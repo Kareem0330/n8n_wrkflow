@@ -1,0 +1,344 @@
+{
+  "id": "hraLl8VuUC4bFa7k",
+  "name": "Assistant comptable",
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-12T16:35:30.253Z",
+  "updatedAt": "2026-09-12T16:35:31.652Z",
+  "isArchived": false,
+  "versionId": "08637bf0-43fa-4aa3-aab2-66b982a2e42f",
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Reçus de Facture --> Comptabilité",
+        "formDescription": "Merci d'envoyer votre reçu.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Reçu --> image/PDF",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "path": "comptabilité"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -480,
+        128
+      ],
+      "id": "da8ad10d-af89-4083-9da3-9ede8c783c9c",
+      "name": "On form submission",
+      "webhookId": "d011c74f-2d43-4c12-bb89-4d8513924fb5"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Tu extrais les données d'un ticket ou d'une facture.\n\nRègles :\n- nom_item : le nom de la société qui émet la facture (l'entête, l'enseigne du commerçant). Pas le nom du client, pas la description du produit.\n- numero_facture : la valeur qui suit « numéro: », « numéro », « N° », « Id » ou « Id: ». Jamais un numéro de commande, de client, de TVA ou de SIRET.\n- date_facture : la date d'émission de la facture, au format AAAA-MM-JJ.\n- montant_total : le montant total payé, TTC. Nombre décimal avec un point, sans symbole ni séparateur de milliers.\n- montant_tva : le montant de la TVA en valeur (pas le taux). Même format numérique.\n- devise : code ISO à 3 lettres (EUR, USD…). Par défaut EUR si un montant en euros est présent sans autre indication.\n\nSi un champ est absent ou illisible sur le ticket, mets null. N'invente jamais une valeur, ne déduis pas, ne complète pas.\n\nContenu extrait du document (vide s'il s'agit d'une image) :\n{{ $json.text || '' }}",
+        "hasOutputParser": true,
+        "options": {
+          "passthroughBinaryImages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        144
+      ],
+      "id": "fa70006d-e4b8-4b42-b134-77970b74f774",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"nom_item\":       { \"type\": [\"string\", \"null\"], \"description\": \"Nom de la société qui émet la facture\" },\n    \"numero_facture\": { \"type\": [\"string\", \"null\"], \"description\": \"Valeur après « numéro: », « N° » ou « Id ». null si absente\" },\n    \"date_facture\":   { \"type\": [\"string\", \"null\"], \"description\": \"Date d'émission au format AAAA-MM-JJ\" },\n    \"montant_total\":  { \"type\": [\"number\", \"null\"], \"description\": \"Montant total TTC\" },\n    \"montant_tva\":    { \"type\": [\"number\", \"null\"], \"description\": \"Montant de la TVA\" },\n    \"devise\":         { \"type\": [\"string\", \"null\"], \"description\": \"Code devise ISO, ex. EUR\" }\n  },\n  \"required\": [\"nom_item\", \"numero_facture\", \"date_facture\", \"montant_total\", \"montant_tva\", \"devise\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        352
+      ],
+      "id": "7b58e9da-6dc5-43d2-ab22-8eb2caeb3e9a",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        432
+      ],
+      "id": "60b58feb-4bba-49c6-9d88-289ed59abba6",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1KNQcmEIPWTYqqITSjzTTZZM3qGsOVHcuqDjostx0YPQ",
+          "mode": "list",
+          "cachedResultName": "Reçus factures Compta",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KNQcmEIPWTYqqITSjzTTZZM3qGsOVHcuqDjostx0YPQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KNQcmEIPWTYqqITSjzTTZZM3qGsOVHcuqDjostx0YPQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.output.date_facture }}",
+            "Item": "={{ $json.output.nom_item }}",
+            "Montant": "={{ $json.output.montant_total }}",
+            "TVA": "={{ $json.output.montant_tva }}",
+            "Devise": "={{ $json.output.devise }}",
+            "Id": "={{ $json.output.numero_facture }}"
+          },
+          "matchingColumns": [
+            "Id"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Item",
+              "displayName": "Item",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Montant",
+              "displayName": "Montant",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TVA",
+              "displayName": "TVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Devise",
+              "displayName": "Devise",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Id",
+              "displayName": "Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        608,
+        144
+      ],
+      "id": "43908102-1bd4-4918-8cff-c1959e7e62e0",
+      "name": "Append or update row in sheet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f14c5221-2ba8-471f-8abf-bf0fde425a60",
+              "leftValue": "={{ $json['Reçu --> image/PDF'][0].mimetype }}",
+              "rightValue": "application/pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        128
+      ],
+      "id": "22f9066d-75d5-45be-a4fe-113fd328cbba",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Re_u_____image_PDF",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7c2960a5-b792-416b-ae4c-e8fca5bbc61e",
+      "name": "Extract from File"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "hraLl8VuUC4bFa7k",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-12T16:35:30.255Z",
+      "updatedAt": "2026-09-12T16:35:30.255Z"
+    }
+  ],
+  "activeVersion": null
+}
