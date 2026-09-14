@@ -4,9 +4,9 @@
   "active": false,
   "activeVersionId": null,
   "createdAt": "2026-09-12T16:32:46.672Z",
-  "updatedAt": "2026-09-12T16:32:46.672Z",
+  "updatedAt": "2026-09-14T18:51:36.487Z",
   "isArchived": false,
-  "versionId": "2fb348eb-88ae-4e94-9c8e-99520398d02c",
+  "versionId": "c81be295-d46c-493c-a500-433cf4e2fee4",
   "triggerCount": 0,
   "nodes": [
     {
@@ -29,7 +29,13 @@
         224
       ],
       "id": "b0eac4fc-0862-4644-a19a-32cc2ce337d7",
-      "name": "Gmail Trigger"
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
@@ -69,8 +75,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1.1,
       "position": [
-        -800,
-        480
+        -832,
+        512
       ],
       "id": "0d33721b-07e5-4086-95e3-8e3497ab6c36",
       "name": "Google Gemini Chat Model"
@@ -91,7 +97,13 @@
       ],
       "id": "26e563ba-0d95-40b2-abc1-a93f02c42e6c",
       "name": "Add communication interne label to email",
-      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a"
+      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
@@ -109,7 +121,13 @@
       ],
       "id": "7917b792-74b3-4b5d-8e35-67b1b295e663",
       "name": "Add Devis envoyés label to email",
-      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a"
+      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
@@ -127,7 +145,13 @@
       ],
       "id": "37225fc6-0534-4ae5-8bb1-69e0327e33b1",
       "name": "Add .New demandes label to email",
-      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a"
+      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
@@ -159,7 +183,13 @@
       ],
       "id": "c454a7a5-2436-4056-ab30-56fd5cbed5e3",
       "name": "Remove label from message",
-      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1"
+      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
@@ -177,7 +207,13 @@
       ],
       "id": "62acc50b-fe4c-41fc-9d89-732d4bc3a61d",
       "name": "Remove label from message1",
-      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1"
+      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
@@ -195,7 +231,13 @@
       ],
       "id": "1116461a-d245-4938-9a47-a4dee0ee198a",
       "name": "Remove label from message2",
-      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1"
+      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
     }
   ],
   "connections": {
