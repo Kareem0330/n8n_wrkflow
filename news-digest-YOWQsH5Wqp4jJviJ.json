@@ -1,0 +1,375 @@
+{
+  "id": "YOWQsH5Wqp4jJviJ",
+  "name": "News Digest",
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-12T16:35:46.220Z",
+  "updatedAt": "2026-09-12T16:35:47.982Z",
+  "isArchived": false,
+  "versionId": "23910ead-c84e-4f55-93f6-3e4b5b0833b6",
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -912,
+        240
+      ],
+      "id": "c79380ee-cc52-4b00-80b5-73677b4a1875",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        384
+      ],
+      "id": "9a299f47-737d-4ad5-8aaa-766620d8ae3c",
+      "name": "CNBC Economy"
+    },
+    {
+      "parameters": {
+        "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=19854910",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        240
+      ],
+      "id": "154996b3-9caa-4386-b509-e7d5476589e3",
+      "name": "CNBC Tech"
+    },
+    {
+      "parameters": {
+        "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        96
+      ],
+      "id": "58e0b19c-b443-42e4-af79-490709e84bd9",
+      "name": "CNBC Finance"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -384,
+        224
+      ],
+      "id": "650918d8-d945-4cbb-857f-75218aead6d6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e8d270c4-f5a9-490a-9deb-a398fb44eb7f",
+              "leftValue": "={{ $json.pubDate }}",
+              "rightValue": "={{ $('Schedule Trigger').item.json.timestamp.toDateTime().toUTC().minus(24,\"hours\") }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        240
+      ],
+      "id": "1dce3220-6001-48c1-b518-ebc25d7c214f",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "guid",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        240
+      ],
+      "id": "dd1fcadc-4291-4a58-8775-48ac3002268f",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "content",
+              "separateBy": "other",
+              "customSeparator": "'''"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        240
+      ],
+      "id": "9d2188d7-6657-4ae1-9806-053c86ed2da8",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "content": "## I'm a note \nAjouter un node Exa + Api key pour scrapper le contenu de chaque article et en faire un résumé plus détaillé",
+        "height": 176,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "b559d3c6-9c87-41b7-847d-cfeb54f31b3b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.concatenated_content }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a news curator agent. You receive scraped articles from multiple sources, your goal is to create an email digest from them, that preserves the facts and lets a user read important news in under 1 minutes.\nDigest and output your result in HTML format.\nUse simple everyday words in your copy, no jargon. Output the final digest without your explanation or reasoning.\nL'output final devra etre en français.\n\nColor palette:\nblue, gray and white"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        320,
+        240
+      ],
+      "id": "238e83aa-7a39-4250-8f54-f123d817777b",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        448
+      ],
+      "id": "fdaf1690-d372-4038-89dd-653c7952fc1e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "karimbordeau33@gmail.com",
+        "subject": "=New Digest {{ $('Schedule Trigger').item.json.Month }} - {{ $('Schedule Trigger').item.json['Readable date'] }}",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        240
+      ],
+      "id": "520c856f-a70c-4ab3-a213-3b21f878888c",
+      "name": "Send a message",
+      "webhookId": "373163e4-b3b0-4c34-830f-533b4fe1a030"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "CNBC Finance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CNBC Tech",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CNBC Economy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CNBC Economy": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "CNBC Finance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CNBC Tech": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "YOWQsH5Wqp4jJviJ",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-12T16:35:46.223Z",
+      "updatedAt": "2026-09-12T16:35:46.223Z"
+    }
+  ],
+  "activeVersion": null
+}
