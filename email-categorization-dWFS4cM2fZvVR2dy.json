@@ -1,0 +1,302 @@
+{
+  "id": "dWFS4cM2fZvVR2dy",
+  "name": "email categorization",
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-12T16:32:46.672Z",
+  "updatedAt": "2026-09-12T16:32:46.672Z",
+  "isArchived": false,
+  "versionId": "2fb348eb-88ae-4e94-9c8e-99520398d02c",
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 25,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1040,
+        224
+      ],
+      "id": "b0eac4fc-0862-4644-a19a-32cc2ce337d7",
+      "name": "Gmail Trigger"
+    },
+    {
+      "parameters": {
+        "inputText": "=email body:{{ $json.snippet }}\nemail subject:{{ $json.Subject }}\n",
+        "categories": {
+          "categories": [
+            {
+              "category": ".New demandes",
+              "description": "Cette catégorie va servir à classer toutes les nouvelles demandes de devis reçues par le formulaire du site internet, mais également les demandes de devis que Samuel m'envoie ou que Mathieu m'envoie. Toutes les demandes de devis, que ça soit par formulaire ou en direct, vont être classées dans cette catégorie"
+            },
+            {
+              "category": "Communication interne",
+              "description": "Communication interne va être la catégorie où tous les mails reçus d'applications, les mails publicitaires, les mails informatifs au niveau de la société, mais qui n'ont aucun rapport avec les clients, vont allez dans cette catégorie "
+            },
+            {
+              "category": "Devis envoyés",
+              "description": "Cette catégorie représente toutes les discussions, tous les fils de discussion concernant les devis envoyés aux clients, ainsi que les estimations de devis envoyées aux clients. Les devis sont principalement envoyés par ma collègue Sandrine et les estimations par moi-même. Ce sont deux formats différents de faire des cotes mais il faut que ça ressemble au même endroit dans cette catégorie. Tu vas mettre ici également toutes les réponses des clients aux mails d'envoi de devis/estimation"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        208
+      ],
+      "id": "b10edf39-3aa1-4926-b95e-cd2821cf1ef2",
+      "name": "Text Classifier",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        480
+      ],
+      "id": "0d33721b-07e5-4086-95e3-8e3497ab6c36",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_6"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -432,
+        224
+      ],
+      "id": "26e563ba-0d95-40b2-abc1-a93f02c42e6c",
+      "name": "Add communication interne label to email",
+      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "Label_7737304818915798096"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -432,
+        432
+      ],
+      "id": "7917b792-74b3-4b5d-8e35-67b1b295e663",
+      "name": "Add Devis envoyés label to email",
+      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_4826283931906379376"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -432,
+        16
+      ],
+      "id": "37225fc6-0534-4ae5-8bb1-69e0327e33b1",
+      "name": "Add .New demandes label to email",
+      "webhookId": "9a6e4b05-2e26-4431-8af0-853604b6554a"
+    },
+    {
+      "parameters": {
+        "content": "## I'm a note \n\nCeci est un workflow qui permet d'aposer un label en fonction du type d'email reçu, permettant de pouvoir trier plus facilement la boîte mail. \n\nFini la boite de réception brouillon où on perd les informations. Le but est de faire gagner du temps et de l'espace mental en classant efficacement les mails importants.\n",
+        "height": 400
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "41fe2aec-98af-4a5d-a08f-75ebe4a31e04",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "removeLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        16
+      ],
+      "id": "c454a7a5-2436-4056-ab30-56fd5cbed5e3",
+      "name": "Remove label from message",
+      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1"
+    },
+    {
+      "parameters": {
+        "operation": "removeLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        224
+      ],
+      "id": "62acc50b-fe4c-41fc-9d89-732d4bc3a61d",
+      "name": "Remove label from message1",
+      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1"
+    },
+    {
+      "parameters": {
+        "operation": "removeLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        432
+      ],
+      "id": "1116461a-d245-4938-9a47-a4dee0ee198a",
+      "name": "Remove label from message2",
+      "webhookId": "1f4b1463-66ef-478f-bebd-e162c60445e1"
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Add .New demandes label to email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add communication interne label to email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Devis envoyés label to email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add .New demandes label to email": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add communication interne label to email": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Devis envoyés label to email": {
+      "main": [
+        [
+          {
+            "node": "Remove label from message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "dWFS4cM2fZvVR2dy",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-12T16:32:46.692Z",
+      "updatedAt": "2026-09-12T16:32:46.692Z"
+    }
+  ],
+  "activeVersion": null
+}
