@@ -1,0 +1,1119 @@
+{
+  "id": "RelWF1SyncNocrm0",
+  "name": "Relances devis · Système complet",
+  "active": true,
+  "activeVersionId": "2b4c2ff6-99a8-4fdb-a5dc-df41c35034f0",
+  "createdAt": "2026-09-17T16:02:57.570Z",
+  "updatedAt": "2026-09-17T19:55:37.310Z",
+  "isArchived": false,
+  "versionId": "2b4c2ff6-99a8-4fdb-a5dc-df41c35034f0",
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Relances devis · Système complet\nUn bloc par partie du système, de haut en bas :\n- **WF1** · Synchronisation complète noCRM → Airtable ✅\n- WF2 · Synchronisation au fil de l'eau (webhook noCRM) — à venir\n- WF3 · Éligibilité J+2 / J+7 et préparation des relances — à venir\n- WF4 · Planification des envois — à venir\n- WF5 · Envoi Gmail — à venir\n- **WF0** · Alertes d'erreur sur Slack #alertes-relances ✅\n- WF6 · Contrôle (pannes silencieuses) — à venir\n\nChaque bloc a son propre déclencheur : ils s'exécutent indépendamment. Un bloc en construction garde son déclencheur **désactivé** jusqu'à sa recette.",
+        "height": 380,
+        "width": 2560,
+        "color": 7
+      },
+      "id": "a1000000-0000-4000-8000-0000000000b0",
+      "name": "Sommaire du système",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -768
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# WF1 · Synchronisation complète noCRM → Airtable\nChaque nuit à 2 h · filet de rattrapage de la synchronisation",
+        "height": 1332,
+        "width": 2560,
+        "color": 4
+      },
+      "id": "a1000000-0000-4000-8000-0000000000b1",
+      "name": "Bloc WF1 · Synchronisation complète noCRM → Airtable",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## WF1 · Synchronisation complète noCRM → Airtable\n\n**Rôle** : recopier chaque nuit les opportunités noCRM dans la table Airtable **Opportunités**. Filet de rattrapage : corrige tout ce que la synchronisation au fil de l'eau (WF2) aurait manqué.\n\n**Quand** : chaque nuit à 2 h (Europe/Paris), ou à la main via « Lancement manuel ».\n\n### Étapes\n**1. noCRM – utilisateurs** — lit la liste des commerciaux (1 requête) pour afficher leur nom.\n\n**2. noCRM – opportunités** — lit toutes les opportunités, 100 par page, les plus récemment modifiées d'abord (≈ 7 requêtes). La liste contient déjà la description.\n\n**3. Airtable – opportunités existantes** — lit ce qui est déjà dans Airtable (nocrm_id + « Modifié le »).\n\n**4. Sélection des dossiers à mettre à jour** — garde les dossiers ouverts, ou clôturés/modifiés depuis moins de 90 jours, puis seulement ceux **nouveaux ou modifiés** depuis la dernière synchro. Un dossier inchangé n'est jamais relu : le quota noCRM est de 2 000 requêtes/jour pour tout le compte.\n\n**5. noCRM – détail des dossiers** — relit chaque dossier retenu (5 par seconde) pour obtenir e-mail, prénom, nom, téléphone.\n\n**6. Préparation des lignes Airtable** — convertit le statut (todo → En cours…), extrait de la description la ville de départ, la ville d'arrivée, le volume et le prix TTC (le plus élevé s'il y a plusieurs devis). Une valeur illisible reste **vide, jamais devinée**. Regroupe les lignes par lots de 10.\n\n**7. Airtable – écriture par lots de 10** — upsert sur `nocrm_id` : met à jour la ligne existante ou la crée. Aucun doublon possible.\n\n### Garde-fous\n- N'écrit **jamais** les champs de relance ni les champs manuels (Relance désactivée, Motif, Devis envoyé le, Réponse client reçue le).\n- 3 tentatives espacées de 3 s sur chaque appel noCRM et Airtable.\n- Relancer deux fois de suite ne réécrit rien.\n\n### Références\nCahier des charges, dictionnaire de données et analyse d'écart : dossier `outils/Relances Commerciales Mail/`.\nIdentifiants : « Header Auth account » (clé noCRM, en-tête X-API-KEY) et « Airtable Personal Access Token account ».",
+        "height": 1228,
+        "width": 580,
+        "color": 7
+      },
+      "id": "a1000000-0000-4000-8000-0000000000aa",
+      "name": "WF1 – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Chaque nuit à 2 h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Lancement manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://samdemenage.nocrm.io/api/v2/users",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "noCRM – utilisateurs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        112
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cozsLIX1RhBu4CoY",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://samdemenage.nocrm.io/api/v2/leads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "order",
+              "value": "last_update"
+            },
+            {
+              "name": "direction",
+              "value": "desc"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "offset",
+                    "value": "={{ $pageCount * 100 }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !Array.isArray($response.body) || $response.body.length < 100 }}",
+              "limitPagesFetched": true,
+              "maxRequests": 30,
+              "requestInterval": 300
+            }
+          }
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "noCRM – opportunités",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        112
+      ],
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cozsLIX1RhBu4CoY",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appnNlYLA9oETCuH1"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblUZkQTQVaxTWxIZ"
+        },
+        "options": {
+          "fields": [
+            "nocrm_id",
+            "Modifié le"
+          ]
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Airtable – opportunités existantes",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        112
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "sr22doSVsleoR29y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Périmètre : dossiers ouverts, ou modifiés/clôturés depuis moins de 90 jours.\n// Seuls les dossiers nouveaux ou modifiés depuis la dernière synchronisation sont relus en détail (quota noCRM : 2 000 requêtes/jour).\nconst J90 = 90 * 24 * 3600 * 1000;\nconst maintenant = Date.now();\n\nconst aplatir = (items) => items.flatMap(it => Array.isArray(it.json) ? it.json : [it.json]);\n\nconst commerciaux = {};\nfor (const u of aplatir($('noCRM – utilisateurs').all())) {\n  if (u && u.id) commerciaux[u.id] = [u.firstname, u.lastname].filter(Boolean).join(' ');\n}\n\nconst connus = {};\nfor (const it of $('Airtable – opportunités existantes').all()) {\n  const f = it.json.fields || it.json;\n  if (f && f.nocrm_id) connus[f.nocrm_id] = f['Modifié le'] ? Date.parse(f['Modifié le']) : 0;\n}\n\nconst leads = aplatir($('noCRM – opportunités').all()).filter(l => l && l.id);\nconst sortie = [];\nfor (const l of leads) {\n  const ouvert = l.status === 'todo' || l.status === 'standby';\n  const reference = Date.parse(l.closed_at || l.updated_at || l.created_at);\n  if (!ouvert && maintenant - reference > J90) continue;\n  const modifie = Date.parse(l.updated_at);\n  const dejaAJour = l.id in connus && Math.abs(connus[l.id] - modifie) < 1000;\n  if (dejaAJour) continue;\n  sortie.push({ json: { id: l.id, commercial: commerciaux[l.user_id] || '', nouveau: !(l.id in connus) } });\n}\nreturn sortie;"
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Sélection des dossiers à mettre à jour",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://samdemenage.nocrm.io/api/v2/leads/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1100
+            }
+          }
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "noCRM – détail des dossiers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        112
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cozsLIX1RhBu4CoY",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transforme chaque dossier noCRM en ligne Airtable. N'écrit QUE les champs « sync » :\n// jamais Relance désactivée, Motif, Devis envoyé le ni Réponse client reçue le.\nconst STATUT = { todo: 'En cours', standby: 'En attente', won: 'Gagné', lost: 'Perdu', cancelled: 'Annulé' };\nconst commerciaux = {};\nfor (const s of $('Sélection des dossiers à mettre à jour').all()) commerciaux[s.json.id] = s.json.commercial;\n\nconst nombre = (s) => {\n  if (s == null) return null;\n  const n = parseFloat(String(s).replace(/[\\s\\u00a0\\u202f]/g, '').replace(',', '.'));\n  return Number.isFinite(n) ? n : null;\n};\nconst RUE = /^(n°?\\s*)?\\d|\\b(rue|avenue|av\\.?|all[ée]e|chemin|bd|boulevard|impasse|place|cours|route|quai|lotissement|r[ée]sidence|lieu[- ]dit|passage|square|voie|parvis|esplanade)\\b/i;\n// Ville lue dans une adresse libre ; vide si illisible, jamais devinée.\nconst villeDe = (brut) => {\n  let v = (brut || '').replace(/[\\u{1F300}-\\u{1FAFF}\\u2600-\\u27BF\\uFE0F]/gu, '').replace(/\\s+[—–-]\\s+.*$/, '').trim();\n  if (!v) return '';\n  const fin = (s) => s.split(/\\s{2,}/)[0].trim();\n  let m = v.match(/\\b\\d{5}\\s+([A-Za-zÀ-ÿ][^,\\n(]*?)\\s*(?:[,(]|$)/);\n  if (m) return fin(m[1]);\n  m = v.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\\- ]*?)\\s*\\(\\s*\\d{5}\\s*\\)/);\n  if (m) return fin(m[1]);\n  m = v.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\\- ]*?)\\s+\\d{5}\\b/);\n  if (m && !RUE.test(m[1])) return fin(m[1]);\n  v = v.replace(/\\([^)]*\\)/g, '').trim();\n  const segs = v.split(',').map(s => s.trim()).filter(Boolean);\n  if (!segs.length) return '';\n  // Nom de ville sans code postal : doit commencer par une majuscule (écarte « pas de logement », « à définir »…).\n  const propre = (s) => !/\\d/.test(s) && !RUE.test(s) && s.length <= 40 && /^[A-ZÀ-Ý]/.test(s);\n  if (segs.length === 1) return propre(segs[0]) ? fin(segs[0]) : '';\n  if (propre(segs[0])) return fin(segs[0]);\n  const dernier = segs[segs.length - 1];\n  return propre(dernier) ? fin(dernier) : '';\n};\n// Cherche « Départ : … » ; à défaut, la ligne qui suit « Ville de départ ».\nconst ville = (texte, sens) => {\n  const lignes = texte.split(/\\r?\\n/).map(l => l.trim());\n  const deuxPoints = sens === 'depart' ? /^d[ée]part\\s*:\\s*(.+)$/i : /^arriv[ée]e\\s*:\\s*(.+)$/i;\n  const titre = sens === 'depart' ? /^ville\\s+de\\s+d[ée]part\\s*:?$/i : /^ville\\s+d.\\s*arriv[ée]e\\s*:?$/i;\n  for (const l of lignes) {\n    const m = l.match(deuxPoints);\n    if (m) { const v = villeDe(m[1]); if (v) return v; break; }\n  }\n  const i = lignes.findIndex(l => titre.test(l));\n  if (i >= 0) {\n    const suivante = lignes.slice(i + 1).find(l => l.replace(/\\u00a0/g, '').trim());\n    if (suivante) return villeDe(suivante);\n  }\n  return '';\n};\nconst date = (d) => (d ? new Date(d).toISOString() : null);\n\nconst lignes = [];\nfor (const it of $input.all()) {\n  const l = it.json;\n  if (!l || !l.id) continue;\n  const ei = l.extended_info || {};\n  const f = ei.fields || {};\n  const desc = l.description || '';\n  const vol = desc.match(/Volume de meuble\\s*:\\s*([\\d.,]+)\\s*m/i);\n  const prix = [...desc.matchAll(/Prix Total\\s*:\\s*([\\d\\s\\u00a0\\u202f.,]+)€\\s*TTC/gi)].map(m => nombre(m[1])).filter(n => n != null);\n  const email = (f.email || ei.first_contact_email || '').trim();\n  lignes.push({\n    'Titre': l.title || '',\n    'nocrm_id': l.id,\n    'Prénom': f.first_name || '',\n    'Nom': f.last_name || '',\n    'E-mail': email || null,\n    'Téléphone': f.phone || f.mobile || '',\n    'Étape': l.step || null,\n    'Statut': STATUT[l.status] || null,\n    'Montant TTC': l.amount != null ? Number(l.amount) : null,\n    'Commercial': commerciaux[l.id] || [ (ei.user || {}).firstname, (ei.user || {}).lastname ].filter(Boolean).join(' '),\n    'Départ': ville(desc, 'depart'),\n    'Arrivée': ville(desc, 'arrivee'),\n    'Volume (m³)': vol ? nombre(vol[1]) : null,\n    'Prix TTC extrait': prix.length ? Math.max(...prix) : null,\n    'Prochaine action': date(l.next_action_at),\n    'Créé le': date(l.created_at),\n    'Modifié le': date(l.updated_at),\n    'Clôturé le': date(l.closed_at),\n    'Lien noCRM': ei.permalink || ('https://samdemenage.nocrm.io/leads/' + l.id),\n    'Dernière sync': new Date().toISOString()\n  });\n}\n\n// Lots de 10 : limite de l'API Airtable par requête.\nconst lots = [];\nfor (let i = 0; i < lignes.length; i += 10) {\n  lots.push({ json: { records: lignes.slice(i, i + 10).map(fields => ({ fields })) } });\n}\nreturn lots;"
+      },
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "Préparation des lignes Airtable",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.airtable.com/v0/appnNlYLA9oETCuH1/tblUZkQTQVaxTWxIZ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "airtableTokenApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ performUpsert: { fieldsToMergeOn: ['nocrm_id'] }, typecast: true, records: $json.records }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 250
+            }
+          }
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000009",
+      "name": "Airtable – écriture par lots de 10",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        112
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "sr22doSVsleoR29y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# WF0 · Alertes d'erreur sur Slack\nDéclenché par l'échec de n'importe quel bloc · canal #alertes-relances",
+        "height": 552,
+        "width": 1500,
+        "color": 3
+      },
+      "id": "a1000000-0000-4000-8000-0000000000c0",
+      "name": "Bloc WF0 · Alertes Slack",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## WF0 · Alertes Slack\n\n**Rôle** : prévenir dans **#alertes-relances** dès qu'une exécution de ce workflow échoue (alerte A1 du catalogue).\n\n**Déclenchement** : ce bloc est désigné comme « workflow d'erreur » du workflow lui-même (Paramètres → Error Workflow). n8n le lance automatiquement après un échec ; il ne tourne jamais tout seul.\n\n### Étapes\n**1. Erreur d'exécution** — reçoit de n8n le dossier de l'échec : workflow, nœud fautif, message, lien vers l'exécution.\n\n**2. Message d'alerte** — met en forme le message et calcule une **clé de regroupement** : nœud + message + heure courante.\n\n**3. Une alerte par heure** — compare la clé aux clés déjà vues (mémoire de n8n) : une même erreur qui se répète dans l'heure ne repart pas. L'heure suivante, la clé change et l'alerte repart.\n\n**4. Alerte Slack** — publie dans #alertes-relances. En cas de refus de Slack, le nœud n'échoue pas : cela éviterait une boucle d'alertes sur l'alerte.\n\n### À savoir\n- Ne couvre que les **échecs d'exécution**. Les pannes silencieuses (rien ne se produit) seront couvertes par le bloc WF6 · Contrôle.\n- Si le serveur n8n est arrêté, ce bloc ne peut rien envoyer : c'est le rôle du signal de vie externe (exigence F7).\n- Identifiant utilisé : « Slack Alertes n8n ».",
+        "height": 420,
+        "width": 420,
+        "color": 7
+      },
+      "id": "a1000000-0000-4000-8000-0000000000c1",
+      "name": "WF0 – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        1152
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-0000000000c2",
+      "name": "Erreur d'exécution",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        1232
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Met en forme l'alerte et calcule une clé de regroupement (nœud + message + heure).\nconst d = $json.execution || {};\nconst w = $json.workflow || {};\nconst noeud = d.lastNodeExecuted || 'inconnu';\nconst message = (d.error && (d.error.message || d.error.description)) || 'erreur sans message';\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nconst heure = new Date().toISOString().slice(0, 13);\nconst texte = [\n  ':rotating_light: *Relances devis — échec d’exécution*',\n  '*Bloc / workflow :* ' + (w.name || 'inconnu'),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + String(message).slice(0, 800),\n  '*Quand :* ' + quand,\n  d.url ? '*Exécution :* ' + d.url : '*Exécution :* ' + (d.id || '—')\n].join(String.fromCharCode(10));\nreturn [{ json: { texte, cle: noeud + '|' + String(message).slice(0, 120) + '|' + heure } }];"
+      },
+      "id": "a1000000-0000-4000-8000-0000000000c3",
+      "name": "Message d'alerte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        1232
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.cle }}",
+        "options": {
+          "scope": "workflow",
+          "historySize": 5000
+        }
+      },
+      "id": "a1000000-0000-4000-8000-0000000000c4",
+      "name": "Une alerte par heure",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        384,
+        1232
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "alertes-relances"
+        },
+        "text": "={{ $json.texte }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "mrkdwn": true
+        }
+      },
+      "id": "a1000000-0000-4000-8000-0000000000c5",
+      "name": "Alerte Slack #alertes-relances",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        1232
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "webhookId": "cfab3ab9-aed4-4808-9d24-82379e3c8a9f",
+      "credentials": {
+        "slackApi": {
+          "id": "oiCh7mUHPUPu43md",
+          "name": "Slack Alertes n8n"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Chaque nuit à 2 h": {
+      "main": [
+        [
+          {
+            "node": "noCRM – utilisateurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel": {
+      "main": [
+        [
+          {
+            "node": "noCRM – utilisateurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "noCRM – utilisateurs": {
+      "main": [
+        [
+          {
+            "node": "noCRM – opportunités",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "noCRM – opportunités": {
+      "main": [
+        [
+          {
+            "node": "Airtable – opportunités existantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable – opportunités existantes": {
+      "main": [
+        [
+          {
+            "node": "Sélection des dossiers à mettre à jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sélection des dossiers à mettre à jour": {
+      "main": [
+        [
+          {
+            "node": "noCRM – détail des dossiers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "noCRM – détail des dossiers": {
+      "main": [
+        [
+          {
+            "node": "Préparation des lignes Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparation des lignes Airtable": {
+      "main": [
+        [
+          {
+            "node": "Airtable – écriture par lots de 10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Erreur d'exécution": {
+      "main": [
+        [
+          {
+            "node": "Message d'alerte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message d'alerte": {
+      "main": [
+        [
+          {
+            "node": "Une alerte par heure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Une alerte par heure": {
+      "main": [
+        [
+          {
+            "node": "Alerte Slack #alertes-relances",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "errorWorkflow": "RelWF1SyncNocrm0",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "node:Chaque nuit à 2 h": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "RelWF1SyncNocrm0",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-17T16:02:57.574Z",
+      "updatedAt": "2026-09-17T16:02:57.574Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "2b4c2ff6-99a8-4fdb-a5dc-df41c35034f0",
+    "workflowId": "RelWF1SyncNocrm0",
+    "nodes": [
+      {
+        "parameters": {
+          "content": "# Relances devis · Système complet\nUn bloc par partie du système, de haut en bas :\n- **WF1** · Synchronisation complète noCRM → Airtable ✅\n- WF2 · Synchronisation au fil de l'eau (webhook noCRM) — à venir\n- WF3 · Éligibilité J+2 / J+7 et préparation des relances — à venir\n- WF4 · Planification des envois — à venir\n- WF5 · Envoi Gmail — à venir\n- **WF0** · Alertes d'erreur sur Slack #alertes-relances ✅\n- WF6 · Contrôle (pannes silencieuses) — à venir\n\nChaque bloc a son propre déclencheur : ils s'exécutent indépendamment. Un bloc en construction garde son déclencheur **désactivé** jusqu'à sa recette.",
+          "height": 380,
+          "width": 2560,
+          "color": 7
+        },
+        "id": "a1000000-0000-4000-8000-0000000000b0",
+        "name": "Sommaire du système",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          -768
+        ]
+      },
+      {
+        "parameters": {
+          "content": "# WF1 · Synchronisation complète noCRM → Airtable\nChaque nuit à 2 h · filet de rattrapage de la synchronisation",
+          "height": 1332,
+          "width": 2560,
+          "color": 4
+        },
+        "id": "a1000000-0000-4000-8000-0000000000b1",
+        "name": "Bloc WF1 · Synchronisation complète noCRM → Airtable",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          -320
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## WF1 · Synchronisation complète noCRM → Airtable\n\n**Rôle** : recopier chaque nuit les opportunités noCRM dans la table Airtable **Opportunités**. Filet de rattrapage : corrige tout ce que la synchronisation au fil de l'eau (WF2) aurait manqué.\n\n**Quand** : chaque nuit à 2 h (Europe/Paris), ou à la main via « Lancement manuel ».\n\n### Étapes\n**1. noCRM – utilisateurs** — lit la liste des commerciaux (1 requête) pour afficher leur nom.\n\n**2. noCRM – opportunités** — lit toutes les opportunités, 100 par page, les plus récemment modifiées d'abord (≈ 7 requêtes). La liste contient déjà la description.\n\n**3. Airtable – opportunités existantes** — lit ce qui est déjà dans Airtable (nocrm_id + « Modifié le »).\n\n**4. Sélection des dossiers à mettre à jour** — garde les dossiers ouverts, ou clôturés/modifiés depuis moins de 90 jours, puis seulement ceux **nouveaux ou modifiés** depuis la dernière synchro. Un dossier inchangé n'est jamais relu : le quota noCRM est de 2 000 requêtes/jour pour tout le compte.\n\n**5. noCRM – détail des dossiers** — relit chaque dossier retenu (5 par seconde) pour obtenir e-mail, prénom, nom, téléphone.\n\n**6. Préparation des lignes Airtable** — convertit le statut (todo → En cours…), extrait de la description la ville de départ, la ville d'arrivée, le volume et le prix TTC (le plus élevé s'il y a plusieurs devis). Une valeur illisible reste **vide, jamais devinée**. Regroupe les lignes par lots de 10.\n\n**7. Airtable – écriture par lots de 10** — upsert sur `nocrm_id` : met à jour la ligne existante ou la crée. Aucun doublon possible.\n\n### Garde-fous\n- N'écrit **jamais** les champs de relance ni les champs manuels (Relance désactivée, Motif, Devis envoyé le, Réponse client reçue le).\n- 3 tentatives espacées de 3 s sur chaque appel noCRM et Airtable.\n- Relancer deux fois de suite ne réécrit rien.\n\n### Références\nCahier des charges, dictionnaire de données et analyse d'écart : dossier `outils/Relances Commerciales Mail/`.\nIdentifiants : « Header Auth account » (clé noCRM, en-tête X-API-KEY) et « Airtable Personal Access Token account ».",
+          "height": 1228,
+          "width": 580,
+          "color": 7
+        },
+        "id": "a1000000-0000-4000-8000-0000000000aa",
+        "name": "WF1 – mode d'emploi",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -640,
+          -224
+        ]
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 2 * * *"
+              }
+            ]
+          }
+        },
+        "id": "a1000000-0000-4000-8000-000000000001",
+        "name": "Chaque nuit à 2 h",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "a1000000-0000-4000-8000-000000000002",
+        "name": "Lancement manuel",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://samdemenage.nocrm.io/api/v2/users",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "id": "a1000000-0000-4000-8000-000000000003",
+        "name": "noCRM – utilisateurs",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          240,
+          112
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "alwaysOutputData": true,
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "cozsLIX1RhBu4CoY",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "https://samdemenage.nocrm.io/api/v2/leads",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "limit",
+                "value": "100"
+              },
+              {
+                "name": "order",
+                "value": "last_update"
+              },
+              {
+                "name": "direction",
+                "value": "desc"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "parameters": {
+                  "parameters": [
+                    {
+                      "name": "offset",
+                      "value": "={{ $pageCount * 100 }}"
+                    }
+                  ]
+                },
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ !Array.isArray($response.body) || $response.body.length < 100 }}",
+                "limitPagesFetched": true,
+                "maxRequests": 30,
+                "requestInterval": 300
+              }
+            }
+          }
+        },
+        "id": "a1000000-0000-4000-8000-000000000004",
+        "name": "noCRM – opportunités",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          480,
+          112
+        ],
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "cozsLIX1RhBu4CoY",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "search",
+          "base": {
+            "__rl": true,
+            "mode": "id",
+            "value": "appnNlYLA9oETCuH1"
+          },
+          "table": {
+            "__rl": true,
+            "mode": "id",
+            "value": "tblUZkQTQVaxTWxIZ"
+          },
+          "options": {
+            "fields": [
+              "nocrm_id",
+              "Modifié le"
+            ]
+          }
+        },
+        "id": "a1000000-0000-4000-8000-000000000005",
+        "name": "Airtable – opportunités existantes",
+        "type": "n8n-nodes-base.airtable",
+        "typeVersion": 2.1,
+        "position": [
+          720,
+          112
+        ],
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "sr22doSVsleoR29y",
+            "name": "Airtable Personal Access Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Périmètre : dossiers ouverts, ou modifiés/clôturés depuis moins de 90 jours.\n// Seuls les dossiers nouveaux ou modifiés depuis la dernière synchronisation sont relus en détail (quota noCRM : 2 000 requêtes/jour).\nconst J90 = 90 * 24 * 3600 * 1000;\nconst maintenant = Date.now();\n\nconst aplatir = (items) => items.flatMap(it => Array.isArray(it.json) ? it.json : [it.json]);\n\nconst commerciaux = {};\nfor (const u of aplatir($('noCRM – utilisateurs').all())) {\n  if (u && u.id) commerciaux[u.id] = [u.firstname, u.lastname].filter(Boolean).join(' ');\n}\n\nconst connus = {};\nfor (const it of $('Airtable – opportunités existantes').all()) {\n  const f = it.json.fields || it.json;\n  if (f && f.nocrm_id) connus[f.nocrm_id] = f['Modifié le'] ? Date.parse(f['Modifié le']) : 0;\n}\n\nconst leads = aplatir($('noCRM – opportunités').all()).filter(l => l && l.id);\nconst sortie = [];\nfor (const l of leads) {\n  const ouvert = l.status === 'todo' || l.status === 'standby';\n  const reference = Date.parse(l.closed_at || l.updated_at || l.created_at);\n  if (!ouvert && maintenant - reference > J90) continue;\n  const modifie = Date.parse(l.updated_at);\n  const dejaAJour = l.id in connus && Math.abs(connus[l.id] - modifie) < 1000;\n  if (dejaAJour) continue;\n  sortie.push({ json: { id: l.id, commercial: commerciaux[l.user_id] || '', nouveau: !(l.id in connus) } });\n}\nreturn sortie;"
+        },
+        "id": "a1000000-0000-4000-8000-000000000006",
+        "name": "Sélection des dossiers à mettre à jour",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "url": "=https://samdemenage.nocrm.io/api/v2/leads/{{ $json.id }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 5,
+                "batchInterval": 1100
+              }
+            }
+          }
+        },
+        "id": "a1000000-0000-4000-8000-000000000007",
+        "name": "noCRM – détail des dossiers",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1200,
+          112
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "cozsLIX1RhBu4CoY",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Transforme chaque dossier noCRM en ligne Airtable. N'écrit QUE les champs « sync » :\n// jamais Relance désactivée, Motif, Devis envoyé le ni Réponse client reçue le.\nconst STATUT = { todo: 'En cours', standby: 'En attente', won: 'Gagné', lost: 'Perdu', cancelled: 'Annulé' };\nconst commerciaux = {};\nfor (const s of $('Sélection des dossiers à mettre à jour').all()) commerciaux[s.json.id] = s.json.commercial;\n\nconst nombre = (s) => {\n  if (s == null) return null;\n  const n = parseFloat(String(s).replace(/[\\s\\u00a0\\u202f]/g, '').replace(',', '.'));\n  return Number.isFinite(n) ? n : null;\n};\nconst RUE = /^(n°?\\s*)?\\d|\\b(rue|avenue|av\\.?|all[ée]e|chemin|bd|boulevard|impasse|place|cours|route|quai|lotissement|r[ée]sidence|lieu[- ]dit|passage|square|voie|parvis|esplanade)\\b/i;\n// Ville lue dans une adresse libre ; vide si illisible, jamais devinée.\nconst villeDe = (brut) => {\n  let v = (brut || '').replace(/[\\u{1F300}-\\u{1FAFF}\\u2600-\\u27BF\\uFE0F]/gu, '').replace(/\\s+[—–-]\\s+.*$/, '').trim();\n  if (!v) return '';\n  const fin = (s) => s.split(/\\s{2,}/)[0].trim();\n  let m = v.match(/\\b\\d{5}\\s+([A-Za-zÀ-ÿ][^,\\n(]*?)\\s*(?:[,(]|$)/);\n  if (m) return fin(m[1]);\n  m = v.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\\- ]*?)\\s*\\(\\s*\\d{5}\\s*\\)/);\n  if (m) return fin(m[1]);\n  m = v.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\\- ]*?)\\s+\\d{5}\\b/);\n  if (m && !RUE.test(m[1])) return fin(m[1]);\n  v = v.replace(/\\([^)]*\\)/g, '').trim();\n  const segs = v.split(',').map(s => s.trim()).filter(Boolean);\n  if (!segs.length) return '';\n  // Nom de ville sans code postal : doit commencer par une majuscule (écarte « pas de logement », « à définir »…).\n  const propre = (s) => !/\\d/.test(s) && !RUE.test(s) && s.length <= 40 && /^[A-ZÀ-Ý]/.test(s);\n  if (segs.length === 1) return propre(segs[0]) ? fin(segs[0]) : '';\n  if (propre(segs[0])) return fin(segs[0]);\n  const dernier = segs[segs.length - 1];\n  return propre(dernier) ? fin(dernier) : '';\n};\n// Cherche « Départ : … » ; à défaut, la ligne qui suit « Ville de départ ».\nconst ville = (texte, sens) => {\n  const lignes = texte.split(/\\r?\\n/).map(l => l.trim());\n  const deuxPoints = sens === 'depart' ? /^d[ée]part\\s*:\\s*(.+)$/i : /^arriv[ée]e\\s*:\\s*(.+)$/i;\n  const titre = sens === 'depart' ? /^ville\\s+de\\s+d[ée]part\\s*:?$/i : /^ville\\s+d.\\s*arriv[ée]e\\s*:?$/i;\n  for (const l of lignes) {\n    const m = l.match(deuxPoints);\n    if (m) { const v = villeDe(m[1]); if (v) return v; break; }\n  }\n  const i = lignes.findIndex(l => titre.test(l));\n  if (i >= 0) {\n    const suivante = lignes.slice(i + 1).find(l => l.replace(/\\u00a0/g, '').trim());\n    if (suivante) return villeDe(suivante);\n  }\n  return '';\n};\nconst date = (d) => (d ? new Date(d).toISOString() : null);\n\nconst lignes = [];\nfor (const it of $input.all()) {\n  const l = it.json;\n  if (!l || !l.id) continue;\n  const ei = l.extended_info || {};\n  const f = ei.fields || {};\n  const desc = l.description || '';\n  const vol = desc.match(/Volume de meuble\\s*:\\s*([\\d.,]+)\\s*m/i);\n  const prix = [...desc.matchAll(/Prix Total\\s*:\\s*([\\d\\s\\u00a0\\u202f.,]+)€\\s*TTC/gi)].map(m => nombre(m[1])).filter(n => n != null);\n  const email = (f.email || ei.first_contact_email || '').trim();\n  lignes.push({\n    'Titre': l.title || '',\n    'nocrm_id': l.id,\n    'Prénom': f.first_name || '',\n    'Nom': f.last_name || '',\n    'E-mail': email || null,\n    'Téléphone': f.phone || f.mobile || '',\n    'Étape': l.step || null,\n    'Statut': STATUT[l.status] || null,\n    'Montant TTC': l.amount != null ? Number(l.amount) : null,\n    'Commercial': commerciaux[l.id] || [ (ei.user || {}).firstname, (ei.user || {}).lastname ].filter(Boolean).join(' '),\n    'Départ': ville(desc, 'depart'),\n    'Arrivée': ville(desc, 'arrivee'),\n    'Volume (m³)': vol ? nombre(vol[1]) : null,\n    'Prix TTC extrait': prix.length ? Math.max(...prix) : null,\n    'Prochaine action': date(l.next_action_at),\n    'Créé le': date(l.created_at),\n    'Modifié le': date(l.updated_at),\n    'Clôturé le': date(l.closed_at),\n    'Lien noCRM': ei.permalink || ('https://samdemenage.nocrm.io/leads/' + l.id),\n    'Dernière sync': new Date().toISOString()\n  });\n}\n\n// Lots de 10 : limite de l'API Airtable par requête.\nconst lots = [];\nfor (let i = 0; i < lignes.length; i += 10) {\n  lots.push({ json: { records: lignes.slice(i, i + 10).map(fields => ({ fields })) } });\n}\nreturn lots;"
+        },
+        "id": "a1000000-0000-4000-8000-000000000008",
+        "name": "Préparation des lignes Airtable",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1440,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "https://api.airtable.com/v0/appnNlYLA9oETCuH1/tblUZkQTQVaxTWxIZ",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "airtableTokenApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ performUpsert: { fieldsToMergeOn: ['nocrm_id'] }, typecast: true, records: $json.records }) }}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1,
+                "batchInterval": 250
+              }
+            }
+          }
+        },
+        "id": "a1000000-0000-4000-8000-000000000009",
+        "name": "Airtable – écriture par lots de 10",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1680,
+          112
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "sr22doSVsleoR29y",
+            "name": "Airtable Personal Access Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "# WF0 · Alertes d'erreur sur Slack\nDéclenché par l'échec de n'importe quel bloc · canal #alertes-relances",
+          "height": 552,
+          "width": 1500,
+          "color": 3
+        },
+        "id": "a1000000-0000-4000-8000-0000000000c0",
+        "name": "Bloc WF0 · Alertes Slack",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          1040
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## WF0 · Alertes Slack\n\n**Rôle** : prévenir dans **#alertes-relances** dès qu'une exécution de ce workflow échoue (alerte A1 du catalogue).\n\n**Déclenchement** : ce bloc est désigné comme « workflow d'erreur » du workflow lui-même (Paramètres → Error Workflow). n8n le lance automatiquement après un échec ; il ne tourne jamais tout seul.\n\n### Étapes\n**1. Erreur d'exécution** — reçoit de n8n le dossier de l'échec : workflow, nœud fautif, message, lien vers l'exécution.\n\n**2. Message d'alerte** — met en forme le message et calcule une **clé de regroupement** : nœud + message + heure courante.\n\n**3. Une alerte par heure** — compare la clé aux clés déjà vues (mémoire de n8n) : une même erreur qui se répète dans l'heure ne repart pas. L'heure suivante, la clé change et l'alerte repart.\n\n**4. Alerte Slack** — publie dans #alertes-relances. En cas de refus de Slack, le nœud n'échoue pas : cela éviterait une boucle d'alertes sur l'alerte.\n\n### À savoir\n- Ne couvre que les **échecs d'exécution**. Les pannes silencieuses (rien ne se produit) seront couvertes par le bloc WF6 · Contrôle.\n- Si le serveur n8n est arrêté, ce bloc ne peut rien envoyer : c'est le rôle du signal de vie externe (exigence F7).\n- Identifiant utilisé : « Slack Alertes n8n ».",
+          "height": 420,
+          "width": 420,
+          "color": 7
+        },
+        "id": "a1000000-0000-4000-8000-0000000000c1",
+        "name": "WF0 – mode d'emploi",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -640,
+          1152
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "a1000000-0000-4000-8000-0000000000c2",
+        "name": "Erreur d'exécution",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          -144,
+          1232
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Met en forme l'alerte et calcule une clé de regroupement (nœud + message + heure).\nconst d = $json.execution || {};\nconst w = $json.workflow || {};\nconst noeud = d.lastNodeExecuted || 'inconnu';\nconst message = (d.error && (d.error.message || d.error.description)) || 'erreur sans message';\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nconst heure = new Date().toISOString().slice(0, 13);\nconst texte = [\n  ':rotating_light: *Relances devis — échec d’exécution*',\n  '*Bloc / workflow :* ' + (w.name || 'inconnu'),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + String(message).slice(0, 800),\n  '*Quand :* ' + quand,\n  d.url ? '*Exécution :* ' + d.url : '*Exécution :* ' + (d.id || '—')\n].join(String.fromCharCode(10));\nreturn [{ json: { texte, cle: noeud + '|' + String(message).slice(0, 120) + '|' + heure } }];"
+        },
+        "id": "a1000000-0000-4000-8000-0000000000c3",
+        "name": "Message d'alerte",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          128,
+          1232
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "removeItemsSeenInPreviousExecutions",
+          "dedupeValue": "={{ $json.cle }}",
+          "options": {
+            "scope": "workflow",
+            "historySize": 5000
+          }
+        },
+        "id": "a1000000-0000-4000-8000-0000000000c4",
+        "name": "Une alerte par heure",
+        "type": "n8n-nodes-base.removeDuplicates",
+        "typeVersion": 2,
+        "position": [
+          384,
+          1232
+        ]
+      },
+      {
+        "parameters": {
+          "select": "channel",
+          "channelId": {
+            "__rl": true,
+            "mode": "name",
+            "value": "alertes-relances"
+          },
+          "text": "={{ $json.texte }}",
+          "otherOptions": {
+            "includeLinkToWorkflow": false,
+            "mrkdwn": true
+          }
+        },
+        "id": "a1000000-0000-4000-8000-0000000000c5",
+        "name": "Alerte Slack #alertes-relances",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.3,
+        "position": [
+          640,
+          1232
+        ],
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 3000,
+        "webhookId": "cfab3ab9-aed4-4808-9d24-82379e3c8a9f",
+        "credentials": {
+          "slackApi": {
+            "id": "oiCh7mUHPUPu43md",
+            "name": "Slack Alertes n8n"
+          }
+        },
+        "onError": "continueRegularOutput"
+      }
+    ],
+    "connections": {
+      "Chaque nuit à 2 h": {
+        "main": [
+          [
+            {
+              "node": "noCRM – utilisateurs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lancement manuel": {
+        "main": [
+          [
+            {
+              "node": "noCRM – utilisateurs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "noCRM – utilisateurs": {
+        "main": [
+          [
+            {
+              "node": "noCRM – opportunités",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "noCRM – opportunités": {
+        "main": [
+          [
+            {
+              "node": "Airtable – opportunités existantes",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Airtable – opportunités existantes": {
+        "main": [
+          [
+            {
+              "node": "Sélection des dossiers à mettre à jour",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sélection des dossiers à mettre à jour": {
+        "main": [
+          [
+            {
+              "node": "noCRM – détail des dossiers",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "noCRM – détail des dossiers": {
+        "main": [
+          [
+            {
+              "node": "Préparation des lignes Airtable",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Préparation des lignes Airtable": {
+        "main": [
+          [
+            {
+              "node": "Airtable – écriture par lots de 10",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Erreur d'exécution": {
+        "main": [
+          [
+            {
+              "node": "Message d'alerte",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Message d'alerte": {
+        "main": [
+          [
+            {
+              "node": "Une alerte par heure",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Une alerte par heure": {
+        "main": [
+          [
+            {
+              "node": "Alerte Slack #alertes-relances",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Karim Bordeau",
+    "name": "Version 2b4c2ff6",
+    "description": "",
+    "autosaved": true,
+    "createdAt": "2026-09-17T19:55:37.313Z",
+    "updatedAt": "2026-09-17T19:55:45.000Z"
+  }
+}
