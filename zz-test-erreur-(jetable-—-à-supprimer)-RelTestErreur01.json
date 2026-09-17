@@ -1,0 +1,104 @@
+{
+  "id": "RelTestErreur01",
+  "name": "ZZ test erreur (jetable — à supprimer)",
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-17T19:39:18.941Z",
+  "updatedAt": "2026-09-17T19:39:18.941Z",
+  "isArchived": false,
+  "versionId": "c220bbf9-2bd6-41a7-9937-cb374c86f415",
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "b1000000-0000-4000-8000-000000000003",
+      "name": "Toutes les minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b1000000-0000-4000-8000-000000000002",
+      "name": "Échec volontaire",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "jsCode": "throw new Error('Test alerte Slack — echec volontaire');"
+      }
+    },
+    {
+      "id": "b1000000-0000-4000-8000-000000000004",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        -120
+      ],
+      "parameters": {
+        "content": "# Workflow jetable\nÉchoue volontairement chaque minute pour tester le bloc WF0 · Alertes Slack.\n**À dépublier et supprimer dès le test validé.**",
+        "height": 240,
+        "width": 320,
+        "color": 3
+      }
+    }
+  ],
+  "connections": {
+    "Toutes les minutes": {
+      "main": [
+        [
+          {
+            "node": "Échec volontaire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "errorWorkflow": "RelWF1SyncNocrm0"
+  },
+  "staticData": {
+    "node:Toutes les minutes": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "RelTestErreur01",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-17T19:39:18.945Z",
+      "updatedAt": "2026-09-17T19:39:18.945Z"
+    }
+  ],
+  "activeVersion": null
+}
