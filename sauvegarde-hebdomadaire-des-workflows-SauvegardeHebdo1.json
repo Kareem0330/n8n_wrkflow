@@ -1,0 +1,600 @@
+{
+  "id": "SauvegardeHebdo1",
+  "name": "Sauvegarde hebdomadaire des workflows",
+  "active": true,
+  "activeVersionId": "4f28734e-8db6-437a-b997-78d3888ec4da",
+  "createdAt": "2026-09-21T16:38:26.805Z",
+  "updatedAt": "2026-09-21T16:38:26.805Z",
+  "isArchived": false,
+  "versionId": "4f28734e-8db6-437a-b997-78d3888ec4da",
+  "triggerCount": 1,
+  "nodes": [
+    {
+      "id": "cadre",
+      "name": "Bloc · Sauvegarde hebdomadaire",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -96
+      ],
+      "parameters": {
+        "content": "# Sauvegarde hebdomadaire des workflows\nChaque lundi à 6 h · tous les workflows de l'instance, en pièce jointe JSON, vers karimbordeau33@gmail.com",
+        "width": 2240,
+        "height": 820,
+        "color": 4
+      }
+    },
+    {
+      "id": "note",
+      "name": "Sauvegarde – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        16
+      ],
+      "parameters": {
+        "content": "## Sauvegarde hebdomadaire — mode d'emploi\n\n**Rôle** : garder hors du serveur une copie de **tous les workflows** de l'instance n8n (exigence F10 du projet Relances devis). En cas de perte du serveur, chaque workflow se réimporte depuis l'e-mail.\n\n### Étapes\n**1. Chaque lundi à 6 h** — ou « Lancement manuel » pour une sauvegarde à la demande.\n\n**2. Réglages** — l'adresse qui reçoit la sauvegarde (karimbordeau33@gmail.com).\n\n**3. n8n – tous les workflows** — lecture par l'API n8n (identifiant « n8n SD-WF6 »), 250 workflows au plus.\n\n**4. Préparation de la sauvegarde** — une entrée par workflow (nœuds, liaisons, réglages) ; les tests « ZZ … » et les workflows archivés sont écartés. Aucun workflow lu = échec volontaire, pour être prévenu.\n\n**5. Fichier JSON** — un seul fichier `n8n-sauvegarde-AAAA-MM-JJ.json`.\n\n**6. Message** — objet et liste des workflows sauvegardés.\n\n**7. Gmail – envoi de la sauvegarde** — depuis la boîte perso (« Gmail account »), pièce jointe comprise.\n\n### À savoir\n- Les **identifiants ne sont pas sauvegardés ici** : ils restent chiffrés dans la base. Ils se restaurent avec la **sauvegarde automatique Hostinger** (hebdomadaire) et la **clé de chiffrement** rangée dans le gestionnaire de mots de passe de Karim.\n- Un échec part vers « Gestion des erreurs » comme les autres workflows.\n- Aucun appel Airtable, noCRM ni Slack.",
+        "width": 560,
+        "height": 680,
+        "color": 7
+      }
+    },
+    {
+      "id": "cron",
+      "name": "Chaque lundi à 6 h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        112
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "manuel",
+      "name": "Lancement manuel",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        304
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "reglages",
+      "name": "Réglages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        208
+      ],
+      "parameters": {
+        "jsCode": "// Réglages de la sauvegarde.\n// DESTINATAIRE : adresse qui reçoit la sauvegarde chaque lundi (boîte perso : le serveur sert tous les projets de Karim).\n// INSTANCE     : adresse de l'instance n8n sauvegardée.\nreturn [{ json: { DESTINATAIRE: 'karimbordeau33@gmail.com', INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud' } }];"
+      }
+    },
+    {
+      "id": "api",
+      "name": "n8n – tous les workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        208
+      ],
+      "parameters": {
+        "url": "https://n8n-jtbx.srv1974245.hstgr.cloud/api/v1/workflows",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "250"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "n8nApi": {
+          "id": "UkE2UaZb5SrNjijN",
+          "name": "n8n SD-WF6"
+        }
+      }
+    },
+    {
+      "id": "prep",
+      "name": "Préparation de la sauvegarde",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        208
+      ],
+      "parameters": {
+        "jsCode": "// Une ligne par workflow à sauvegarder (tests « ZZ … » et workflows archivés exclus).\n// On garde tout ce qu'il faut pour réimporter : nœuds, liaisons, réglages, données statiques.\nconst reponse = $input.first().json || {};\nconst workflows = (Array.isArray(reponse.data) ? reponse.data : [])\n  .filter(w => w && w.id && !w.isArchived && !String(w.name || '').startsWith('ZZ '));\nif (!workflows.length) throw new Error('Sauvegarde vide : aucun workflow lu par l’API n8n');\nreturn workflows.map(w => ({ json: {\n  id: w.id, name: w.name, active: w.active, updatedAt: w.updatedAt,\n  nodes: w.nodes, connections: w.connections, settings: w.settings,\n  staticData: w.staticData || null, pinData: w.pinData || {}, tags: w.tags || []\n} }));"
+      }
+    },
+    {
+      "id": "fichier",
+      "name": "Fichier JSON",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        208
+      ],
+      "parameters": {
+        "operation": "toJson",
+        "mode": "once",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ 'n8n-sauvegarde-' + $now.setZone('Europe/Paris').toFormat('yyyy-MM-dd') + '.json' }}",
+          "format": true
+        }
+      }
+    },
+    {
+      "id": "message",
+      "name": "Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        208
+      ],
+      "parameters": {
+        "jsCode": "// Objet et texte de l'e-mail ; la pièce jointe (fichier JSON) est transmise telle quelle.\nconst NL = String.fromCharCode(10);\nconst TZ = 'Europe/Paris';\nconst quand = new Date().toLocaleDateString('fr-FR', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });\nconst wfs = $('Préparation de la sauvegarde').all().map(i => i.json);\nconst lignes = wfs\n  .sort((a, b) => String(a.name).localeCompare(String(b.name)))\n  .map(w => '- ' + w.name + (w.active ? ' (publié)' : ' (inactif)') + ' — modifié le ' + new Date(w.updatedAt).toLocaleDateString('fr-FR', { timeZone: TZ }));\nconst message = [\n  'Sauvegarde hebdomadaire de l’instance n8n ' + $('Réglages').first().json.INSTANCE + ' — ' + quand + '.',\n  '',\n  wfs.length + ' workflows dans la pièce jointe (fichier JSON) :',\n  ...lignes,\n  '',\n  'Restaurer un workflow : ouvrir le fichier, copier l’objet du workflow voulu dans un fichier .json, puis dans n8n « Import from File ».',\n  'Les identifiants ne sont pas dans ce fichier : ils se restaurent avec la sauvegarde Hostinger du serveur et la clé de chiffrement rangée dans le gestionnaire de mots de passe.',\n  '',\n  'Message automatique — workflow « Sauvegarde hebdomadaire des workflows ».'\n].join(NL);\nreturn [{ json: { objet: 'Sauvegarde n8n — ' + quand + ' — ' + wfs.length + ' workflows', message }, binary: $input.first().binary }];"
+      }
+    },
+    {
+      "id": "gmail",
+      "name": "Gmail – envoi de la sauvegarde",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        208
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Réglages').first().json.DESTINATAIRE }}",
+        "subject": "={{ $json.objet }}",
+        "emailType": "text",
+        "message": "={{ $json.message }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "n8n · sauvegarde",
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "data"
+              }
+            ]
+          }
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 10000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Réglages": {
+      "main": [
+        [
+          {
+            "node": "n8n – tous les workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n – tous les workflows": {
+      "main": [
+        [
+          {
+            "node": "Préparation de la sauvegarde",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparation de la sauvegarde": {
+      "main": [
+        [
+          {
+            "node": "Fichier JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fichier JSON": {
+      "main": [
+        [
+          {
+            "node": "Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message": {
+      "main": [
+        [
+          {
+            "node": "Gmail – envoi de la sauvegarde",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chaque lundi à 6 h": {
+      "main": [
+        [
+          {
+            "node": "Réglages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel": {
+      "main": [
+        [
+          {
+            "node": "Réglages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "errorWorkflow": "GestErreursInst1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "staticData": {
+    "node:Chaque lundi à 6 h": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "SauvegardeHebdo1",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-21T16:38:26.809Z",
+      "updatedAt": "2026-09-21T16:38:26.809Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "4f28734e-8db6-437a-b997-78d3888ec4da",
+    "workflowId": "SauvegardeHebdo1",
+    "nodes": [
+      {
+        "id": "cadre",
+        "name": "Bloc · Sauvegarde hebdomadaire",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          -96
+        ],
+        "parameters": {
+          "content": "# Sauvegarde hebdomadaire des workflows\nChaque lundi à 6 h · tous les workflows de l'instance, en pièce jointe JSON, vers karimbordeau33@gmail.com",
+          "width": 2240,
+          "height": 820,
+          "color": 4
+        }
+      },
+      {
+        "id": "note",
+        "name": "Sauvegarde – mode d'emploi",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -640,
+          16
+        ],
+        "parameters": {
+          "content": "## Sauvegarde hebdomadaire — mode d'emploi\n\n**Rôle** : garder hors du serveur une copie de **tous les workflows** de l'instance n8n (exigence F10 du projet Relances devis). En cas de perte du serveur, chaque workflow se réimporte depuis l'e-mail.\n\n### Étapes\n**1. Chaque lundi à 6 h** — ou « Lancement manuel » pour une sauvegarde à la demande.\n\n**2. Réglages** — l'adresse qui reçoit la sauvegarde (karimbordeau33@gmail.com).\n\n**3. n8n – tous les workflows** — lecture par l'API n8n (identifiant « n8n SD-WF6 »), 250 workflows au plus.\n\n**4. Préparation de la sauvegarde** — une entrée par workflow (nœuds, liaisons, réglages) ; les tests « ZZ … » et les workflows archivés sont écartés. Aucun workflow lu = échec volontaire, pour être prévenu.\n\n**5. Fichier JSON** — un seul fichier `n8n-sauvegarde-AAAA-MM-JJ.json`.\n\n**6. Message** — objet et liste des workflows sauvegardés.\n\n**7. Gmail – envoi de la sauvegarde** — depuis la boîte perso (« Gmail account »), pièce jointe comprise.\n\n### À savoir\n- Les **identifiants ne sont pas sauvegardés ici** : ils restent chiffrés dans la base. Ils se restaurent avec la **sauvegarde automatique Hostinger** (hebdomadaire) et la **clé de chiffrement** rangée dans le gestionnaire de mots de passe de Karim.\n- Un échec part vers « Gestion des erreurs » comme les autres workflows.\n- Aucun appel Airtable, noCRM ni Slack.",
+          "width": 560,
+          "height": 680,
+          "color": 7
+        }
+      },
+      {
+        "id": "cron",
+        "name": "Chaque lundi à 6 h",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          112
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 6 * * 1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "manuel",
+        "name": "Lancement manuel",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          304
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "reglages",
+        "name": "Réglages",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          208
+        ],
+        "parameters": {
+          "jsCode": "// Réglages de la sauvegarde.\n// DESTINATAIRE : adresse qui reçoit la sauvegarde chaque lundi (boîte perso : le serveur sert tous les projets de Karim).\n// INSTANCE     : adresse de l'instance n8n sauvegardée.\nreturn [{ json: { DESTINATAIRE: 'karimbordeau33@gmail.com', INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud' } }];"
+        }
+      },
+      {
+        "id": "api",
+        "name": "n8n – tous les workflows",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          480,
+          208
+        ],
+        "parameters": {
+          "url": "https://n8n-jtbx.srv1974245.hstgr.cloud/api/v1/workflows",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "n8nApi",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "limit",
+                "value": "250"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000,
+        "credentials": {
+          "n8nApi": {
+            "id": "UkE2UaZb5SrNjijN",
+            "name": "n8n SD-WF6"
+          }
+        }
+      },
+      {
+        "id": "prep",
+        "name": "Préparation de la sauvegarde",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          208
+        ],
+        "parameters": {
+          "jsCode": "// Une ligne par workflow à sauvegarder (tests « ZZ … » et workflows archivés exclus).\n// On garde tout ce qu'il faut pour réimporter : nœuds, liaisons, réglages, données statiques.\nconst reponse = $input.first().json || {};\nconst workflows = (Array.isArray(reponse.data) ? reponse.data : [])\n  .filter(w => w && w.id && !w.isArchived && !String(w.name || '').startsWith('ZZ '));\nif (!workflows.length) throw new Error('Sauvegarde vide : aucun workflow lu par l’API n8n');\nreturn workflows.map(w => ({ json: {\n  id: w.id, name: w.name, active: w.active, updatedAt: w.updatedAt,\n  nodes: w.nodes, connections: w.connections, settings: w.settings,\n  staticData: w.staticData || null, pinData: w.pinData || {}, tags: w.tags || []\n} }));"
+        }
+      },
+      {
+        "id": "fichier",
+        "name": "Fichier JSON",
+        "type": "n8n-nodes-base.convertToFile",
+        "typeVersion": 1.1,
+        "position": [
+          960,
+          208
+        ],
+        "parameters": {
+          "operation": "toJson",
+          "mode": "once",
+          "binaryPropertyName": "data",
+          "options": {
+            "fileName": "={{ 'n8n-sauvegarde-' + $now.setZone('Europe/Paris').toFormat('yyyy-MM-dd') + '.json' }}",
+            "format": true
+          }
+        }
+      },
+      {
+        "id": "message",
+        "name": "Message",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          208
+        ],
+        "parameters": {
+          "jsCode": "// Objet et texte de l'e-mail ; la pièce jointe (fichier JSON) est transmise telle quelle.\nconst NL = String.fromCharCode(10);\nconst TZ = 'Europe/Paris';\nconst quand = new Date().toLocaleDateString('fr-FR', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });\nconst wfs = $('Préparation de la sauvegarde').all().map(i => i.json);\nconst lignes = wfs\n  .sort((a, b) => String(a.name).localeCompare(String(b.name)))\n  .map(w => '- ' + w.name + (w.active ? ' (publié)' : ' (inactif)') + ' — modifié le ' + new Date(w.updatedAt).toLocaleDateString('fr-FR', { timeZone: TZ }));\nconst message = [\n  'Sauvegarde hebdomadaire de l’instance n8n ' + $('Réglages').first().json.INSTANCE + ' — ' + quand + '.',\n  '',\n  wfs.length + ' workflows dans la pièce jointe (fichier JSON) :',\n  ...lignes,\n  '',\n  'Restaurer un workflow : ouvrir le fichier, copier l’objet du workflow voulu dans un fichier .json, puis dans n8n « Import from File ».',\n  'Les identifiants ne sont pas dans ce fichier : ils se restaurent avec la sauvegarde Hostinger du serveur et la clé de chiffrement rangée dans le gestionnaire de mots de passe.',\n  '',\n  'Message automatique — workflow « Sauvegarde hebdomadaire des workflows ».'\n].join(NL);\nreturn [{ json: { objet: 'Sauvegarde n8n — ' + quand + ' — ' + wfs.length + ' workflows', message }, binary: $input.first().binary }];"
+        }
+      },
+      {
+        "id": "gmail",
+        "name": "Gmail – envoi de la sauvegarde",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "position": [
+          1440,
+          208
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "={{ $('Réglages').first().json.DESTINATAIRE }}",
+          "subject": "={{ $json.objet }}",
+          "emailType": "text",
+          "message": "={{ $json.message }}",
+          "options": {
+            "appendAttribution": false,
+            "senderName": "n8n · sauvegarde",
+            "attachmentsUi": {
+              "attachmentsBinary": [
+                {
+                  "property": "data"
+                }
+              ]
+            }
+          }
+        },
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 10000,
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "OanV52MRrCz2nqau",
+            "name": "Gmail account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Réglages": {
+        "main": [
+          [
+            {
+              "node": "n8n – tous les workflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "n8n – tous les workflows": {
+        "main": [
+          [
+            {
+              "node": "Préparation de la sauvegarde",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Préparation de la sauvegarde": {
+        "main": [
+          [
+            {
+              "node": "Fichier JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fichier JSON": {
+        "main": [
+          [
+            {
+              "node": "Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Message": {
+        "main": [
+          [
+            {
+              "node": "Gmail – envoi de la sauvegarde",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Chaque lundi à 6 h": {
+        "main": [
+          [
+            {
+              "node": "Réglages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lancement manuel": {
+        "main": [
+          [
+            {
+              "node": "Réglages",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "import",
+    "name": "Version 4f28734e",
+    "description": "",
+    "autosaved": false,
+    "createdAt": "2026-09-21T16:38:26.812Z",
+    "updatedAt": "2026-09-21T16:39:57.000Z"
+  }
+}
