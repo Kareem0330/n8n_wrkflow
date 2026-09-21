@@ -2,16 +2,16 @@
   "id": "RelWF1SyncNocrm0",
   "name": "Relances devis · Système complet",
   "active": true,
-  "activeVersionId": "7245ca22-933e-4f07-a632-27e3ddb2f39e",
+  "activeVersionId": "b3f16d21-59a2-4b63-a5cc-7937382449ed",
   "createdAt": "2026-09-17T16:02:57.570Z",
-  "updatedAt": "2026-09-19T14:15:49.947Z",
+  "updatedAt": "2026-09-21T16:14:01.729Z",
   "isArchived": false,
-  "versionId": "7245ca22-933e-4f07-a632-27e3ddb2f39e",
-  "triggerCount": 6,
+  "versionId": "b3f16d21-59a2-4b63-a5cc-7937382449ed",
+  "triggerCount": 7,
   "nodes": [
     {
       "parameters": {
-        "content": "# Relances devis · Système complet\nUn bloc par partie du système, de haut en bas :\n- **WF1** · Synchronisation complète noCRM → Airtable ✅\n- WF2 · Synchronisation au fil de l'eau (webhook noCRM) — à venir\n- **WF3** · Repérage des devis et préparation des relances ✅ (mode simulation)\n- **WF4** · Planification des envois (heures aléatoires) ✅\n- **WF5** · Envoi des relances ✅ (mode simulation)\n- **WF0** · Alertes d'erreur sur Slack #alertes-relances ✅\n- **WF6** · Contrôle des pannes silencieuses (alertes A5, A7–A10) ✅\n\nChaque bloc a son propre déclencheur : ils s'exécutent indépendamment. Un bloc en construction garde son déclencheur **désactivé** jusqu'à sa recette.",
+        "content": "# Relances devis · Système complet\nUn bloc par partie du système, de haut en bas :\n- **WF1** · Synchronisation complète noCRM → Airtable ✅\n- WF2 · Synchronisation au fil de l'eau (webhook noCRM) — à venir\n- **WF3** · Repérage des devis et préparation des relances ✅ (mode simulation)\n- **WF4** · Planification des envois (heures aléatoires) ✅\n- **WF5** · Envoi des relances ✅ (mode simulation)\n- **Échecs d'exécution** · confiés au workflow **Gestion des erreurs** de l'instance (réparation automatique + compte rendu Slack) — désigné dans *Settings → Error workflow* ✅\n- **WF6** · Contrôle des pannes silencieuses (alertes A5, A7–A11) ✅\n- **F7** · Signal de vie externe (Healthchecks.io, alerte A4) ✅\n\nChaque bloc a son propre déclencheur : ils s'exécutent indépendamment. Un bloc en construction garde son déclencheur **désactivé** jusqu'à sa recette.",
         "height": 380,
         "width": 2560,
         "color": 7
@@ -43,7 +43,7 @@
     },
     {
       "parameters": {
-        "content": "## WF1 · Synchronisation complète noCRM → Airtable\n\n**Rôle** : recopier chaque nuit les opportunités noCRM dans la table Airtable **Opportunités**. Filet de rattrapage : corrige tout ce que la synchronisation au fil de l'eau (WF2) aurait manqué.\n\n**Quand** : chaque nuit à 2 h (Europe/Paris), ou à la main via « Lancement manuel ».\n\n### Étapes\n**1. noCRM – utilisateurs** — lit la liste des commerciaux (1 requête) pour afficher leur nom.\n\n**2. noCRM – opportunités** — lit toutes les opportunités, 100 par page, les plus récemment modifiées d'abord (≈ 7 requêtes). La liste contient déjà la description.\n\n**3. Airtable – opportunités existantes** — lit ce qui est déjà dans Airtable (nocrm_id + « Modifié le »).\n\n**4. Sélection des dossiers à mettre à jour** — garde les dossiers ouverts, ou clôturés/modifiés depuis moins de 90 jours, puis seulement ceux **nouveaux ou modifiés** depuis la dernière synchro. Un dossier inchangé n'est jamais relu : le quota noCRM est de 2 000 requêtes/jour pour tout le compte.\n\n**5. noCRM – détail des dossiers** — relit chaque dossier retenu (5 par seconde) pour obtenir e-mail, prénom, nom, téléphone.\n\n**6. Préparation des lignes Airtable** — convertit le statut (todo → En cours…), extrait de la description la ville de départ, la ville d'arrivée, le volume et le prix TTC (le plus élevé s'il y a plusieurs devis). Une valeur illisible reste **vide, jamais devinée**. Regroupe les lignes par lots de 10.\n\n**7. Airtable – écriture par lots de 10** — upsert sur `nocrm_id` : met à jour la ligne existante ou la crée. Aucun doublon possible.\n\n### Garde-fous\n- N'écrit **jamais** les champs de relance ni les champs manuels (Relance désactivée, Motif, Devis envoyé le, Réponse client reçue le).\n- 3 tentatives espacées de 3 s sur chaque appel noCRM et Airtable.\n- Relancer deux fois de suite ne réécrit rien.\n\n### Références\nCahier des charges, dictionnaire de données et analyse d'écart : dossier `outils/Relances Commerciales Mail/`.\nIdentifiants : « Header Auth account » (clé noCRM, en-tête X-API-KEY) et « Airtable Personal Access Token account ».",
+        "content": "## WF1 · Synchronisation complète noCRM → Airtable\n\n**Rôle** : recopier chaque nuit les opportunités noCRM dans la table Airtable **Opportunités**. Filet de rattrapage : corrige tout ce que la synchronisation au fil de l'eau (WF2) aurait manqué.\n\n**Quand** : chaque nuit de semaine à 2 h (Europe/Paris), ou à la main via « Lancement manuel ». Pas de synchro le week-end (quota Airtable) : celle du lundi rattrape tout ce qui a changé depuis vendredi.\n\n### Étapes\n**1. noCRM – utilisateurs** — lit la liste des commerciaux (1 requête) pour afficher leur nom.\n\n**2. noCRM – opportunités** — lit toutes les opportunités, 100 par page, les plus récemment modifiées d'abord (≈ 7 requêtes). La liste contient déjà la description.\n\n**3. Airtable – opportunités existantes** — lit ce qui est déjà dans Airtable (nocrm_id + « Modifié le »).\n\n**4. Sélection des dossiers à mettre à jour** — garde les dossiers ouverts, ou clôturés/modifiés depuis moins de 90 jours, puis seulement ceux **nouveaux ou modifiés** depuis la dernière synchro. Un dossier inchangé n'est jamais relu : le quota noCRM est de 2 000 requêtes/jour pour tout le compte.\n\n**5. noCRM – détail des dossiers** — relit chaque dossier retenu (5 par seconde) pour obtenir e-mail, prénom, nom, téléphone.\n\n**6. Préparation des lignes Airtable** — convertit le statut (todo → En cours…), extrait de la description la ville de départ, la ville d'arrivée, le volume et le prix TTC (le plus élevé s'il y a plusieurs devis). Une valeur illisible reste **vide, jamais devinée**. Regroupe les lignes par lots de 10.\n\n**7. Airtable – écriture par lots de 10** — upsert sur `nocrm_id` : met à jour la ligne existante ou la crée. Aucun doublon possible.\n\n### Garde-fous\n- N'écrit **jamais** les champs de relance ni les champs manuels (Relance désactivée, Motif, Devis envoyé le, Réponse client reçue le).\n- 3 tentatives espacées de 3 s sur chaque appel noCRM et Airtable.\n- Relancer deux fois de suite ne réécrit rien.\n\n### Références\nCahier des charges, dictionnaire de données et analyse d'écart : dossier `outils/Relances Commerciales Mail/`.\nIdentifiants : « Header Auth account » (clé noCRM, en-tête X-API-KEY) et « Airtable Personal Access Token account ».",
         "height": 1212,
         "width": 580,
         "color": 7
@@ -54,7 +54,7 @@
       "typeVersion": 1,
       "position": [
         -640,
-        -256
+        -240
       ]
     },
     {
@@ -63,18 +63,18 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 2 * * *"
+              "expression": "0 2 * * 1-5"
             }
           ]
         }
       },
       "id": "a1000000-0000-4000-8000-000000000001",
-      "name": "Chaque nuit à 2 h",
+      "name": "Chaque nuit de semaine à 2 h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        0,
-        0
+        112,
+        6704
       ]
     },
     {
@@ -99,14 +99,14 @@
       "name": "noCRM – utilisateurs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "position": [
         240,
         112
       ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 3000,
-      "alwaysOutputData": true,
       "credentials": {
         "httpHeaderAuth": {
           "id": "cozsLIX1RhBu4CoY",
@@ -160,14 +160,14 @@
       "name": "noCRM – opportunités",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        480,
-        112
-      ],
       "executeOnce": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        480,
+        112
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "cozsLIX1RhBu4CoY",
@@ -199,15 +199,15 @@
       "name": "Airtable – opportunités existantes",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        720,
-        112
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        720,
+        112
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -246,13 +246,13 @@
       "name": "noCRM – détail des dossiers",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "position": [
         1200,
         112
       ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 3000,
       "credentials": {
         "httpHeaderAuth": {
           "id": "cozsLIX1RhBu4CoY",
@@ -295,13 +295,13 @@
       "name": "Airtable – écriture par lots de 10",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
       "position": [
         1680,
         112
       ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 3000,
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -311,116 +311,8 @@
     },
     {
       "parameters": {
-        "content": "# WF0 · Alertes d'erreur sur Slack\nDéclenché par l'échec de n'importe quel bloc · canal #alertes-relances",
-        "height": 1000,
-        "width": 1500,
-        "color": 3
-      },
-      "id": "a1000000-0000-4000-8000-0000000000c0",
-      "name": "Bloc WF0 · Alertes Slack",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        -688,
-        1040
-      ]
-    },
-    {
-      "parameters": {
-        "content": "## WF0 · Alertes Slack\n\n**Rôle** : prévenir dans **#alertes-relances** dès qu'une exécution de ce workflow échoue (alerte A1 du catalogue).\n\n**Déclenchement** : ce bloc est désigné comme « workflow d'erreur » du workflow lui-même (Paramètres → Error Workflow). n8n le lance automatiquement après un échec ; il ne tourne jamais tout seul.\n\n### Étapes\n**1. Erreur d'exécution** — reçoit de n8n le dossier de l'échec : workflow, nœud fautif, message, lien vers l'exécution.\n\n**2. Message d'alerte** — met en forme le message et calcule une **clé de regroupement** : nœud + message + heure courante.\n\n**3. Une alerte par heure** — compare la clé aux clés déjà vues (mémoire de n8n) : une même erreur qui se répète dans l'heure ne repart pas. L'heure suivante, la clé change et l'alerte repart.\n\n**4. Alerte Slack** — publie dans #alertes-relances. En cas de refus de Slack, le nœud n'échoue pas : cela éviterait une boucle d'alertes sur l'alerte.\n\n### À savoir\n- Ne couvre que les **échecs d'exécution**. Les pannes silencieuses (rien ne se produit) seront couvertes par le bloc WF6 · Contrôle.\n- Si le serveur n8n est arrêté, ce bloc ne peut rien envoyer : c'est le rôle du signal de vie externe (exigence F7).\n- Identifiant utilisé : « Slack Alertes n8n ».",
-        "height": 848,
-        "width": 420,
-        "color": 7
-      },
-      "id": "a1000000-0000-4000-8000-0000000000c1",
-      "name": "WF0 – mode d'emploi",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        -640,
-        1152
-      ]
-    },
-    {
-      "parameters": {},
-      "id": "a1000000-0000-4000-8000-0000000000c2",
-      "name": "Erreur d'exécution",
-      "type": "n8n-nodes-base.errorTrigger",
-      "typeVersion": 1,
-      "position": [
-        -144,
-        1248
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Met en forme l'alerte et calcule une clé de regroupement (nœud + message + heure).\nconst d = $json.execution || {};\nconst w = $json.workflow || {};\nconst noeud = d.lastNodeExecuted || 'inconnu';\nconst message = (d.error && (d.error.message || d.error.description)) || 'erreur sans message';\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nconst heure = new Date().toISOString().slice(0, 13);\nconst texte = [\n  ':rotating_light: *Relances devis — échec d’exécution*',\n  '*Bloc / workflow :* ' + (w.name || 'inconnu'),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + String(message).slice(0, 800),\n  '*Quand :* ' + quand,\n  d.url ? '*Exécution :* ' + d.url : '*Exécution :* ' + (d.id || '—')\n].join(String.fromCharCode(10));\nreturn [{ json: { texte, cle: noeud + '|' + String(message).slice(0, 120) + '|' + heure } }];"
-      },
-      "id": "a1000000-0000-4000-8000-0000000000c3",
-      "name": "Message d'alerte",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        128,
-        1248
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "removeItemsSeenInPreviousExecutions",
-        "dedupeValue": "={{ $json.cle }}",
-        "options": {
-          "scope": "workflow",
-          "historySize": 5000
-        }
-      },
-      "id": "a1000000-0000-4000-8000-0000000000c4",
-      "name": "Une alerte par heure",
-      "type": "n8n-nodes-base.removeDuplicates",
-      "typeVersion": 2,
-      "position": [
-        384,
-        1248
-      ]
-    },
-    {
-      "parameters": {
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "C0C27914SAZ"
-        },
-        "text": "={{ $json.texte }}",
-        "otherOptions": {
-          "includeLinkToWorkflow": false,
-          "mrkdwn": true
-        }
-      },
-      "id": "a1000000-0000-4000-8000-0000000000c5",
-      "name": "Alerte Slack #alertes-relances",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.3,
-      "position": [
-        640,
-        1248
-      ],
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 3000,
-      "webhookId": "b60f7de3-5ed7-4e8d-837c-221d1d9a1150",
-      "credentials": {
-        "slackApi": {
-          "id": "oiCh7mUHPUPu43md",
-          "name": "Slack Alertes n8n"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
         "content": "# WF3 · Repérage des devis et préparation des relances\nChaque jour ouvré à 7 h · mode SIMULATION (rien n'est envoyé)",
-        "height": 1292,
+        "height": 1516,
         "width": 2800,
         "color": 5
       },
@@ -430,13 +322,13 @@
       "typeVersion": 1,
       "position": [
         -688,
-        2096
+        1072
       ]
     },
     {
       "parameters": {
-        "content": "## WF3 · Repérage des devis et préparation des relances\n\n**Rôle** : chaque jour ouvré à 7 h, repérer les devis envoyés par le secrétariat, calculer J+2 et J+7, écarter les clients qui ont répondu, et créer les relances du jour dans la table **Relances**.\n\n**Mode actuel : SIMULATION** — les relances sont créées au statut « Simulée » et rien n'est envoyé. Le passage en conditions réelles (constante MODE du nœud « Décision et rédaction ») se fait uniquement sur déclaration explicite de Karim.\n\n### Étapes\n**1. Airtable – dossiers en relance** — les opportunités en « Devis envoyé » ou « Trajets Axe Paris », ouvertes, avec e-mail, relance non désactivée.\n\n**2. Gmail – envois de devis** — les mails de secretariat@samdemenage.fr dont une pièce jointe porte « devis » dans son nom (ex. « Devis 069203092026 Nom Prénom.pdf »), sur 21 jours, reçus en copie par Karim. Tous les mails, lus ou non. Une pièce jointe nommée autrement n'est pas repérée → le dossier ressort en « Devis introuvable ».\n\n**3. Recherche des réponses** — fabrique une recherche Gmail limitée aux adresses des clients en relance.\n\n**4. Gmail – réponses des clients** — les mails reçus de ces clients sur 21 jours.\n\n**5. Airtable – relances existantes** — pour ne jamais créer deux fois la même relance.\n\n**6. Décision et rédaction** — pour chaque dossier : date du **dernier** envoi de devis (D14) ; réponse du client après cet envoi → plus de relance ; « stop » → Relance désactivée ; sinon R1 à J+2 et R2 à J+7 (week-end → lundi), avec rattrapage de quelques jours si le serveur était arrêté. Au lancement, seuls les devis de moins de 7 jours entrent (D16). Texte = modèle validé ; une variable vide ne laisse jamais de trou.\n\n**7–8. Lots de 10** puis **écritures Airtable** : mise à jour des opportunités, création des relances.\n\n### Garde-fous\n- Aucun envoi dans ce bloc : il prépare seulement.\n- Référence unique « Titre · n° noCRM · R1 » : relancer le bloc ne crée pas de doublon.\n- Devis introuvable → pas de relance (formule « Devis introuvable » dans Airtable).\n\nIdentifiants : « Gmail SamD Karim », « Airtable Personal Access Token account ».",
-        "height": 1136,
+        "content": "## WF3 · Repérage des devis et préparation des relances\n\n**Rôle** : chaque jour ouvré à 7 h, repérer les devis envoyés par le secrétariat, calculer J+2 et J+7, écarter les clients qui ont répondu, et créer les relances du jour dans la table **Relances**.\n\n**Mode actuel : SIMULATION** — les relances sont créées au statut « Simulée » et rien n'est envoyé. Le passage en conditions réelles (constante MODE du nœud « Décision et rédaction ») se fait uniquement sur déclaration explicite de Karim.\n\n### Étapes\n**1. Airtable – dossiers en relance** — les opportunités en « Devis envoyé » ou « Trajets Axe Paris », ouvertes, avec e-mail, relance non désactivée.\n\n**2. Gmail – envois de devis** — les mails de secretariat@samdemenage.fr dont une pièce jointe porte « devis » dans son nom (ex. « Devis 069203092026 Nom Prénom.pdf »), sur 21 jours, reçus en copie par Karim. Tous les mails, lus ou non. Une pièce jointe nommée autrement n'est pas repérée → le dossier ressort en « Devis introuvable ».\n\n**3. Recherche des réponses** — fabrique une recherche Gmail limitée aux adresses des clients en relance.\n\n**4. Gmail – réponses des clients** — les mails reçus de ces clients sur 21 jours.\n\n**5. Airtable – relances existantes** — les relances créées ces 30 derniers jours, pour ne jamais créer deux fois la même relance (une séquence R1 → R2 dure moins de 3 semaines ; un devis renvoyé plus de 30 jours après repart comme un nouveau devis). En conditions réelles, les relances « Simulée » sont ignorées : elles ne sont jamais parties.\n\n**6. Décision et rédaction** — pour chaque dossier : date du **dernier** envoi de devis (D14) ; réponse du client après cet envoi → plus de relance ; « stop » → Relance désactivée ; sinon R1 à J+2 et R2 à J+7 (week-end → lundi), avec rattrapage de quelques jours si le serveur était arrêté. Au lancement, seuls les devis de moins de 7 jours entrent (D16). Texte = modèle validé ; une variable vide ne laisse jamais de trou.\n\n**7–8. Lots de 10** puis **écritures Airtable** : mise à jour des opportunités, création des relances.\n\n### Garde-fous\n- Aucun envoi dans ce bloc : il prépare seulement.\n- Une relance est reconnue par « n° noCRM · R1 » (fin de la Référence) : relancer le bloc ne crée pas de doublon, et un dossier renommé dans noCRM garde ses relances.\n- Devis introuvable → pas de relance (formule « Devis introuvable » dans Airtable).\n\nIdentifiants : « Gmail SamD Karim », « Airtable Personal Access Token account ».",
+        "height": 1376,
         "width": 560,
         "color": 7
       },
@@ -446,7 +338,7 @@
       "typeVersion": 1,
       "position": [
         -640,
-        2208
+        1184
       ]
     },
     {
@@ -466,7 +358,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        2272
+        1248
       ]
     },
     {
@@ -477,7 +369,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        2464
+        1440
       ]
     },
     {
@@ -511,15 +403,15 @@
       "name": "Airtable – dossiers en relance",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        240,
-        2368
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        240,
+        1344
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -538,18 +430,18 @@
       },
       "id": "d3000000-0000-4000-8000-000000000004",
       "name": "Gmail – envois de devis",
+      "webhookId": "c4adba99-8670-4555-a4ab-88e5e2e866a5",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        480,
-        2368
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
-      "webhookId": "e61cc56a-d45c-4adb-9a72-2f0540875cd8",
+      "position": [
+        480,
+        1344
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "JP8a4UaPJbJqua5Y",
@@ -567,7 +459,7 @@
       "typeVersion": 2,
       "position": [
         720,
-        2368
+        1344
       ]
     },
     {
@@ -581,18 +473,18 @@
       },
       "id": "d3000000-0000-4000-8000-000000000006",
       "name": "Gmail – réponses des clients",
+      "webhookId": "dca05971-44bc-4571-8fb7-78e8d9cf1528",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        960,
-        2368
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
-      "webhookId": "b1687098-5a78-4a63-8542-e941fda8975f",
+      "position": [
+        960,
+        1344
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "JP8a4UaPJbJqua5Y",
@@ -613,10 +505,12 @@
           "mode": "id",
           "value": "tblRoNTjuFAXOmcLf"
         },
+        "filterByFormula": "IS_AFTER(CREATED_TIME(),DATEADD(NOW(),-30,'days'))",
         "options": {
           "fields": [
             "Référence",
-            "Prévue le"
+            "Prévue le",
+            "Statut"
           ]
         }
       },
@@ -624,15 +518,15 @@
       "name": "Airtable – relances existantes",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        1200,
-        2368
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        1200,
+        1344
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -642,7 +536,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Décide, dossier par dossier, s'il faut une relance aujourd'hui, et rédige le texte à partir du modèle validé.\n// MODE : 'simulation' = relances créées « Simulée », rien n'est envoyé.\n//        'reel'       = uniquement après déclaration explicite de Karim Bordeau (décision D5).\nconst MODE = 'simulation';\nconst TZ = 'Europe/Paris';\nconst NL = String.fromCharCode(10);\n\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\nconst ecart = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 864e5);\nconst adresses = (s) => (String(s || '').match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g) || []).map(x => x.toLowerCase());\nconst aplatir = (items) => items.map(it => it.json.fields ? { id: it.json.id, ...it.json.fields } : it.json);\nconst aujourdhui = ymd(new Date());\n\n// 1. Dernier envoi de devis par adresse client (pièce jointe nommée « Devis… », filtrée par la recherche Gmail).\nconst devis = {};\nfor (const it of $('Gmail – envois de devis').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const quand = Number(m.internalDate);\n  for (const a of adresses(m.To)) if (!devis[a] || quand > devis[a]) devis[a] = quand;\n}\n\n// 2. Réponses des clients : dates et extraits, par adresse.\nconst reponses = {};\nfor (const it of $('Gmail – réponses des clients').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const de = adresses(m.From)[0];\n  if (!de) continue;\n  // Une réponse automatique (absence, accusé de réception) n'est pas une vraie réponse du client.\n  if (/r[ée]ponse automatique|message d.absence|absent du bureau|absente du bureau|je suis absente?|out of office|automatic reply|auto.?reply|accus[ée] de r[ée]ception/i.test(String(m.Subject || '') + ' ' + String(m.snippet || '').slice(0, 120))) continue;\n  (reponses[de] = reponses[de] || []).push({ quand: Number(m.internalDate), extrait: String(m.snippet || '') });\n}\n\n// 3. Relances déjà créées (ne jamais créer deux fois la même).\n// Référence -> jour de création (ou, à défaut, date prévue), pour espacer R1 et R2.\nconst existantes = new Map();\nfor (const it of $('Airtable – relances existantes').all()) {\n  const f = it.json.fields || it.json;\n  const ref = f['Référence'];\n  if (!ref) continue;\n  const cree = it.json.createdTime || f['Prévue le'];\n  existantes.set(ref, cree ? ymd(new Date(cree)) : aujourdhui);\n}\n\n// Rédaction : modèles validés le 16/09/2026 (annexe du cahier des charges).\nconst SIGNATURE = [\"Secretariat - Sam'Déménage\", 'Téléphone : 06 09 41 02 47', 'Mail : sandrine@samdemenage.fr', 'Mail contact : contact@samdemenage.fr'].join(NL);\nconst de_ = (v) => /^Le /.test(v) ? 'du ' + v.slice(3) : /^Les /.test(v) ? 'des ' + v.slice(4) : /^[AEIOUYÉÈÊÂÎH]/i.test(v) ? \"d'\" + v : 'de ' + v;\nconst a_ = (v) => /^Le /.test(v) ? 'au ' + v.slice(3) : /^Les /.test(v) ? 'aux ' + v.slice(4) : 'à ' + v;\nconst texte = (numero, prenom, dateDevis, depart, arrivee) => {\n  const p = String(prenom || '').trim();\n  const bonjour = p ? 'Bonjour ' + p.charAt(0).toUpperCase() + p.slice(1) + ',' : 'Bonjour,';\n  const trajet = depart && arrivee\n    ? (depart.toLowerCase() === arrivee.toLowerCase() ? ' pour votre déménagement ' + a_(arrivee) : ' pour votre déménagement ' + de_(depart) + ' ' + a_(arrivee))\n    : '';\n  if (numero === 'R1') return {\n    objet: \"Votre devis de déménagement Sam'Déménage\",\n    corps: [bonjour, '',\n      'Je reviens vers vous au sujet du devis que nous vous avons adressé le ' + dateDevis + trajet + '.', '',\n      \"Avez-vous pu en prendre connaissance ? Si vous avez une question, ou si un point est à ajuster (date, volume, prestations), il vous suffit de répondre à ce message.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si votre projet a évolué et que vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n  return {\n    objet: \"Votre projet de déménagement est-il toujours d'actualité ?\",\n    corps: [bonjour, '',\n      'Je me permets de revenir vers vous une dernière fois au sujet de notre devis du ' + dateDevis + trajet + '.', '',\n      \"Si la date vous convient toujours, une simple réponse nous permet de réserver l'équipe et le camion pour vous. Et si vous avez choisi une autre solution, un mot de votre part nous aide à clore votre dossier.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n};\n\nconst sortie = [];\nfor (const f of aplatir($('Airtable – dossiers en relance').all())) {\n  if (!f.id || !f.nocrm_id) continue;\n  const email = String(f['E-mail'] || '').trim().toLowerCase();\n  const envoiDevis = devis[email];\n  if (!envoiDevis) continue; // devis introuvable : pas de relance (formule « Devis introuvable » dans Airtable)\n\n  const maj = {};\n  const connu = f['Devis envoyé le'] ? Date.parse(f['Devis envoyé le']) : 0;\n  if (Math.abs(connu - envoiDevis) > 60000) maj['Devis envoyé le'] = new Date(envoiDevis).toISOString();\n\n  const apres = (reponses[email] || []).filter(r => r.quand > envoiDevis).sort((a, b) => a.quand - b.quand);\n  if (apres.length) {\n    const premiere = new Date(apres[0].quand).toISOString();\n    if (!f['Réponse client reçue le'] || Math.abs(Date.parse(f['Réponse client reçue le']) - apres[0].quand) > 60000) maj['Réponse client reçue le'] = premiere;\n    if (apres.some(r => /\\bstop\\b/i.test(r.extrait))) { maj['Relance désactivée'] = true; maj['Motif de désactivation'] = 'Réponse stop du client'; }\n  } else if (f['Réponse client reçue le']) {\n    maj['Réponse client reçue le'] = null; // plus de vraie réponse après le dernier devis (réponse automatique écartée, devis renvoyé)\n  }\n  if (Object.keys(maj).length) sortie.push({ json: { cible: 'opportunite', id: f.id, fields: maj } });\n  if (apres.length) continue; // le client a répondu : plus de relance\n\n  const jourDevis = ymd(new Date(envoiDevis));\n  const refBase = (f['Titre'] || 'Dossier') + ' · ' + f.nocrm_id;\n  const enSequence = existantes.has(refBase + ' · R1');\n  if (!enSequence && ecart(jourDevis, aujourdhui) > 7) continue; // D16 : au lancement, seuls les devis de moins de 7 jours entrent\n  const dateDevis = new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, day: 'numeric', month: 'long' }).format(new Date(envoiDevis));\n\n  for (const [numero, libelle, jours, rattrapage] of [['R1', 'R1 · J+2', 2, 4], ['R2', 'R2 · J+7', 7, 6]]) {\n    const prevue = ouvre(plus(jourDevis, jours));\n    const ref = refBase + ' · ' + numero;\n    if (aujourdhui < prevue || ecart(prevue, aujourdhui) > rattrapage || existantes.has(ref)) continue;\n    if (numero === 'R2') {\n      const jourR1 = existantes.get(refBase + ' · R1');\n      if (!jourR1 || ecart(jourR1, aujourdhui) < 4) continue; // pas de R2 sans R1, ni moins de 4 jours après R1 (cas du rattrapage)\n    }\n    const t = texte(numero, f['Prénom'], dateDevis, f['Départ'], f['Arrivée']);\n    sortie.push({ json: { cible: 'relance', fields: {\n      'Référence': ref, 'Opportunité': [f.id], 'Numéro': libelle, 'Prévue le': prevue,\n      'Destinataire': email, 'Objet': t.objet, 'Corps': t.corps,\n      'Statut': MODE === 'simulation' ? 'Simulée' : 'Planifiée'\n    } } });\n  }\n}\nreturn sortie;"
+        "jsCode": "// Décide, dossier par dossier, s'il faut une relance aujourd'hui, et rédige le texte à partir du modèle validé.\n// MODE : 'simulation' = relances créées « Simulée », rien n'est envoyé.\n//        'reel'       = uniquement après déclaration explicite de Karim Bordeau (décision D5).\nconst MODE = 'simulation';\nconst TZ = 'Europe/Paris';\nconst NL = String.fromCharCode(10);\n\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\nconst ecart = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 864e5);\nconst adresses = (s) => (String(s || '').match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g) || []).map(x => x.toLowerCase());\nconst aplatir = (items) => items.map(it => it.json.fields ? { id: it.json.id, ...it.json.fields } : it.json);\nconst aujourdhui = ymd(new Date());\n\n// 1. Dernier envoi de devis par adresse client (pièce jointe nommée « Devis… », filtrée par la recherche Gmail).\nconst devis = {};\nfor (const it of $('Gmail – envois de devis').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const quand = Number(m.internalDate);\n  for (const a of adresses(m.To)) if (!devis[a] || quand > devis[a]) devis[a] = quand;\n}\n\n// 2. Réponses des clients : dates et extraits, par adresse.\nconst reponses = {};\nfor (const it of $('Gmail – réponses des clients').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const de = adresses(m.From)[0];\n  if (!de) continue;\n  // Une réponse automatique (absence, accusé de réception) n'est pas une vraie réponse du client.\n  if (/r[ée]ponse automatique|message d.absence|absent du bureau|absente du bureau|je suis absente?|out of office|automatic reply|auto.?reply|accus[ée] de r[ée]ception/i.test(String(m.Subject || '') + ' ' + String(m.snippet || '').slice(0, 120))) continue;\n  (reponses[de] = reponses[de] || []).push({ quand: Number(m.internalDate), extrait: String(m.snippet || '') });\n}\n\n// 3. Relances déjà créées (ne jamais créer deux fois la même).\n// Clé = « n° noCRM · R1 », lue à la fin de la Référence : un dossier renommé dans noCRM garde ses relances.\n// Clé -> jour de création (ou, à défaut, date prévue), pour espacer R1 et R2.\n// En conditions réelles, une relance « Simulée » ne compte pas : elle n'est jamais partie.\nconst cleDe = (ref) => String(ref).split(' · ').slice(-2).join(' · ');\nconst existantes = new Map();\nfor (const it of $('Airtable – relances existantes').all()) {\n  const f = it.json.fields || it.json;\n  const ref = f['Référence'];\n  if (!ref) continue;\n  if (MODE === 'reel' && f['Statut'] === 'Simulée') continue;\n  const cree = it.json.createdTime || f['Prévue le'];\n  const jour = cree ? ymd(new Date(cree)) : aujourdhui;\n  const cle = cleDe(ref);\n  if (!existantes.has(cle) || jour > existantes.get(cle)) existantes.set(cle, jour);\n}\n\n// Rédaction : modèles validés le 16/09/2026 (annexe du cahier des charges).\nconst SIGNATURE = [\"Secretariat - Sam'Déménage\", 'Téléphone : 06 09 41 02 47', 'Mail : sandrine@samdemenage.fr', 'Mail contact : contact@samdemenage.fr'].join(NL);\nconst de_ = (v) => /^Le /.test(v) ? 'du ' + v.slice(3) : /^Les /.test(v) ? 'des ' + v.slice(4) : /^[AEIOUYÉÈÊÂÎH]/i.test(v) ? \"d'\" + v : 'de ' + v;\nconst a_ = (v) => /^Le /.test(v) ? 'au ' + v.slice(3) : /^Les /.test(v) ? 'aux ' + v.slice(4) : 'à ' + v;\nconst texte = (numero, prenom, dateDevis, depart, arrivee) => {\n  const p = String(prenom || '').trim();\n  const bonjour = p ? 'Bonjour ' + p.charAt(0).toUpperCase() + p.slice(1) + ',' : 'Bonjour,';\n  const trajet = depart && arrivee\n    ? (depart.toLowerCase() === arrivee.toLowerCase() ? ' pour votre déménagement ' + a_(arrivee) : ' pour votre déménagement ' + de_(depart) + ' ' + a_(arrivee))\n    : '';\n  if (numero === 'R1') return {\n    objet: \"Votre devis de déménagement Sam'Déménage\",\n    corps: [bonjour, '',\n      'Je reviens vers vous au sujet du devis que nous vous avons adressé le ' + dateDevis + trajet + '.', '',\n      \"Avez-vous pu en prendre connaissance ? Si vous avez une question, ou si un point est à ajuster (date, volume, prestations), il vous suffit de répondre à ce message.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si votre projet a évolué et que vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n  return {\n    objet: \"Votre projet de déménagement est-il toujours d'actualité ?\",\n    corps: [bonjour, '',\n      'Je me permets de revenir vers vous une dernière fois au sujet de notre devis du ' + dateDevis + trajet + '.', '',\n      \"Si la date vous convient toujours, une simple réponse nous permet de réserver l'équipe et le camion pour vous. Et si vous avez choisi une autre solution, un mot de votre part nous aide à clore votre dossier.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n};\n\nconst sortie = [];\nfor (const f of aplatir($('Airtable – dossiers en relance').all())) {\n  if (!f.id || !f.nocrm_id) continue;\n  const email = String(f['E-mail'] || '').trim().toLowerCase();\n  const envoiDevis = devis[email];\n  if (!envoiDevis) continue; // devis introuvable : pas de relance (formule « Devis introuvable » dans Airtable)\n\n  const maj = {};\n  const connu = f['Devis envoyé le'] ? Date.parse(f['Devis envoyé le']) : 0;\n  if (Math.abs(connu - envoiDevis) > 60000) maj['Devis envoyé le'] = new Date(envoiDevis).toISOString();\n\n  const apres = (reponses[email] || []).filter(r => r.quand > envoiDevis).sort((a, b) => a.quand - b.quand);\n  if (apres.length) {\n    const premiere = new Date(apres[0].quand).toISOString();\n    if (!f['Réponse client reçue le'] || Math.abs(Date.parse(f['Réponse client reçue le']) - apres[0].quand) > 60000) maj['Réponse client reçue le'] = premiere;\n    if (apres.some(r => /\\bstop\\b/i.test(r.extrait))) { maj['Relance désactivée'] = true; maj['Motif de désactivation'] = 'Réponse stop du client'; }\n  } else if (f['Réponse client reçue le']) {\n    maj['Réponse client reçue le'] = null; // plus de vraie réponse après le dernier devis (réponse automatique écartée, devis renvoyé)\n  }\n  if (Object.keys(maj).length) sortie.push({ json: { cible: 'opportunite', id: f.id, fields: maj } });\n  if (apres.length) continue; // le client a répondu : plus de relance\n\n  const jourDevis = ymd(new Date(envoiDevis));\n  const refBase = (f['Titre'] || 'Dossier') + ' · ' + f.nocrm_id;\n  const cleBase = f.nocrm_id + '';\n  const enSequence = existantes.has(cleBase + ' · R1');\n  if (!enSequence && ecart(jourDevis, aujourdhui) > 7) continue; // D16 : au lancement, seuls les devis de moins de 7 jours entrent\n  const dateDevis = new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, day: 'numeric', month: 'long' }).format(new Date(envoiDevis));\n\n  for (const [numero, libelle, jours, rattrapage] of [['R1', 'R1 · J+2', 2, 4], ['R2', 'R2 · J+7', 7, 6]]) {\n    const prevue = ouvre(plus(jourDevis, jours));\n    const ref = refBase + ' · ' + numero;\n    if (aujourdhui < prevue || ecart(prevue, aujourdhui) > rattrapage || existantes.has(cleBase + ' · ' + numero)) continue;\n    if (numero === 'R2') {\n      const jourR1 = existantes.get(cleBase + ' · R1');\n      if (!jourR1 || ecart(jourR1, aujourdhui) < 4) continue; // pas de R2 sans R1, ni moins de 4 jours après R1 (cas du rattrapage)\n    }\n    const t = texte(numero, f['Prénom'], dateDevis, f['Départ'], f['Arrivée']);\n    sortie.push({ json: { cible: 'relance', fields: {\n      'Référence': ref, 'Opportunité': [f.id], 'Numéro': libelle, 'Prévue le': prevue,\n      'Destinataire': email, 'Objet': t.objet, 'Corps': t.corps,\n      'Statut': MODE === 'simulation' ? 'Simulée' : 'Planifiée'\n    } } });\n  }\n}\nreturn sortie;"
       },
       "id": "d3000000-0000-4000-8000-000000000008",
       "name": "Décision et rédaction des relances",
@@ -650,7 +544,7 @@
       "typeVersion": 2,
       "position": [
         1440,
-        2368
+        1344
       ]
     },
     {
@@ -663,7 +557,7 @@
       "typeVersion": 2,
       "position": [
         1680,
-        2272
+        1248
       ]
     },
     {
@@ -676,7 +570,7 @@
       "typeVersion": 2,
       "position": [
         1680,
-        2496
+        1472
       ]
     },
     {
@@ -701,13 +595,13 @@
       "name": "Airtable – mise à jour des opportunités",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        1920,
-        2272
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        1920,
+        1248
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -737,13 +631,13 @@
       "name": "Airtable – création des relances",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        1920,
-        2496
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        1920,
+        1472
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -754,7 +648,7 @@
     {
       "parameters": {
         "content": "# WF4 · Planification des envois\nChaque jour ouvré à 7 h 30 · heures d'envoi tirées au hasard (D21)",
-        "height": 912,
+        "height": 992,
         "width": 2080,
         "color": 6
       },
@@ -764,13 +658,13 @@
       "typeVersion": 1,
       "position": [
         -688,
-        3488
+        2704
       ]
     },
     {
       "parameters": {
-        "content": "## WF4 · Planification des envois\n\n**Rôle** : chaque jour ouvré à 7 h 30, donner à chaque relance à envoyer une **heure d'envoi tirée au hasard**, pour un rythme comparable à un envoi manuel (décision D21, exigence F12).\n\n**Relances concernées** : statut « Simulée » ou « Planifiée », sans heure d'envoi. En simulation, l'heure est fictive : rien ne part tant que WF5 n'est pas activé.\n\n### Étapes\n**1. Airtable – relances à planifier** — les relances sans heure d'envoi, les plus anciennes d'abord.\n\n**2. Airtable – créneaux déjà pris** — les heures déjà attribuées sur les derniers jours, pour respecter le plafond et ne pas empiéter.\n\n**3. Tirage des heures d'envoi** — jour d'envoi = aujourd'hui s'il reste de la fenêtre, sinon le jour ouvré suivant. Écarts aléatoires de 7 à 25 min, heure de départ aléatoire, fenêtre 8 h – 17 h 30, jamais pile sur :00 / :15 / :30 / :45. **Plafond 20 par jour** (5 par jour la première semaine de conditions réelles : constante DEBUT_CONDITIONS_REELLES). Le surplus attend le lendemain.\n\n**4. Airtable – enregistrement des heures** — écrit « Planifiée à », par lots de 10.\n\n### Garde-fous\n- N'envoie rien : WF5 enverra chaque relance à son heure exacte.\n- Une relance déjà planifiée n'est jamais replanifiée.\n\nIdentifiant : « Airtable Personal Access Token account ».",
-        "height": 768,
+        "content": "## WF4 · Planification des envois\n\n**Rôle** : chaque jour ouvré à 7 h 30, donner à chaque relance à envoyer une **heure d'envoi tirée au hasard**, pour un rythme comparable à un envoi manuel (décision D21, exigence F12).\n\n**Relances concernées** : statut « Simulée » ou « Planifiée », sans heure d'envoi. En simulation, l'heure est fictive : rien ne part tant que WF5 n'est pas activé. À partir de DEBUT_CONDITIONS_REELLES, les relances « Simulée » restantes ne sont plus planifiées et ne comptent plus dans le plafond.\n\n### Étapes\n**1. Airtable – relances à planifier** — les relances sans heure d'envoi, les plus anciennes d'abord.\n\n**2. Airtable – créneaux déjà pris** — les heures déjà attribuées sur les derniers jours, pour respecter le plafond et ne pas empiéter.\n\n**3. Tirage des heures d'envoi** — jour d'envoi = aujourd'hui s'il reste de la fenêtre, sinon le jour ouvré suivant. Écarts aléatoires de 7 à 25 min, heure de départ aléatoire, fenêtre 8 h – 17 h 30, jamais pile sur :00 / :15 / :30 / :45. **Plafond 20 par jour** (5 par jour la première semaine de conditions réelles : constante DEBUT_CONDITIONS_REELLES). Le surplus attend le lendemain.\n\n**4. Airtable – enregistrement des heures** — écrit « Planifiée à », par lots de 10.\n\n### Garde-fous\n- N'envoie rien : WF5 enverra chaque relance à son heure exacte.\n- Une relance déjà planifiée n'est jamais replanifiée.\n\nIdentifiant : « Airtable Personal Access Token account ».",
+        "height": 864,
         "width": 560,
         "color": 7
       },
@@ -780,7 +674,7 @@
       "typeVersion": 1,
       "position": [
         -640,
-        3600
+        2816
       ]
     },
     {
@@ -800,7 +694,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        3712
+        2928
       ]
     },
     {
@@ -811,7 +705,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        3904
+        3120
       ]
     },
     {
@@ -840,15 +734,15 @@
       "name": "Airtable – relances à planifier",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        240,
-        3808
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        240,
+        3024
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -872,7 +766,8 @@
         "filterByFormula": "AND({Planifiée à}!=BLANK(),IS_AFTER({Planifiée à},DATEADD(NOW(),-1,'days')))",
         "options": {
           "fields": [
-            "Planifiée à"
+            "Planifiée à",
+            "Statut"
           ]
         }
       },
@@ -880,15 +775,15 @@
       "name": "Airtable – créneaux déjà pris",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        480,
-        3808
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        480,
+        3024
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -898,7 +793,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Tire au hasard l'heure d'envoi de chaque relance à planifier (décision D21, exigence F12).\n// Fenêtre : jours ouvrés, 8 h – 17 h 30 (heure de Paris). Écart aléatoire de 7 à 25 min entre deux envois,\n// jamais sur une heure ronde. Plafond quotidien ; le surplus attend le jour ouvré suivant.\nconst TZ = 'Europe/Paris';\nconst PLAFOND_PAR_JOUR = 20;\n// Montée en charge (D21) : 5 relances par jour pendant 7 jours à partir du premier jour en conditions réelles.\n// À renseigner au passage en conditions réelles (format 'AAAA-MM-JJ'). Vide = pas de montée en charge.\nconst DEBUT_CONDITIONS_REELLES = '';\nconst DEBUT_FENETRE = 8 * 60, FIN_FENETRE = 17 * 60 + 30;\nconst ECART_MIN = 7, ECART_MAX = 25;\nconst hasard = (a, b) => a + Math.random() * (b - a);\n\nconst parties = (d) => Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short' }).formatToParts(d).map(p => [p.type, p.value]));\nconst jourDe = (d) => { const p = parties(d); return p.year + '-' + p.month + '-' + p.day; };\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\n// (jour, minutes à Paris) -> instant réel, heure d'été comprise\nconst versInstant = (jour, minutes) => {\n  const [a, m, j] = jour.split('-').map(Number);\n  const essai = Date.UTC(a, m - 1, j, Math.floor(minutes / 60), Math.floor(minutes % 60), Math.floor((minutes % 1) * 60));\n  const p = parties(new Date(essai));\n  const affiche = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute);\n  return new Date(essai - (affiche - Math.floor(essai / 60000) * 60000));\n};\nconst minutesParis = (d) => { const p = parties(d); return (+p.hour % 24) * 60 + (+p.minute); };\n\n// Jour d'envoi : aujourd'hui si c'est un jour ouvré et qu'il reste au moins 30 min de fenêtre, sinon le jour ouvré suivant.\nconst maintenant = new Date();\nconst aujourdhui = jourDe(maintenant);\nconst jourOuvre = ouvre(aujourdhui) === aujourdhui;\nconst jourEnvoi = jourOuvre && minutesParis(maintenant) < FIN_FENETRE - 30 ? aujourdhui : ouvre(plus(aujourdhui, 1));\nlet plancher = jourEnvoi === aujourdhui ? Math.max(DEBUT_FENETRE, minutesParis(maintenant) + 10) : DEBUT_FENETRE;\n\n// Créneaux déjà pris ce jour-là : ils comptent dans le plafond et on repart après le dernier.\nlet dejaPris = 0;\nfor (const it of $('Airtable – créneaux déjà pris').all()) {\n  const f = it.json.fields || it.json;\n  if (!f['Planifiée à']) continue;\n  const d = new Date(f['Planifiée à']);\n  if (jourDe(d) !== jourEnvoi) continue;\n  dejaPris++;\n  plancher = Math.max(plancher, minutesParis(d) + ECART_MIN);\n}\nconst enMontee = DEBUT_CONDITIONS_REELLES && jourEnvoi >= DEBUT_CONDITIONS_REELLES && jourEnvoi < plus(DEBUT_CONDITIONS_REELLES, 7);\nconst capacite = Math.max(0, (enMontee ? 5 : PLAFOND_PAR_JOUR) - dejaPris);\n\n// Relances à planifier, les plus anciennes d'abord.\nconst aPlanifier = $('Airtable – relances à planifier').all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Référence'])\n  .sort((a, b) => String(a['Prévue le'] || '').localeCompare(String(b['Prévue le'] || '')));\n\n// Tirage : écarts aléatoires, puis une heure de départ aléatoire qui laisse tenir toute la série dans la fenêtre.\nlet n = Math.min(capacite, aPlanifier.length);\nlet ecarts = [];\nwhile (n > 0) {\n  ecarts = Array.from({ length: n - 1 }, () => hasard(ECART_MIN, ECART_MAX));\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  if (plancher + duree <= FIN_FENETRE) break;\n  n--; // la série ne tient pas : la dernière relance attendra le jour ouvré suivant\n}\nconst lignes = [];\nif (n > 0) {\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  let t = hasard(plancher, FIN_FENETRE - duree);\n  for (let i = 0; i < n; i++) {\n    if (i > 0) t += ecarts[i - 1];\n    let minutes = t;\n    if (Math.floor(minutes) % 15 === 0) minutes += hasard(1, 3); // jamais pile sur :00, :15, :30, :45\n    lignes.push({ id: aPlanifier[i].id, fields: { 'Planifiée à': versInstant(jourEnvoi, Math.min(minutes, FIN_FENETRE)).toISOString() } });\n  }\n}\nconst lots = [];\nfor (let i = 0; i < lignes.length; i += 10) lots.push({ json: { records: lignes.slice(i, i + 10), jourEnvoi, planifiees: lignes.length, enAttente: aPlanifier.length - lignes.length } });\nreturn lots;"
+        "jsCode": "// Tire au hasard l'heure d'envoi de chaque relance à planifier (décision D21, exigence F12).\n// Fenêtre : jours ouvrés, 8 h – 17 h 30 (heure de Paris). Écart aléatoire de 7 à 25 min entre deux envois,\n// jamais sur une heure ronde. Plafond quotidien ; le surplus attend le jour ouvré suivant.\nconst TZ = 'Europe/Paris';\nconst PLAFOND_PAR_JOUR = 20;\n// Montée en charge (D21) : 5 relances par jour pendant 7 jours à partir du premier jour en conditions réelles.\n// À renseigner au passage en conditions réelles (format 'AAAA-MM-JJ'). Vide = pas de montée en charge.\n// Sert aussi de repère du mode réel : à partir de cette date, les relances « Simulée » ne sont plus planifiées.\nconst DEBUT_CONDITIONS_REELLES = '';\nconst DEBUT_FENETRE = 8 * 60, FIN_FENETRE = 17 * 60 + 30;\nconst ECART_MIN = 7, ECART_MAX = 25;\nconst hasard = (a, b) => a + Math.random() * (b - a);\n\nconst parties = (d) => Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short' }).formatToParts(d).map(p => [p.type, p.value]));\nconst jourDe = (d) => { const p = parties(d); return p.year + '-' + p.month + '-' + p.day; };\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\n// (jour, minutes à Paris) -> instant réel, heure d'été comprise\nconst versInstant = (jour, minutes) => {\n  const [a, m, j] = jour.split('-').map(Number);\n  const essai = Date.UTC(a, m - 1, j, Math.floor(minutes / 60), Math.floor(minutes % 60), Math.floor((minutes % 1) * 60));\n  const p = parties(new Date(essai));\n  const affiche = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute);\n  return new Date(essai - (affiche - Math.floor(essai / 60000) * 60000));\n};\nconst minutesParis = (d) => { const p = parties(d); return (+p.hour % 24) * 60 + (+p.minute); };\n\n// Jour d'envoi : aujourd'hui si c'est un jour ouvré et qu'il reste au moins 30 min de fenêtre, sinon le jour ouvré suivant.\nconst maintenant = new Date();\nconst aujourdhui = jourDe(maintenant);\nconst jourOuvre = ouvre(aujourdhui) === aujourdhui;\nconst jourEnvoi = jourOuvre && minutesParis(maintenant) < FIN_FENETRE - 30 ? aujourdhui : ouvre(plus(aujourdhui, 1));\nconst reel = Boolean(DEBUT_CONDITIONS_REELLES) && jourEnvoi >= DEBUT_CONDITIONS_REELLES;\nlet plancher = jourEnvoi === aujourdhui ? Math.max(DEBUT_FENETRE, minutesParis(maintenant) + 10) : DEBUT_FENETRE;\n\n// Créneaux déjà pris ce jour-là : ils comptent dans le plafond et on repart après le dernier.\nlet dejaPris = 0;\nfor (const it of $('Airtable – créneaux déjà pris').all()) {\n  const f = it.json.fields || it.json;\n  if (!f['Planifiée à']) continue;\n  if (reel && f['Statut'] === 'Simulée') continue;\n  const d = new Date(f['Planifiée à']);\n  if (jourDe(d) !== jourEnvoi) continue;\n  dejaPris++;\n  plancher = Math.max(plancher, minutesParis(d) + ECART_MIN);\n}\nconst enMontee = DEBUT_CONDITIONS_REELLES && jourEnvoi >= DEBUT_CONDITIONS_REELLES && jourEnvoi < plus(DEBUT_CONDITIONS_REELLES, 7);\nconst capacite = Math.max(0, (enMontee ? 5 : PLAFOND_PAR_JOUR) - dejaPris);\n\n// Relances à planifier, les plus anciennes d'abord.\nconst aPlanifier = $('Airtable – relances à planifier').all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Référence'] && !(reel && r['Statut'] === 'Simulée'))\n  .sort((a, b) => String(a['Prévue le'] || '').localeCompare(String(b['Prévue le'] || '')));\n\n// Tirage : écarts aléatoires, puis une heure de départ aléatoire qui laisse tenir toute la série dans la fenêtre.\nlet n = Math.min(capacite, aPlanifier.length);\nlet ecarts = [];\nwhile (n > 0) {\n  ecarts = Array.from({ length: n - 1 }, () => hasard(ECART_MIN, ECART_MAX));\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  if (plancher + duree <= FIN_FENETRE) break;\n  n--; // la série ne tient pas : la dernière relance attendra le jour ouvré suivant\n}\nconst lignes = [];\nif (n > 0) {\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  let t = hasard(plancher, FIN_FENETRE - duree);\n  for (let i = 0; i < n; i++) {\n    if (i > 0) t += ecarts[i - 1];\n    let minutes = t;\n    if (Math.floor(minutes) % 15 === 0) minutes += hasard(1, 3); // jamais pile sur :00, :15, :30, :45\n    lignes.push({ id: aPlanifier[i].id, fields: { 'Planifiée à': versInstant(jourEnvoi, Math.min(minutes, FIN_FENETRE)).toISOString() } });\n  }\n}\nconst lots = [];\nfor (let i = 0; i < lignes.length; i += 10) lots.push({ json: { records: lignes.slice(i, i + 10), jourEnvoi, planifiees: lignes.length, enAttente: aPlanifier.length - lignes.length } });\nreturn lots;"
       },
       "id": "d4000000-0000-4000-8000-000000000005",
       "name": "Tirage des heures d'envoi",
@@ -906,7 +801,7 @@
       "typeVersion": 2,
       "position": [
         720,
-        3808
+        3024
       ]
     },
     {
@@ -931,13 +826,13 @@
       "name": "Airtable – enregistrement des heures",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        960,
-        3808
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        960,
+        3024
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -948,7 +843,7 @@
     {
       "parameters": {
         "content": "# WF5 · Envoi des relances\nToutes les 25 min en journée · mode SIMULATION (aucun e-mail envoyé)",
-        "height": 1128,
+        "height": 1208,
         "width": 4720,
         "color": 2
       },
@@ -958,13 +853,13 @@
       "typeVersion": 1,
       "position": [
         -688,
-        4496
+        3712
       ]
     },
     {
       "parameters": {
-        "content": "## WF5 · Envoi des relances\n\n**Rôle** : envoyer chaque relance **à son heure exacte**, après une dernière vérification du dossier.\n\n**Mode actuel : SIMULATION** — aucun e-mail ne part ; chaque relance est annotée dans le champ Motif (« aurait été envoyée… » ou « aurait été annulée — raison »). Passage en conditions réelles : constante MODE du nœud « Réglages WF5 », uniquement sur déclaration explicite de Karim, en même temps que WF3 et WF4.\n\n### Étapes\n**1. Toutes les 25 min en journée** — jours ouvrés, de 8 h à 17 h 50.\n\n**2. Réglages WF5** — le mode (simulation ou réel).\n\n**3. Airtable – relances à envoyer** — celles dont l'heure d'envoi tombe dans les 25 prochaines minutes (ou est passée).\n\n**4. Verrou** — en réel, statut « Envoi en cours » ; en simulation, Motif provisoire. La prochaine exécution ne les reprend pas : **aucun double envoi** (F1).\n\n**5. Boucle, une relance à la fois** :\n- **Attente jusqu'à l'heure prévue** — l'heure tirée par WF4 est respectée à la minute ;\n- **Dernière vérification** : dossier Airtable, état noCRM à l'instant (étape, statut), réponse du client arrivée dans Gmail depuis le matin, relance désactivée ;\n- **Envoi Gmail** depuis karimbordeau@samdemenage.fr, affiché « Secrétariat Sam'Déménage », texte simple, sans mention n8n ;\n- **Résultat** : Envoyée, Annulée (avec la raison), Échec (Gmail ou noCRM injoignable), ou replanifiée si l'heure est dépassée de plus d'un jour.\n\n### Garde-fous\n- Un dossier qui n'est plus éligible n'est jamais relancé : la vérification a lieu à la minute de l'envoi.\n- noCRM injoignable → pas d'envoi à l'aveugle : statut Échec.\n- Un refus de Gmail n'arrête pas les autres envois.\n\nIdentifiants : « Gmail SamD Karim », « Header Auth account » (noCRM), « Airtable Personal Access Token account ».",
-        "height": 976,
+        "content": "## WF5 · Envoi des relances\n\n**Rôle** : envoyer chaque relance **à son heure exacte**, après une dernière vérification du dossier.\n\n**Mode actuel : SIMULATION** — aucun e-mail ne part ; chaque relance est annotée dans le champ Motif (« aurait été envoyée… » ou « aurait été annulée — raison »). Passage en conditions réelles : constante MODE du nœud « Réglages WF5 », uniquement sur déclaration explicite de Karim, en même temps que WF3 et WF4.\n\n### Étapes\n**1. Jours ouvrés à 8 h, 11 h et 14 h** — 3 passages par jour (quota Airtable : 1 000 appels/mois).\n\n**2. Réglages WF5** — le mode (simulation ou réel) et FENETRE_MINUTES (210 : chaque passage couvre les 3 h 30 suivantes).\n\n**3. Airtable – relances à envoyer** — celles dont l'heure d'envoi tombe dans la fenêtre du passage (ou est passée). L'exécution reste ensuite en attente jusqu'à chaque heure d'envoi ; une attente survit à un redémarrage de n8n.\n\n**4. Verrou** — en réel, statut « Envoi en cours » ; en simulation, Motif provisoire. Le passage suivant ne les reprend pas : **aucun double envoi** (F1).\n\n**5. Boucle, une relance à la fois** :\n- **Attente jusqu'à l'heure prévue** — l'heure tirée par WF4 est respectée à la minute ;\n- **Dernière vérification** : dossier Airtable, état noCRM à l'instant (étape, statut), réponse du client arrivée dans Gmail depuis le matin, relance désactivée ;\n- **Envoi Gmail** depuis karimbordeau@samdemenage.fr, affiché « Secrétariat Sam'Déménage », texte simple, sans mention n8n ;\n- **Résultat** : Envoyée, Annulée (avec la raison), Échec (Gmail ou noCRM injoignable), ou replanifiée si l'heure est dépassée de plus d'un jour.\n\n### Garde-fous\n- Un dossier qui n'est plus éligible n'est jamais relancé : la vérification a lieu à la minute de l'envoi.\n- noCRM injoignable → pas d'envoi à l'aveugle : statut Échec.\n- Un refus de Gmail n'arrête pas les autres envois.\n\nIdentifiants : « Gmail SamD Karim », « Header Auth account » (noCRM), « Airtable Personal Access Token account ».",
+        "height": 1056,
         "width": 560,
         "color": 7
       },
@@ -974,7 +869,7 @@
       "typeVersion": 1,
       "position": [
         -640,
-        4608
+        3824
       ]
     },
     {
@@ -983,18 +878,18 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "*/25 8-17 * * 1-5"
+              "expression": "0 8,11,14 * * 1-5"
             }
           ]
         }
       },
       "id": "d5000000-0000-4000-8000-000000000001",
-      "name": "Toutes les 25 min en journée",
+      "name": "Jours ouvrés à 8 h, 11 h et 14 h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
         0,
-        4720
+        3936
       ]
     },
     {
@@ -1005,12 +900,12 @@
       "typeVersion": 1,
       "position": [
         0,
-        4912
+        4128
       ]
     },
     {
       "parameters": {
-        "jsCode": "// MODE : 'simulation' = aucun e-mail n'est envoyé ; chaque relance est seulement annotée (champ Motif).\n//        'reel'       = envoi réel. À ne passer qu'après déclaration explicite de Karim Bordeau (décision D5),\n//                       en même temps que MODE du nœud « Décision et rédaction des relances » (WF3)\n//                       et DEBUT_CONDITIONS_REELLES du nœud « Tirage des heures d'envoi » (WF4).\nreturn [{ json: { MODE: 'simulation' } }];"
+        "jsCode": "// MODE : 'simulation' = aucun e-mail n'est envoyé ; chaque relance est seulement annotée (champ Motif).\n//        'reel'       = envoi réel. À ne passer qu'après déclaration explicite de Karim Bordeau (décision D5),\n//                       en même temps que MODE du nœud « Décision et rédaction des relances » (WF3)\n//                       et DEBUT_CONDITIONS_REELLES du nœud « Tirage des heures d'envoi » (WF4).\n// FENETRE_MINUTES : un passage prend les relances dont l'heure d'envoi tombe dans ce délai (ou est passée).\n//                   Doit couvrir l'écart jusqu'au passage suivant : 8 h → 11 h → 14 h → fin de fenêtre 17 h 30.\nreturn [{ json: { MODE: 'simulation', FENETRE_MINUTES: 210 } }];"
       },
       "id": "d5000000-0000-4000-8000-000000000003",
       "name": "Réglages WF5",
@@ -1018,7 +913,7 @@
       "typeVersion": 2,
       "position": [
         240,
-        4816
+        4032
       ]
     },
     {
@@ -1034,7 +929,7 @@
           "mode": "id",
           "value": "tblRoNTjuFAXOmcLf"
         },
-        "filterByFormula": "={{ $('Réglages WF5').first().json.MODE === 'reel' ? \"AND({Statut}='Planifiée',{Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),25,'minutes')))\" : \"AND({Statut}='Simulée',{Planifiée à}!=BLANK(),{Motif}=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),25,'minutes')))\" }}",
+        "filterByFormula": "={{ $('Réglages WF5').first().json.MODE === 'reel' ? \"AND({Statut}='Planifiée',{Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),\" + $('Réglages WF5').first().json.FENETRE_MINUTES + \",'minutes')))\" : \"AND({Statut}='Simulée',{Planifiée à}!=BLANK(),{Motif}=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),\" + $('Réglages WF5').first().json.FENETRE_MINUTES + \",'minutes')))\" }}",
         "options": {
           "fields": [
             "Référence",
@@ -1051,15 +946,15 @@
       "name": "Airtable – relances à envoyer",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        480,
-        4816
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        480,
+        4032
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -1069,7 +964,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Relances dont l'heure d'envoi tombe dans les 25 prochaines minutes (ou est passée), les plus tôt d'abord.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst relances = $input.all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Destinataire'] && r['Planifiée à'] && Array.isArray(r['Opportunité']) && r['Opportunité'].length)\n  .sort((a, b) => String(a['Planifiée à']).localeCompare(String(b['Planifiée à'])))\n  .map(r => ({ json: {\n    id: r.id, reference: r['Référence'], destinataire: String(r['Destinataire']).trim(),\n    objet: r['Objet'], corps: r['Corps'], planifieeA: r['Planifiée à'], opportunite: r['Opportunité'][0], MODE\n  } }));\nreturn relances;"
+        "jsCode": "// Relances dont l'heure d'envoi tombe dans la fenêtre du passage (FENETRE_MINUTES) ou est passée, les plus tôt d'abord.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst relances = $input.all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Destinataire'] && r['Planifiée à'] && Array.isArray(r['Opportunité']) && r['Opportunité'].length)\n  .sort((a, b) => String(a['Planifiée à']).localeCompare(String(b['Planifiée à'])))\n  .map(r => ({ json: {\n    id: r.id, reference: r['Référence'], destinataire: String(r['Destinataire']).trim(),\n    objet: r['Objet'], corps: r['Corps'], planifieeA: r['Planifiée à'], opportunite: r['Opportunité'][0], MODE\n  } }));\nreturn relances;"
       },
       "id": "d5000000-0000-4000-8000-000000000005",
       "name": "Préparation des relances",
@@ -1077,12 +972,12 @@
       "typeVersion": 2,
       "position": [
         720,
-        4816
+        4032
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Verrou (exigence F1) : la prochaine exécution, 25 min plus tard, ne reprendra pas ces relances.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst l = $input.all().map(i => ({ id: i.json.id, fields: MODE === 'reel'\n  ? { 'Statut': 'Envoi en cours' }\n  : { 'Motif': \"Simulation : en attente de l'heure d'envoi\" } }));\nconst lots = [];\nfor (let i = 0; i < l.length; i += 10) lots.push({ json: { records: l.slice(i, i + 10) } });\nreturn lots;"
+        "jsCode": "// Verrou (exigence F1) : le passage suivant ne reprendra pas ces relances.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst l = $input.all().map(i => ({ id: i.json.id, fields: MODE === 'reel'\n  ? { 'Statut': 'Envoi en cours' }\n  : { 'Motif': \"Simulation : en attente de l'heure d'envoi\" } }));\nconst lots = [];\nfor (let i = 0; i < l.length; i += 10) lots.push({ json: { records: l.slice(i, i + 10) } });\nreturn lots;"
       },
       "id": "d5000000-0000-4000-8000-000000000006",
       "name": "Lots – verrou",
@@ -1090,7 +985,7 @@
       "typeVersion": 2,
       "position": [
         960,
-        4816
+        4032
       ]
     },
     {
@@ -1115,13 +1010,13 @@
       "name": "Airtable – pose du verrou",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        1200,
-        4816
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        1200,
+        4032
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -1139,7 +1034,7 @@
       "typeVersion": 2,
       "position": [
         1440,
-        4816
+        4032
       ]
     },
     {
@@ -1152,7 +1047,7 @@
       "typeVersion": 3,
       "position": [
         1680,
-        4816
+        4032
       ]
     },
     {
@@ -1162,13 +1057,13 @@
       },
       "id": "d5000000-0000-4000-8000-00000000000a",
       "name": "Attente jusqu'à l'heure prévue",
+      "webhookId": "d724d102-be42-4c3e-8897-7d67b0610285",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
         1920,
-        4992
-      ],
-      "webhookId": "7fa194b0-88ef-4cb8-9e4c-189fab0ba662"
+        4208
+      ]
     },
     {
       "parameters": {
@@ -1181,13 +1076,13 @@
       "name": "Airtable – dossier de la relance",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        2160,
-        4992
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        2160,
+        4208
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -1206,13 +1101,13 @@
       "name": "noCRM – état du dossier",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        2400,
-        4992
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        2400,
+        4208
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "cozsLIX1RhBu4CoY",
@@ -1232,17 +1127,17 @@
       },
       "id": "d5000000-0000-4000-8000-00000000000d",
       "name": "Gmail – réponse récente du client",
+      "webhookId": "2b7c87be-a4ac-463c-ab53-caf238df1417",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        2640,
-        4992
-      ],
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
-      "webhookId": "7f886c06-0be9-4653-83ce-8ccc509c8dbc",
+      "position": [
+        2640,
+        4208
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "JP8a4UaPJbJqua5Y",
@@ -1260,7 +1155,7 @@
       "typeVersion": 2,
       "position": [
         2880,
-        4992
+        4208
       ]
     },
     {
@@ -1293,7 +1188,7 @@
       "typeVersion": 2,
       "position": [
         3120,
-        4992
+        4208
       ]
     },
     {
@@ -1309,13 +1204,13 @@
       },
       "id": "d5000000-0000-4000-8000-000000000010",
       "name": "Gmail – envoi de la relance",
+      "webhookId": "69c5c8dd-7542-4868-9121-a2efb7475ef2",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
         3360,
-        4912
+        4128
       ],
-      "webhookId": "cd1d7d69-92cc-43d8-9b74-ce9f5e3b7891",
       "credentials": {
         "gmailOAuth2": {
           "id": "JP8a4UaPJbJqua5Y",
@@ -1334,7 +1229,7 @@
       "typeVersion": 2,
       "position": [
         3600,
-        4992
+        4208
       ]
     },
     {
@@ -1352,13 +1247,13 @@
       "name": "Airtable – enregistrement du résultat",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        3840,
-        4992
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        3840,
+        4208
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -1369,7 +1264,7 @@
     {
       "parameters": {
         "content": "# WF6 · Contrôle des pannes silencieuses\nJours ouvrés · 8 h : A5, A9, A10 · chaque heure de 8 h 10 à 19 h 10 : A7, A8 · #alertes-relances",
-        "height": 1548,
+        "height": 1564,
         "width": 2560
       },
       "id": "13dc832e-e513-5bed-b90d-8c9477cacf4f",
@@ -1378,12 +1273,12 @@
       "typeVersion": 1,
       "position": [
         -688,
-        5728
+        5024
       ]
     },
     {
       "parameters": {
-        "content": "## WF6 · Contrôle des pannes silencieuses\n\n**Rôle** : repérer un système qui tourne sans erreur mais ne fait plus son travail (exigence F8). WF0 prévient quand une exécution **échoue** ; WF6 prévient quand ce qui devait se produire **ne s'est pas produit**. Alertes A5, A7 à A10 du catalogue, dans **#alertes-relances**.\n\n### Contrôles du matin — jours ouvrés à 8 h\n**1. n8n – exécutions récentes** — l'historique des exécutions de ce workflow (API n8n).\n\n**2. Gmail – derniers envois de devis** — les mails du secrétariat avec un devis en pièce jointe, sur 14 jours.\n\n**3. Airtable – devis introuvables** — les dossiers où la formule « Devis introuvable » vaut 1.\n\n**4. Contrôles du matin** :\n- **A5** — la synchronisation de 2 h (WF1) s'est exécutée cette nuit **et** a terminé ;\n- **A9** — au moins un envoi de devis sur les deux derniers jours ouvrés ;\n- **A10** — nouveaux dossiers « Devis introuvable » (chaque dossier n'est signalé qu'une fois).\n\n### Contrôles horaires — jours ouvrés, de 8 h 10 à 19 h 10\n**1. Airtable – relances en retard** — relances dont l'heure d'envoi est dépassée de plus de 30 min et qui ne sont ni envoyées, ni annulées, ni en échec.\n\n**2. Contrôles horaires** :\n- **A7** — relance verrouillée par WF5 (« Envoi en cours », ou Motif « en attente de l'heure d'envoi » en simulation) et toujours pas traitée 30 min après son heure : l'exécution d'envoi s'est interrompue ;\n- **A8** — relance jamais prise en charge 1 h après son heure : WF5 ne tourne plus.\n\n### Envoi de l'alerte (commun aux deux)\n**Une alerte par anomalie** — mémoire de n8n : une anomalie déjà signalée ne repart pas. A5 et A9 : une fois par jour ; A7 et A8 : un rappel par relance et par jour ; A10 : une fois par dossier.\n\n**Message de contrôle** — regroupe tout en **un seul message**, avec l'action à mener pour chaque alerte.\n\n**Alerte Slack** — publie dans #alertes-relances. Rien à signaler = aucun message.\n\n### À savoir\n- **A6** (webhooks noCRM manqués) viendra avec WF2 : sans webhook, rien à comparer.\n- **A4** (n8n ou le serveur arrêté) : WF6 s'arrête avec eux et ne peut rien voir → signal de vie externe (F7), à venir.\n- Jours fériés non gérés : A9 peut sonner à tort le lendemain d'un jour férié.\n- Identifiants : « n8n SD-WF6 », « Gmail SamD Karim », « Airtable Personal Access Token account », « Slack Alertes n8n ».",
+        "content": "## WF6 · Contrôle des pannes silencieuses\n\n**Rôle** : repérer un système qui tourne sans erreur mais ne fait plus son travail (exigence F8). « Gestion des erreurs » prend en charge une exécution qui **échoue** ; WF6 prévient quand ce qui devait se produire **ne s'est pas produit**. Alertes A5, A7 à A11 du catalogue, dans **#alertes-relances**.\n\n### Contrôles du matin — jours ouvrés à 8 h\n**1. n8n – exécutions récentes** — l'historique des exécutions de ce workflow (API n8n).\n\n**2. Gmail – derniers envois de devis** — les mails du secrétariat avec un devis en pièce jointe, sur 14 jours.\n\n**3. Airtable – devis introuvables** — les dossiers où la formule « Devis introuvable » vaut 1.\n\n**4. Contrôles du matin** :\n- **A5** — la synchronisation de 2 h (WF1, jours ouvrés) s'est exécutée cette nuit **et** a terminé ;\n- **A9** — au moins un envoi de devis sur les deux derniers jours ouvrés ;\n- **A10** — nouveaux dossiers « Devis introuvable » (chaque dossier n'est signalé qu'une fois).\n\n### Contrôles de la journée — jours ouvrés à 10 h 10, 12 h 10, 15 h 10 et 18 h 40 (quota Airtable)\n**1. Airtable – relances en retard** — relances dont l'heure d'envoi est dépassée de plus de 30 min et qui ne sont ni envoyées, ni annulées ; et relances en échec.\n\n**2. Contrôles horaires** (nom du nœud) :\n- **A7** — relance verrouillée par WF5 (« Envoi en cours », ou Motif « en attente de l'heure d'envoi » en simulation) et toujours pas traitée 30 min après son heure : l'exécution d'envoi s'est interrompue ;\n- **A8** — relance jamais prise en charge 1 h après son heure : WF5 ne tourne plus ;\n- **A11** — relance en « Échec » (Gmail a refusé l'envoi, ou noCRM injoignable) ; en simulation, relance qui aurait échoué faute de vérification noCRM.\n\n### Envoi de l'alerte (commun aux deux)\n**Une alerte par anomalie** — mémoire de n8n : une anomalie déjà signalée ne repart pas. A5 et A9 : une fois par jour ; A7 et A8 : un rappel par relance et par jour ; A11 : une fois par échec ; A10 : une fois par dossier.\n\n**Message de contrôle** — regroupe tout en **un seul message**, avec l'action à mener pour chaque alerte.\n\n**Alerte Slack** — publie dans #alertes-relances. Rien à signaler = aucun message.\n\n### À savoir\n- **A6** (webhooks noCRM manqués) viendra avec WF2 : sans webhook, rien à comparer.\n- **A4** (n8n ou le serveur arrêté) : WF6 s'arrête avec eux et ne peut rien voir → bloc F7 · Signal de vie externe.\n- Jours fériés non gérés : A9 peut sonner à tort le lendemain d'un jour férié.\n- Identifiants : « n8n SD-WF6 », « Gmail SamD Karim », « Airtable Personal Access Token account », « Slack Alertes n8n ».",
         "height": 1408,
         "width": 560,
         "color": 7
@@ -1394,7 +1289,7 @@
       "typeVersion": 1,
       "position": [
         -640,
-        5840
+        5136
       ]
     },
     {
@@ -1414,7 +1309,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        5936
+        5232
       ]
     },
     {
@@ -1425,7 +1320,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        6128
+        5424
       ]
     },
     {
@@ -1452,14 +1347,14 @@
       "name": "n8n – exécutions récentes",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        240,
-        6032
-      ],
       "executeOnce": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        240,
+        5328
+      ],
       "credentials": {
         "n8nApi": {
           "id": "UkE2UaZb5SrNjijN",
@@ -1478,18 +1373,18 @@
       },
       "id": "87b74910-b8c3-5429-b006-e6075fda69b8",
       "name": "Gmail – derniers envois de devis",
+      "webhookId": "28ee87eb-0ea9-4f66-a22a-98971e86fa4e",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [
-        480,
-        6032
-      ],
       "executeOnce": true,
       "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
-      "webhookId": "cacf8893-f33f-4ad9-9476-773519eb81f6",
+      "position": [
+        480,
+        5328
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "JP8a4UaPJbJqua5Y",
@@ -1526,15 +1421,15 @@
       "name": "Airtable – devis introuvables",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        720,
-        6032
-      ],
       "executeOnce": true,
+      "alwaysOutputData": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
-      "alwaysOutputData": true,
+      "position": [
+        720,
+        5328
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -1552,7 +1447,7 @@
       "typeVersion": 2,
       "position": [
         960,
-        6032
+        5328
       ]
     },
     {
@@ -1561,18 +1456,22 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "10 8-19 * * 1-5"
+              "expression": "10 10,12,15 * * 1-5"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "40 18 * * 1-5"
             }
           ]
         }
       },
       "id": "911f2037-dd85-53f5-b42a-71e3953f97ed",
-      "name": "Chaque heure en journée",
+      "name": "Jours ouvrés à 10 h 10, 12 h 10, 15 h 10 et 18 h 40",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
         0,
-        6336
+        5632
       ]
     },
     {
@@ -1583,7 +1482,7 @@
       "typeVersion": 1,
       "position": [
         0,
-        6528
+        5824
       ]
     },
     {
@@ -1599,7 +1498,7 @@
           "mode": "id",
           "value": "tblRoNTjuFAXOmcLf"
         },
-        "filterByFormula": "AND({Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),-30,'minutes')),OR({Statut}='Envoi en cours',{Statut}='Planifiée',AND({Statut}='Simulée',OR({Motif}=BLANK(),{Motif}=\"Simulation : en attente de l'heure d'envoi\"))))",
+        "filterByFormula": "OR({Statut}='Échec',AND({Statut}='Simulée',FIND('Vérification noCRM impossible',{Motif})),AND({Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),-30,'minutes')),OR({Statut}='Envoi en cours',{Statut}='Planifiée',AND({Statut}='Simulée',OR({Motif}=BLANK(),{Motif}=\"Simulation : en attente de l'heure d'envoi\")))))",
         "options": {
           "fields": [
             "Référence",
@@ -1613,14 +1512,14 @@
       "name": "Airtable – relances en retard",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
-      "position": [
-        480,
-        6432
-      ],
       "executeOnce": true,
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
+      "position": [
+        480,
+        5728
+      ],
       "credentials": {
         "airtableTokenApi": {
           "id": "sr22doSVsleoR29y",
@@ -1630,7 +1529,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Contrôles horaires (alertes A7 et A8 du catalogue), en conditions réelles comme en simulation.\n// A7 : relance verrouillée par WF5 et toujours pas traitée 30 min après son heure d'envoi (exécution interrompue).\n// A8 : relance jamais prise en charge plus d'une heure après son heure d'envoi (WF5 ne tourne plus).\nconst TZ = 'Europe/Paris';\nconst VERROU_SIMULATION = \"Simulation : en attente de l'heure d'envoi\"; // Motif posé par le verrou de WF5 en simulation\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst hm = (d) => new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(d).replace(':', ' h ');\nconst duree = (min) => min < 60 ? min + ' min' : Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0');\nconst maintenant = Date.now();\nconst aujourdhui = ymd(new Date());\n\nconst anomalies = [];\nfor (const it of $input.all()) {\n  const r = { id: it.json.id, ...(it.json.fields || it.json) };\n  if (!r.id || !r['Planifiée à']) continue;\n  const prevue = Date.parse(r['Planifiée à']);\n  const retard = Math.round((maintenant - prevue) / 60000);\n  const statut = r['Statut'];\n  const motif = String(r['Motif'] || '');\n  let code = null;\n  if (retard > 30 && (statut === 'Envoi en cours' || (statut === 'Simulée' && motif === VERROU_SIMULATION))) code = 'A7';\n  else if (retard > 60 && (statut === 'Planifiée' || (statut === 'Simulée' && !motif))) code = 'A8';\n  if (!code) continue;\n  anomalies.push({ json: {\n    code,\n    cle: code + '|' + r.id + '|' + aujourdhui, // au plus un rappel par relance et par jour\n    texte: (r['Référence'] || r.id) + (statut === 'Simulée' ? ' (simulation)' : '') + ' — prévue à ' + hm(new Date(prevue))\n      + (code === 'A7' ? ', toujours « en cours d’envoi »' : ', toujours pas partie') + ' (' + duree(retard) + ' de retard).'\n  } });\n}\nreturn anomalies;"
+        "jsCode": "// Contrôles de la journée, 4 passages (alertes A7, A8 et A11 du catalogue), en conditions réelles comme en simulation.\n// A7 : relance verrouillée par WF5 et toujours pas traitée 30 min après son heure d'envoi (exécution interrompue).\n// A8 : relance jamais prise en charge plus d'une heure après son heure d'envoi (WF5 ne tourne plus).\n// A11 : relance en échec (Gmail a refusé l'envoi, ou noCRM injoignable) ; en simulation, l'échec noCRM qui l'aurait causé.\nconst TZ = 'Europe/Paris';\nconst VERROU_SIMULATION = \"Simulation : en attente de l'heure d'envoi\"; // Motif posé par le verrou de WF5 en simulation\nconst ECHEC_SIMULATION = 'Vérification noCRM impossible'; // seul échec possible en simulation (aucun envoi Gmail)\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst hm = (d) => new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(d).replace(':', ' h ');\nconst duree = (min) => min < 60 ? min + ' min' : Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0');\nconst maintenant = Date.now();\nconst aujourdhui = ymd(new Date());\n\nconst anomalies = [];\nfor (const it of $input.all()) {\n  const r = { id: it.json.id, ...(it.json.fields || it.json) };\n  if (!r.id) continue;\n  const statut = r['Statut'];\n  const motif = String(r['Motif'] || '');\n  if (statut === 'Échec' || (statut === 'Simulée' && motif.includes(ECHEC_SIMULATION))) {\n    anomalies.push({ json: {\n      code: 'A11',\n      cle: 'A11|' + r.id + '|' + (r['Planifiée à'] || ''), // une fois par échec ; une relance replanifiée qui échoue à nouveau est re-signalée\n      texte: (r['Référence'] || r.id) + (statut === 'Simulée' ? ' (simulation)' : '') + ' — ' + (motif || 'sans motif')\n    } });\n    continue;\n  }\n  if (!r['Planifiée à']) continue;\n  const prevue = Date.parse(r['Planifiée à']);\n  const retard = Math.round((maintenant - prevue) / 60000);\n  let code = null;\n  if (retard > 30 && (statut === 'Envoi en cours' || (statut === 'Simulée' && motif === VERROU_SIMULATION))) code = 'A7';\n  else if (retard > 60 && (statut === 'Planifiée' || (statut === 'Simulée' && !motif))) code = 'A8';\n  if (!code) continue;\n  anomalies.push({ json: {\n    code,\n    cle: code + '|' + r.id + '|' + aujourdhui, // au plus un rappel par relance et par jour\n    texte: (r['Référence'] || r.id) + (statut === 'Simulée' ? ' (simulation)' : '') + ' — prévue à ' + hm(new Date(prevue))\n      + (code === 'A7' ? ', toujours « en cours d’envoi »' : ', toujours pas partie') + ' (' + duree(retard) + ' de retard).'\n  } });\n}\nreturn anomalies;"
       },
       "id": "2f26d08d-bd4f-5e19-aefe-1c7c7eb8bb4b",
       "name": "Contrôles horaires",
@@ -1638,7 +1537,7 @@
       "typeVersion": 2,
       "position": [
         960,
-        6432
+        5728
       ]
     },
     {
@@ -1656,12 +1555,12 @@
       "typeVersion": 2,
       "position": [
         1200,
-        6224
+        5520
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Regroupe les anomalies nouvelles de cette exécution en un seul message Slack, avec l'action à mener.\nconst NL = String.fromCharCode(10);\nconst CATALOGUE = {\n  A5: ['Synchronisation de nuit absente ou inachevée', 'Relancer la synchronisation complète (bloc WF1 · Lancement manuel).'],\n  A7: ['Relance bloquée « en cours d’envoi » depuis plus de 30 min', 'Vérifier dans Gmail (Messages envoyés) si elle est partie, puis corriger son statut dans Airtable. Jamais de renvoi automatique.'],\n  A8: ['Relance non partie plus d’une heure après son créneau', 'Vérifier que l’envoi (bloc WF5) tourne : exécutions récentes dans n8n, workflow publié.'],\n  A9: ['Aucun envoi de devis depuis deux jours ouvrés', 'Vérifier que le secrétariat met toujours Karim en copie des envois de devis.'],\n  A10: ['Nouveaux dossiers « Devis introuvable »', 'Retrouver le devis dans Gmail, ou corriger l’e-mail du dossier dans noCRM. Ces dossiers ne sont pas relancés.']\n};\nconst parCode = {};\nfor (const it of $input.all()) (parCode[it.json.code] = parCode[it.json.code] || []).push(it.json);\nconst blocs = Object.keys(CATALOGUE).filter(c => parCode[c]).map(c => [\n  '*' + c + ' · ' + CATALOGUE[c][0] + '*',\n  ...parCode[c].map(a => '• ' + a.texte + (a.lien ? ' <' + a.lien + '|ouvrir>' : '')),\n  '→ ' + CATALOGUE[c][1]\n].join(NL));\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nreturn [{ json: { texte: [':mag: *Relances devis — contrôle WF6*', ...blocs, '_' + quand + '_'].join(NL + NL) } }];"
+        "jsCode": "// Regroupe les anomalies nouvelles de cette exécution en un seul message Slack, avec l'action à mener.\nconst NL = String.fromCharCode(10);\nconst CATALOGUE = {\n  A5: ['Synchronisation de nuit absente ou inachevée', 'Relancer la synchronisation complète (bloc WF1 · Lancement manuel).'],\n  A7: ['Relance bloquée « en cours d’envoi » depuis plus de 30 min', 'Vérifier dans Gmail (Messages envoyés) si elle est partie, puis corriger son statut dans Airtable. Jamais de renvoi automatique.'],\n  A8: ['Relance non partie plus d’une heure après son créneau', 'Vérifier que l’envoi (bloc WF5) tourne : exécutions récentes dans n8n, workflow publié.'],\n  A9: ['Aucun envoi de devis depuis deux jours ouvrés', 'Vérifier que le secrétariat met toujours Karim en copie des envois de devis.'],\n  A10: ['Nouveaux dossiers « Devis introuvable »', 'Retrouver le devis dans Gmail, ou corriger l’e-mail du dossier dans noCRM. Ces dossiers ne sont pas relancés.'],\n  A11: ['Relance en échec', 'Lire le motif. « Gmail a refusé » : vérifier l’identifiant « Gmail SamD Karim ». « Vérification noCRM impossible » : dossier supprimé ou API noCRM indisponible. Pour la renvoyer : dans Airtable, Statut « Planifiée » et « Planifiée à » vidé — WF4 la replanifie à son prochain passage (7 h 30).']\n};\nconst parCode = {};\nfor (const it of $input.all()) (parCode[it.json.code] = parCode[it.json.code] || []).push(it.json);\nconst blocs = Object.keys(CATALOGUE).filter(c => parCode[c]).map(c => [\n  '*' + c + ' · ' + CATALOGUE[c][0] + '*',\n  ...parCode[c].map(a => '• ' + a.texte + (a.lien ? ' <' + a.lien + '|ouvrir>' : '')),\n  '→ ' + CATALOGUE[c][1]\n].join(NL));\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nreturn [{ json: { texte: [':mag: *Relances devis — contrôle WF6*', ...blocs, '_' + quand + '_'].join(NL + NL) } }];"
       },
       "id": "1145e9f7-81a7-5a35-923e-9ef73783977b",
       "name": "Message de contrôle",
@@ -1669,7 +1568,7 @@
       "typeVersion": 2,
       "position": [
         1440,
-        6224
+        5520
       ]
     },
     {
@@ -1688,36 +1587,97 @@
       },
       "id": "1481b110-c84a-554d-a366-386e233e0f3e",
       "name": "Alerte Slack contrôle",
+      "webhookId": "c51d0c4c-adb2-4ca4-8d94-01be34951e64",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
-      "position": [
-        1680,
-        6224
-      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000,
-      "webhookId": "2958ba26-d080-4e4d-be48-a5711737d1d9",
+      "position": [
+        1680,
+        5520
+      ],
       "credentials": {
         "slackApi": {
           "id": "oiCh7mUHPUPu43md",
           "name": "Slack Alertes n8n"
         }
       }
+    },
+    {
+      "parameters": {
+        "content": "# Signal de vie externe (F7)\nJours ouvrés · toutes les 15 min de 8 h à 17 h 45 · Healthchecks.io → #alertes-relances (alerte A4)",
+        "height": 988,
+        "width": 1500,
+        "color": 3
+      },
+      "id": "de1bd78d-bad4-59e5-9cd7-075069badfc9",
+      "name": "Bloc F7 · Signal de vie externe",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        6688
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Signal de vie externe (F7)\n\n**Rôle** : prévenir quand **n8n ou le serveur Hostinger est arrêté** (alerte A4). C'est le seul cas que « Gestion des erreurs » et WF6 ne peuvent pas voir : ils s'arrêtent avec le serveur.\n\n**Principe** : n8n signale régulièrement qu'il tourne à un service extérieur, **Healthchecks.io**. C'est Healthchecks qui alerte quand les signaux **cessent**.\n\n### Étapes\n**1. Toutes les 15 min en journée** — jours ouvrés, de 8 h à 17 h 45 (heure de Paris).\n\n**2. Signal de vie (Healthchecks)** — un simple appel à l'adresse de ping du contrôle « n8n · Relances devis ». Aucun appel Airtable, noCRM ni Gmail : ce bloc ne consomme aucun quota.\n\n### Côté Healthchecks.io (compte de Karim)\n- Contrôle **« n8n · Relances devis »**, calendrier Cron `*/15 8-17 * * 1-5`, fuseau Europe/Paris, délai de grâce **45 min**.\n- Plus de signal pendant ~1 h en heures ouvrées → message dans **#alertes-relances**, e-mail en secours. Retour du signal → message « up ».\n- La nuit et le week-end, Healthchecks n'attend rien : aucune fausse alerte.\n\n### À savoir\n- **Workflow dépublié** = plus de signal = alerte A4 : c'est voulu, un système dépublié n'envoie plus rien.\n- Un redémarrage rapide de n8n (mise à jour Watchtower) ne déclenche pas d'alerte : un signal manqué est absorbé par le délai de grâce.\n- Un échec de l'appel n'est pas une erreur n8n (rien ne part vers « Gestion des erreurs ») : si le signal n'arrive pas, Healthchecks le verra.\n- L'adresse de ping est dans le nœud : ne pas la diffuser (n'importe qui pourrait faire croire que n8n tourne).",
+        "height": 864,
+        "width": 560,
+        "color": 7
+      },
+      "id": "2476dc11-d341-55ac-9a61-9fb8f9f389e6",
+      "name": "F7 – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        6800
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 8-17 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "b98ba2d6-417d-5bb4-b22d-69eadb62382f",
+      "name": "Toutes les 15 min en journée",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        6896
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://hc-ping.com/bba17224-d01b-418a-a55d-c7286e37bd1c",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "a3917fd2-5350-534a-8053-a6616dc5fa54",
+      "name": "Signal de vie (Healthchecks)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "position": [
+        240,
+        6896
+      ],
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
-    "Chaque nuit à 2 h": {
-      "main": [
-        [
-          {
-            "node": "noCRM – utilisateurs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Lancement manuel": {
       "main": [
         [
@@ -1789,39 +1749,6 @@
         [
           {
             "node": "Airtable – écriture par lots de 10",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Erreur d'exécution": {
-      "main": [
-        [
-          {
-            "node": "Message d'alerte",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Message d'alerte": {
-      "main": [
-        [
-          {
-            "node": "Une alerte par heure",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Une alerte par heure": {
-      "main": [
-        [
-          {
-            "node": "Alerte Slack #alertes-relances",
             "type": "main",
             "index": 0
           }
@@ -1992,17 +1919,6 @@
         [
           {
             "node": "Airtable – enregistrement des heures",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Toutes les 25 min en journée": {
-      "main": [
-        [
-          {
-            "node": "Réglages WF5",
             "type": "main",
             "index": 0
           }
@@ -2270,17 +2186,6 @@
         ]
       ]
     },
-    "Chaque heure en journée": {
-      "main": [
-        [
-          {
-            "node": "Airtable – relances en retard",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Lancement manuel WF6 horaire": {
       "main": [
         [
@@ -2335,6 +2240,50 @@
           }
         ]
       ]
+    },
+    "Chaque nuit de semaine à 2 h": {
+      "main": [
+        [
+          {
+            "node": "noCRM – utilisateurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jours ouvrés à 8 h, 11 h et 14 h": {
+      "main": [
+        [
+          {
+            "node": "Réglages WF5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jours ouvrés à 10 h 10, 12 h 10, 15 h 10 et 18 h 40": {
+      "main": [
+        [
+          {
+            "node": "Airtable – relances en retard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Toutes les 15 min en journée": {
+      "main": [
+        [
+          {
+            "node": "Signal de vie (Healthchecks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "nodeGroups": [],
@@ -2343,8 +2292,11 @@
     "timezone": "Europe/Paris",
     "saveDataErrorExecution": "all",
     "saveDataSuccessExecution": "all",
-    "errorWorkflow": "RelWF1SyncNocrm0",
-    "binaryMode": "separate"
+    "errorWorkflow": "GestErreursInst1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
   "staticData": {
     "node:Chaque nuit à 2 h": {
@@ -2394,6 +2346,40 @@
       "recurrenceRuleSignatures": [
         null
       ]
+    },
+    "node:Chaque nuit de semaine à 2 h": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Jours ouvrés à 8 h, 11 h et 14 h": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Jours ouvrés à 10 h 10, 12 h 10, 15 h 10 et 18 h 40": {
+      "recurrenceRules": [
+        null,
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null,
+        null
+      ]
+    },
+    "node:Toutes les 15 min en journée": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
     }
   },
   "pinData": {},
@@ -2409,12 +2395,12 @@
     }
   ],
   "activeVersion": {
-    "versionId": "7245ca22-933e-4f07-a632-27e3ddb2f39e",
+    "versionId": "b3f16d21-59a2-4b63-a5cc-7937382449ed",
     "workflowId": "RelWF1SyncNocrm0",
     "nodes": [
       {
         "parameters": {
-          "content": "# Relances devis · Système complet\nUn bloc par partie du système, de haut en bas :\n- **WF1** · Synchronisation complète noCRM → Airtable ✅\n- WF2 · Synchronisation au fil de l'eau (webhook noCRM) — à venir\n- **WF3** · Repérage des devis et préparation des relances ✅ (mode simulation)\n- **WF4** · Planification des envois (heures aléatoires) ✅\n- **WF5** · Envoi des relances ✅ (mode simulation)\n- **WF0** · Alertes d'erreur sur Slack #alertes-relances ✅\n- **WF6** · Contrôle des pannes silencieuses (alertes A5, A7–A10) ✅\n\nChaque bloc a son propre déclencheur : ils s'exécutent indépendamment. Un bloc en construction garde son déclencheur **désactivé** jusqu'à sa recette.",
+          "content": "# Relances devis · Système complet\nUn bloc par partie du système, de haut en bas :\n- **WF1** · Synchronisation complète noCRM → Airtable ✅\n- WF2 · Synchronisation au fil de l'eau (webhook noCRM) — à venir\n- **WF3** · Repérage des devis et préparation des relances ✅ (mode simulation)\n- **WF4** · Planification des envois (heures aléatoires) ✅\n- **WF5** · Envoi des relances ✅ (mode simulation)\n- **Échecs d'exécution** · confiés au workflow **Gestion des erreurs** de l'instance (réparation automatique + compte rendu Slack) — désigné dans *Settings → Error workflow* ✅\n- **WF6** · Contrôle des pannes silencieuses (alertes A5, A7–A11) ✅\n- **F7** · Signal de vie externe (Healthchecks.io, alerte A4) ✅\n\nChaque bloc a son propre déclencheur : ils s'exécutent indépendamment. Un bloc en construction garde son déclencheur **désactivé** jusqu'à sa recette.",
           "height": 380,
           "width": 2560,
           "color": 7
@@ -2446,7 +2432,7 @@
       },
       {
         "parameters": {
-          "content": "## WF1 · Synchronisation complète noCRM → Airtable\n\n**Rôle** : recopier chaque nuit les opportunités noCRM dans la table Airtable **Opportunités**. Filet de rattrapage : corrige tout ce que la synchronisation au fil de l'eau (WF2) aurait manqué.\n\n**Quand** : chaque nuit à 2 h (Europe/Paris), ou à la main via « Lancement manuel ».\n\n### Étapes\n**1. noCRM – utilisateurs** — lit la liste des commerciaux (1 requête) pour afficher leur nom.\n\n**2. noCRM – opportunités** — lit toutes les opportunités, 100 par page, les plus récemment modifiées d'abord (≈ 7 requêtes). La liste contient déjà la description.\n\n**3. Airtable – opportunités existantes** — lit ce qui est déjà dans Airtable (nocrm_id + « Modifié le »).\n\n**4. Sélection des dossiers à mettre à jour** — garde les dossiers ouverts, ou clôturés/modifiés depuis moins de 90 jours, puis seulement ceux **nouveaux ou modifiés** depuis la dernière synchro. Un dossier inchangé n'est jamais relu : le quota noCRM est de 2 000 requêtes/jour pour tout le compte.\n\n**5. noCRM – détail des dossiers** — relit chaque dossier retenu (5 par seconde) pour obtenir e-mail, prénom, nom, téléphone.\n\n**6. Préparation des lignes Airtable** — convertit le statut (todo → En cours…), extrait de la description la ville de départ, la ville d'arrivée, le volume et le prix TTC (le plus élevé s'il y a plusieurs devis). Une valeur illisible reste **vide, jamais devinée**. Regroupe les lignes par lots de 10.\n\n**7. Airtable – écriture par lots de 10** — upsert sur `nocrm_id` : met à jour la ligne existante ou la crée. Aucun doublon possible.\n\n### Garde-fous\n- N'écrit **jamais** les champs de relance ni les champs manuels (Relance désactivée, Motif, Devis envoyé le, Réponse client reçue le).\n- 3 tentatives espacées de 3 s sur chaque appel noCRM et Airtable.\n- Relancer deux fois de suite ne réécrit rien.\n\n### Références\nCahier des charges, dictionnaire de données et analyse d'écart : dossier `outils/Relances Commerciales Mail/`.\nIdentifiants : « Header Auth account » (clé noCRM, en-tête X-API-KEY) et « Airtable Personal Access Token account ».",
+          "content": "## WF1 · Synchronisation complète noCRM → Airtable\n\n**Rôle** : recopier chaque nuit les opportunités noCRM dans la table Airtable **Opportunités**. Filet de rattrapage : corrige tout ce que la synchronisation au fil de l'eau (WF2) aurait manqué.\n\n**Quand** : chaque nuit de semaine à 2 h (Europe/Paris), ou à la main via « Lancement manuel ». Pas de synchro le week-end (quota Airtable) : celle du lundi rattrape tout ce qui a changé depuis vendredi.\n\n### Étapes\n**1. noCRM – utilisateurs** — lit la liste des commerciaux (1 requête) pour afficher leur nom.\n\n**2. noCRM – opportunités** — lit toutes les opportunités, 100 par page, les plus récemment modifiées d'abord (≈ 7 requêtes). La liste contient déjà la description.\n\n**3. Airtable – opportunités existantes** — lit ce qui est déjà dans Airtable (nocrm_id + « Modifié le »).\n\n**4. Sélection des dossiers à mettre à jour** — garde les dossiers ouverts, ou clôturés/modifiés depuis moins de 90 jours, puis seulement ceux **nouveaux ou modifiés** depuis la dernière synchro. Un dossier inchangé n'est jamais relu : le quota noCRM est de 2 000 requêtes/jour pour tout le compte.\n\n**5. noCRM – détail des dossiers** — relit chaque dossier retenu (5 par seconde) pour obtenir e-mail, prénom, nom, téléphone.\n\n**6. Préparation des lignes Airtable** — convertit le statut (todo → En cours…), extrait de la description la ville de départ, la ville d'arrivée, le volume et le prix TTC (le plus élevé s'il y a plusieurs devis). Une valeur illisible reste **vide, jamais devinée**. Regroupe les lignes par lots de 10.\n\n**7. Airtable – écriture par lots de 10** — upsert sur `nocrm_id` : met à jour la ligne existante ou la crée. Aucun doublon possible.\n\n### Garde-fous\n- N'écrit **jamais** les champs de relance ni les champs manuels (Relance désactivée, Motif, Devis envoyé le, Réponse client reçue le).\n- 3 tentatives espacées de 3 s sur chaque appel noCRM et Airtable.\n- Relancer deux fois de suite ne réécrit rien.\n\n### Références\nCahier des charges, dictionnaire de données et analyse d'écart : dossier `outils/Relances Commerciales Mail/`.\nIdentifiants : « Header Auth account » (clé noCRM, en-tête X-API-KEY) et « Airtable Personal Access Token account ».",
           "height": 1212,
           "width": 580,
           "color": 7
@@ -2457,7 +2443,7 @@
         "typeVersion": 1,
         "position": [
           -640,
-          -256
+          -240
         ]
       },
       {
@@ -2466,18 +2452,18 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "0 2 * * *"
+                "expression": "0 2 * * 1-5"
               }
             ]
           }
         },
         "id": "a1000000-0000-4000-8000-000000000001",
-        "name": "Chaque nuit à 2 h",
+        "name": "Chaque nuit de semaine à 2 h",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.2,
         "position": [
-          0,
-          0
+          112,
+          6704
         ]
       },
       {
@@ -2502,14 +2488,14 @@
         "name": "noCRM – utilisateurs",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
         "position": [
           240,
           112
         ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 3000,
-        "alwaysOutputData": true,
         "credentials": {
           "httpHeaderAuth": {
             "id": "cozsLIX1RhBu4CoY",
@@ -2563,14 +2549,14 @@
         "name": "noCRM – opportunités",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          480,
-          112
-        ],
         "executeOnce": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          480,
+          112
+        ],
         "credentials": {
           "httpHeaderAuth": {
             "id": "cozsLIX1RhBu4CoY",
@@ -2602,15 +2588,15 @@
         "name": "Airtable – opportunités existantes",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          720,
-          112
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          720,
+          112
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -2649,13 +2635,13 @@
         "name": "noCRM – détail des dossiers",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
         "position": [
           1200,
           112
         ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 3000,
         "credentials": {
           "httpHeaderAuth": {
             "id": "cozsLIX1RhBu4CoY",
@@ -2698,13 +2684,13 @@
         "name": "Airtable – écriture par lots de 10",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
         "position": [
           1680,
           112
         ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 3000,
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -2714,116 +2700,8 @@
       },
       {
         "parameters": {
-          "content": "# WF0 · Alertes d'erreur sur Slack\nDéclenché par l'échec de n'importe quel bloc · canal #alertes-relances",
-          "height": 1000,
-          "width": 1500,
-          "color": 3
-        },
-        "id": "a1000000-0000-4000-8000-0000000000c0",
-        "name": "Bloc WF0 · Alertes Slack",
-        "type": "n8n-nodes-base.stickyNote",
-        "typeVersion": 1,
-        "position": [
-          -688,
-          1040
-        ]
-      },
-      {
-        "parameters": {
-          "content": "## WF0 · Alertes Slack\n\n**Rôle** : prévenir dans **#alertes-relances** dès qu'une exécution de ce workflow échoue (alerte A1 du catalogue).\n\n**Déclenchement** : ce bloc est désigné comme « workflow d'erreur » du workflow lui-même (Paramètres → Error Workflow). n8n le lance automatiquement après un échec ; il ne tourne jamais tout seul.\n\n### Étapes\n**1. Erreur d'exécution** — reçoit de n8n le dossier de l'échec : workflow, nœud fautif, message, lien vers l'exécution.\n\n**2. Message d'alerte** — met en forme le message et calcule une **clé de regroupement** : nœud + message + heure courante.\n\n**3. Une alerte par heure** — compare la clé aux clés déjà vues (mémoire de n8n) : une même erreur qui se répète dans l'heure ne repart pas. L'heure suivante, la clé change et l'alerte repart.\n\n**4. Alerte Slack** — publie dans #alertes-relances. En cas de refus de Slack, le nœud n'échoue pas : cela éviterait une boucle d'alertes sur l'alerte.\n\n### À savoir\n- Ne couvre que les **échecs d'exécution**. Les pannes silencieuses (rien ne se produit) seront couvertes par le bloc WF6 · Contrôle.\n- Si le serveur n8n est arrêté, ce bloc ne peut rien envoyer : c'est le rôle du signal de vie externe (exigence F7).\n- Identifiant utilisé : « Slack Alertes n8n ».",
-          "height": 848,
-          "width": 420,
-          "color": 7
-        },
-        "id": "a1000000-0000-4000-8000-0000000000c1",
-        "name": "WF0 – mode d'emploi",
-        "type": "n8n-nodes-base.stickyNote",
-        "typeVersion": 1,
-        "position": [
-          -640,
-          1152
-        ]
-      },
-      {
-        "parameters": {},
-        "id": "a1000000-0000-4000-8000-0000000000c2",
-        "name": "Erreur d'exécution",
-        "type": "n8n-nodes-base.errorTrigger",
-        "typeVersion": 1,
-        "position": [
-          -144,
-          1248
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "// Met en forme l'alerte et calcule une clé de regroupement (nœud + message + heure).\nconst d = $json.execution || {};\nconst w = $json.workflow || {};\nconst noeud = d.lastNodeExecuted || 'inconnu';\nconst message = (d.error && (d.error.message || d.error.description)) || 'erreur sans message';\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nconst heure = new Date().toISOString().slice(0, 13);\nconst texte = [\n  ':rotating_light: *Relances devis — échec d’exécution*',\n  '*Bloc / workflow :* ' + (w.name || 'inconnu'),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + String(message).slice(0, 800),\n  '*Quand :* ' + quand,\n  d.url ? '*Exécution :* ' + d.url : '*Exécution :* ' + (d.id || '—')\n].join(String.fromCharCode(10));\nreturn [{ json: { texte, cle: noeud + '|' + String(message).slice(0, 120) + '|' + heure } }];"
-        },
-        "id": "a1000000-0000-4000-8000-0000000000c3",
-        "name": "Message d'alerte",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          128,
-          1248
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "removeItemsSeenInPreviousExecutions",
-          "dedupeValue": "={{ $json.cle }}",
-          "options": {
-            "scope": "workflow",
-            "historySize": 5000
-          }
-        },
-        "id": "a1000000-0000-4000-8000-0000000000c4",
-        "name": "Une alerte par heure",
-        "type": "n8n-nodes-base.removeDuplicates",
-        "typeVersion": 2,
-        "position": [
-          384,
-          1248
-        ]
-      },
-      {
-        "parameters": {
-          "select": "channel",
-          "channelId": {
-            "__rl": true,
-            "mode": "id",
-            "value": "C0C27914SAZ"
-          },
-          "text": "={{ $json.texte }}",
-          "otherOptions": {
-            "includeLinkToWorkflow": false,
-            "mrkdwn": true
-          }
-        },
-        "id": "a1000000-0000-4000-8000-0000000000c5",
-        "name": "Alerte Slack #alertes-relances",
-        "type": "n8n-nodes-base.slack",
-        "typeVersion": 2.3,
-        "position": [
-          640,
-          1248
-        ],
-        "retryOnFail": true,
-        "maxTries": 2,
-        "waitBetweenTries": 3000,
-        "webhookId": "b60f7de3-5ed7-4e8d-837c-221d1d9a1150",
-        "credentials": {
-          "slackApi": {
-            "id": "oiCh7mUHPUPu43md",
-            "name": "Slack Alertes n8n"
-          }
-        },
-        "onError": "continueRegularOutput"
-      },
-      {
-        "parameters": {
           "content": "# WF3 · Repérage des devis et préparation des relances\nChaque jour ouvré à 7 h · mode SIMULATION (rien n'est envoyé)",
-          "height": 1292,
+          "height": 1516,
           "width": 2800,
           "color": 5
         },
@@ -2833,13 +2711,13 @@
         "typeVersion": 1,
         "position": [
           -688,
-          2096
+          1072
         ]
       },
       {
         "parameters": {
-          "content": "## WF3 · Repérage des devis et préparation des relances\n\n**Rôle** : chaque jour ouvré à 7 h, repérer les devis envoyés par le secrétariat, calculer J+2 et J+7, écarter les clients qui ont répondu, et créer les relances du jour dans la table **Relances**.\n\n**Mode actuel : SIMULATION** — les relances sont créées au statut « Simulée » et rien n'est envoyé. Le passage en conditions réelles (constante MODE du nœud « Décision et rédaction ») se fait uniquement sur déclaration explicite de Karim.\n\n### Étapes\n**1. Airtable – dossiers en relance** — les opportunités en « Devis envoyé » ou « Trajets Axe Paris », ouvertes, avec e-mail, relance non désactivée.\n\n**2. Gmail – envois de devis** — les mails de secretariat@samdemenage.fr dont une pièce jointe porte « devis » dans son nom (ex. « Devis 069203092026 Nom Prénom.pdf »), sur 21 jours, reçus en copie par Karim. Tous les mails, lus ou non. Une pièce jointe nommée autrement n'est pas repérée → le dossier ressort en « Devis introuvable ».\n\n**3. Recherche des réponses** — fabrique une recherche Gmail limitée aux adresses des clients en relance.\n\n**4. Gmail – réponses des clients** — les mails reçus de ces clients sur 21 jours.\n\n**5. Airtable – relances existantes** — pour ne jamais créer deux fois la même relance.\n\n**6. Décision et rédaction** — pour chaque dossier : date du **dernier** envoi de devis (D14) ; réponse du client après cet envoi → plus de relance ; « stop » → Relance désactivée ; sinon R1 à J+2 et R2 à J+7 (week-end → lundi), avec rattrapage de quelques jours si le serveur était arrêté. Au lancement, seuls les devis de moins de 7 jours entrent (D16). Texte = modèle validé ; une variable vide ne laisse jamais de trou.\n\n**7–8. Lots de 10** puis **écritures Airtable** : mise à jour des opportunités, création des relances.\n\n### Garde-fous\n- Aucun envoi dans ce bloc : il prépare seulement.\n- Référence unique « Titre · n° noCRM · R1 » : relancer le bloc ne crée pas de doublon.\n- Devis introuvable → pas de relance (formule « Devis introuvable » dans Airtable).\n\nIdentifiants : « Gmail SamD Karim », « Airtable Personal Access Token account ».",
-          "height": 1136,
+          "content": "## WF3 · Repérage des devis et préparation des relances\n\n**Rôle** : chaque jour ouvré à 7 h, repérer les devis envoyés par le secrétariat, calculer J+2 et J+7, écarter les clients qui ont répondu, et créer les relances du jour dans la table **Relances**.\n\n**Mode actuel : SIMULATION** — les relances sont créées au statut « Simulée » et rien n'est envoyé. Le passage en conditions réelles (constante MODE du nœud « Décision et rédaction ») se fait uniquement sur déclaration explicite de Karim.\n\n### Étapes\n**1. Airtable – dossiers en relance** — les opportunités en « Devis envoyé » ou « Trajets Axe Paris », ouvertes, avec e-mail, relance non désactivée.\n\n**2. Gmail – envois de devis** — les mails de secretariat@samdemenage.fr dont une pièce jointe porte « devis » dans son nom (ex. « Devis 069203092026 Nom Prénom.pdf »), sur 21 jours, reçus en copie par Karim. Tous les mails, lus ou non. Une pièce jointe nommée autrement n'est pas repérée → le dossier ressort en « Devis introuvable ».\n\n**3. Recherche des réponses** — fabrique une recherche Gmail limitée aux adresses des clients en relance.\n\n**4. Gmail – réponses des clients** — les mails reçus de ces clients sur 21 jours.\n\n**5. Airtable – relances existantes** — les relances créées ces 30 derniers jours, pour ne jamais créer deux fois la même relance (une séquence R1 → R2 dure moins de 3 semaines ; un devis renvoyé plus de 30 jours après repart comme un nouveau devis). En conditions réelles, les relances « Simulée » sont ignorées : elles ne sont jamais parties.\n\n**6. Décision et rédaction** — pour chaque dossier : date du **dernier** envoi de devis (D14) ; réponse du client après cet envoi → plus de relance ; « stop » → Relance désactivée ; sinon R1 à J+2 et R2 à J+7 (week-end → lundi), avec rattrapage de quelques jours si le serveur était arrêté. Au lancement, seuls les devis de moins de 7 jours entrent (D16). Texte = modèle validé ; une variable vide ne laisse jamais de trou.\n\n**7–8. Lots de 10** puis **écritures Airtable** : mise à jour des opportunités, création des relances.\n\n### Garde-fous\n- Aucun envoi dans ce bloc : il prépare seulement.\n- Une relance est reconnue par « n° noCRM · R1 » (fin de la Référence) : relancer le bloc ne crée pas de doublon, et un dossier renommé dans noCRM garde ses relances.\n- Devis introuvable → pas de relance (formule « Devis introuvable » dans Airtable).\n\nIdentifiants : « Gmail SamD Karim », « Airtable Personal Access Token account ».",
+          "height": 1376,
           "width": 560,
           "color": 7
         },
@@ -2849,7 +2727,7 @@
         "typeVersion": 1,
         "position": [
           -640,
-          2208
+          1184
         ]
       },
       {
@@ -2869,7 +2747,7 @@
         "typeVersion": 1.2,
         "position": [
           0,
-          2272
+          1248
         ]
       },
       {
@@ -2880,7 +2758,7 @@
         "typeVersion": 1,
         "position": [
           0,
-          2464
+          1440
         ]
       },
       {
@@ -2914,15 +2792,15 @@
         "name": "Airtable – dossiers en relance",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          240,
-          2368
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          240,
+          1344
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -2941,18 +2819,18 @@
         },
         "id": "d3000000-0000-4000-8000-000000000004",
         "name": "Gmail – envois de devis",
+        "webhookId": "c4adba99-8670-4555-a4ab-88e5e2e866a5",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.1,
-        "position": [
-          480,
-          2368
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
-        "webhookId": "e61cc56a-d45c-4adb-9a72-2f0540875cd8",
+        "position": [
+          480,
+          1344
+        ],
         "credentials": {
           "gmailOAuth2": {
             "id": "JP8a4UaPJbJqua5Y",
@@ -2970,7 +2848,7 @@
         "typeVersion": 2,
         "position": [
           720,
-          2368
+          1344
         ]
       },
       {
@@ -2984,18 +2862,18 @@
         },
         "id": "d3000000-0000-4000-8000-000000000006",
         "name": "Gmail – réponses des clients",
+        "webhookId": "dca05971-44bc-4571-8fb7-78e8d9cf1528",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.1,
-        "position": [
-          960,
-          2368
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
-        "webhookId": "b1687098-5a78-4a63-8542-e941fda8975f",
+        "position": [
+          960,
+          1344
+        ],
         "credentials": {
           "gmailOAuth2": {
             "id": "JP8a4UaPJbJqua5Y",
@@ -3016,10 +2894,12 @@
             "mode": "id",
             "value": "tblRoNTjuFAXOmcLf"
           },
+          "filterByFormula": "IS_AFTER(CREATED_TIME(),DATEADD(NOW(),-30,'days'))",
           "options": {
             "fields": [
               "Référence",
-              "Prévue le"
+              "Prévue le",
+              "Statut"
             ]
           }
         },
@@ -3027,15 +2907,15 @@
         "name": "Airtable – relances existantes",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          1200,
-          2368
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          1200,
+          1344
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3045,7 +2925,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Décide, dossier par dossier, s'il faut une relance aujourd'hui, et rédige le texte à partir du modèle validé.\n// MODE : 'simulation' = relances créées « Simulée », rien n'est envoyé.\n//        'reel'       = uniquement après déclaration explicite de Karim Bordeau (décision D5).\nconst MODE = 'simulation';\nconst TZ = 'Europe/Paris';\nconst NL = String.fromCharCode(10);\n\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\nconst ecart = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 864e5);\nconst adresses = (s) => (String(s || '').match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g) || []).map(x => x.toLowerCase());\nconst aplatir = (items) => items.map(it => it.json.fields ? { id: it.json.id, ...it.json.fields } : it.json);\nconst aujourdhui = ymd(new Date());\n\n// 1. Dernier envoi de devis par adresse client (pièce jointe nommée « Devis… », filtrée par la recherche Gmail).\nconst devis = {};\nfor (const it of $('Gmail – envois de devis').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const quand = Number(m.internalDate);\n  for (const a of adresses(m.To)) if (!devis[a] || quand > devis[a]) devis[a] = quand;\n}\n\n// 2. Réponses des clients : dates et extraits, par adresse.\nconst reponses = {};\nfor (const it of $('Gmail – réponses des clients').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const de = adresses(m.From)[0];\n  if (!de) continue;\n  // Une réponse automatique (absence, accusé de réception) n'est pas une vraie réponse du client.\n  if (/r[ée]ponse automatique|message d.absence|absent du bureau|absente du bureau|je suis absente?|out of office|automatic reply|auto.?reply|accus[ée] de r[ée]ception/i.test(String(m.Subject || '') + ' ' + String(m.snippet || '').slice(0, 120))) continue;\n  (reponses[de] = reponses[de] || []).push({ quand: Number(m.internalDate), extrait: String(m.snippet || '') });\n}\n\n// 3. Relances déjà créées (ne jamais créer deux fois la même).\n// Référence -> jour de création (ou, à défaut, date prévue), pour espacer R1 et R2.\nconst existantes = new Map();\nfor (const it of $('Airtable – relances existantes').all()) {\n  const f = it.json.fields || it.json;\n  const ref = f['Référence'];\n  if (!ref) continue;\n  const cree = it.json.createdTime || f['Prévue le'];\n  existantes.set(ref, cree ? ymd(new Date(cree)) : aujourdhui);\n}\n\n// Rédaction : modèles validés le 16/09/2026 (annexe du cahier des charges).\nconst SIGNATURE = [\"Secretariat - Sam'Déménage\", 'Téléphone : 06 09 41 02 47', 'Mail : sandrine@samdemenage.fr', 'Mail contact : contact@samdemenage.fr'].join(NL);\nconst de_ = (v) => /^Le /.test(v) ? 'du ' + v.slice(3) : /^Les /.test(v) ? 'des ' + v.slice(4) : /^[AEIOUYÉÈÊÂÎH]/i.test(v) ? \"d'\" + v : 'de ' + v;\nconst a_ = (v) => /^Le /.test(v) ? 'au ' + v.slice(3) : /^Les /.test(v) ? 'aux ' + v.slice(4) : 'à ' + v;\nconst texte = (numero, prenom, dateDevis, depart, arrivee) => {\n  const p = String(prenom || '').trim();\n  const bonjour = p ? 'Bonjour ' + p.charAt(0).toUpperCase() + p.slice(1) + ',' : 'Bonjour,';\n  const trajet = depart && arrivee\n    ? (depart.toLowerCase() === arrivee.toLowerCase() ? ' pour votre déménagement ' + a_(arrivee) : ' pour votre déménagement ' + de_(depart) + ' ' + a_(arrivee))\n    : '';\n  if (numero === 'R1') return {\n    objet: \"Votre devis de déménagement Sam'Déménage\",\n    corps: [bonjour, '',\n      'Je reviens vers vous au sujet du devis que nous vous avons adressé le ' + dateDevis + trajet + '.', '',\n      \"Avez-vous pu en prendre connaissance ? Si vous avez une question, ou si un point est à ajuster (date, volume, prestations), il vous suffit de répondre à ce message.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si votre projet a évolué et que vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n  return {\n    objet: \"Votre projet de déménagement est-il toujours d'actualité ?\",\n    corps: [bonjour, '',\n      'Je me permets de revenir vers vous une dernière fois au sujet de notre devis du ' + dateDevis + trajet + '.', '',\n      \"Si la date vous convient toujours, une simple réponse nous permet de réserver l'équipe et le camion pour vous. Et si vous avez choisi une autre solution, un mot de votre part nous aide à clore votre dossier.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n};\n\nconst sortie = [];\nfor (const f of aplatir($('Airtable – dossiers en relance').all())) {\n  if (!f.id || !f.nocrm_id) continue;\n  const email = String(f['E-mail'] || '').trim().toLowerCase();\n  const envoiDevis = devis[email];\n  if (!envoiDevis) continue; // devis introuvable : pas de relance (formule « Devis introuvable » dans Airtable)\n\n  const maj = {};\n  const connu = f['Devis envoyé le'] ? Date.parse(f['Devis envoyé le']) : 0;\n  if (Math.abs(connu - envoiDevis) > 60000) maj['Devis envoyé le'] = new Date(envoiDevis).toISOString();\n\n  const apres = (reponses[email] || []).filter(r => r.quand > envoiDevis).sort((a, b) => a.quand - b.quand);\n  if (apres.length) {\n    const premiere = new Date(apres[0].quand).toISOString();\n    if (!f['Réponse client reçue le'] || Math.abs(Date.parse(f['Réponse client reçue le']) - apres[0].quand) > 60000) maj['Réponse client reçue le'] = premiere;\n    if (apres.some(r => /\\bstop\\b/i.test(r.extrait))) { maj['Relance désactivée'] = true; maj['Motif de désactivation'] = 'Réponse stop du client'; }\n  } else if (f['Réponse client reçue le']) {\n    maj['Réponse client reçue le'] = null; // plus de vraie réponse après le dernier devis (réponse automatique écartée, devis renvoyé)\n  }\n  if (Object.keys(maj).length) sortie.push({ json: { cible: 'opportunite', id: f.id, fields: maj } });\n  if (apres.length) continue; // le client a répondu : plus de relance\n\n  const jourDevis = ymd(new Date(envoiDevis));\n  const refBase = (f['Titre'] || 'Dossier') + ' · ' + f.nocrm_id;\n  const enSequence = existantes.has(refBase + ' · R1');\n  if (!enSequence && ecart(jourDevis, aujourdhui) > 7) continue; // D16 : au lancement, seuls les devis de moins de 7 jours entrent\n  const dateDevis = new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, day: 'numeric', month: 'long' }).format(new Date(envoiDevis));\n\n  for (const [numero, libelle, jours, rattrapage] of [['R1', 'R1 · J+2', 2, 4], ['R2', 'R2 · J+7', 7, 6]]) {\n    const prevue = ouvre(plus(jourDevis, jours));\n    const ref = refBase + ' · ' + numero;\n    if (aujourdhui < prevue || ecart(prevue, aujourdhui) > rattrapage || existantes.has(ref)) continue;\n    if (numero === 'R2') {\n      const jourR1 = existantes.get(refBase + ' · R1');\n      if (!jourR1 || ecart(jourR1, aujourdhui) < 4) continue; // pas de R2 sans R1, ni moins de 4 jours après R1 (cas du rattrapage)\n    }\n    const t = texte(numero, f['Prénom'], dateDevis, f['Départ'], f['Arrivée']);\n    sortie.push({ json: { cible: 'relance', fields: {\n      'Référence': ref, 'Opportunité': [f.id], 'Numéro': libelle, 'Prévue le': prevue,\n      'Destinataire': email, 'Objet': t.objet, 'Corps': t.corps,\n      'Statut': MODE === 'simulation' ? 'Simulée' : 'Planifiée'\n    } } });\n  }\n}\nreturn sortie;"
+          "jsCode": "// Décide, dossier par dossier, s'il faut une relance aujourd'hui, et rédige le texte à partir du modèle validé.\n// MODE : 'simulation' = relances créées « Simulée », rien n'est envoyé.\n//        'reel'       = uniquement après déclaration explicite de Karim Bordeau (décision D5).\nconst MODE = 'simulation';\nconst TZ = 'Europe/Paris';\nconst NL = String.fromCharCode(10);\n\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\nconst ecart = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 864e5);\nconst adresses = (s) => (String(s || '').match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g) || []).map(x => x.toLowerCase());\nconst aplatir = (items) => items.map(it => it.json.fields ? { id: it.json.id, ...it.json.fields } : it.json);\nconst aujourdhui = ymd(new Date());\n\n// 1. Dernier envoi de devis par adresse client (pièce jointe nommée « Devis… », filtrée par la recherche Gmail).\nconst devis = {};\nfor (const it of $('Gmail – envois de devis').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const quand = Number(m.internalDate);\n  for (const a of adresses(m.To)) if (!devis[a] || quand > devis[a]) devis[a] = quand;\n}\n\n// 2. Réponses des clients : dates et extraits, par adresse.\nconst reponses = {};\nfor (const it of $('Gmail – réponses des clients').all()) {\n  const m = it.json;\n  if (!m || !m.id) continue;\n  const de = adresses(m.From)[0];\n  if (!de) continue;\n  // Une réponse automatique (absence, accusé de réception) n'est pas une vraie réponse du client.\n  if (/r[ée]ponse automatique|message d.absence|absent du bureau|absente du bureau|je suis absente?|out of office|automatic reply|auto.?reply|accus[ée] de r[ée]ception/i.test(String(m.Subject || '') + ' ' + String(m.snippet || '').slice(0, 120))) continue;\n  (reponses[de] = reponses[de] || []).push({ quand: Number(m.internalDate), extrait: String(m.snippet || '') });\n}\n\n// 3. Relances déjà créées (ne jamais créer deux fois la même).\n// Clé = « n° noCRM · R1 », lue à la fin de la Référence : un dossier renommé dans noCRM garde ses relances.\n// Clé -> jour de création (ou, à défaut, date prévue), pour espacer R1 et R2.\n// En conditions réelles, une relance « Simulée » ne compte pas : elle n'est jamais partie.\nconst cleDe = (ref) => String(ref).split(' · ').slice(-2).join(' · ');\nconst existantes = new Map();\nfor (const it of $('Airtable – relances existantes').all()) {\n  const f = it.json.fields || it.json;\n  const ref = f['Référence'];\n  if (!ref) continue;\n  if (MODE === 'reel' && f['Statut'] === 'Simulée') continue;\n  const cree = it.json.createdTime || f['Prévue le'];\n  const jour = cree ? ymd(new Date(cree)) : aujourdhui;\n  const cle = cleDe(ref);\n  if (!existantes.has(cle) || jour > existantes.get(cle)) existantes.set(cle, jour);\n}\n\n// Rédaction : modèles validés le 16/09/2026 (annexe du cahier des charges).\nconst SIGNATURE = [\"Secretariat - Sam'Déménage\", 'Téléphone : 06 09 41 02 47', 'Mail : sandrine@samdemenage.fr', 'Mail contact : contact@samdemenage.fr'].join(NL);\nconst de_ = (v) => /^Le /.test(v) ? 'du ' + v.slice(3) : /^Les /.test(v) ? 'des ' + v.slice(4) : /^[AEIOUYÉÈÊÂÎH]/i.test(v) ? \"d'\" + v : 'de ' + v;\nconst a_ = (v) => /^Le /.test(v) ? 'au ' + v.slice(3) : /^Les /.test(v) ? 'aux ' + v.slice(4) : 'à ' + v;\nconst texte = (numero, prenom, dateDevis, depart, arrivee) => {\n  const p = String(prenom || '').trim();\n  const bonjour = p ? 'Bonjour ' + p.charAt(0).toUpperCase() + p.slice(1) + ',' : 'Bonjour,';\n  const trajet = depart && arrivee\n    ? (depart.toLowerCase() === arrivee.toLowerCase() ? ' pour votre déménagement ' + a_(arrivee) : ' pour votre déménagement ' + de_(depart) + ' ' + a_(arrivee))\n    : '';\n  if (numero === 'R1') return {\n    objet: \"Votre devis de déménagement Sam'Déménage\",\n    corps: [bonjour, '',\n      'Je reviens vers vous au sujet du devis que nous vous avons adressé le ' + dateDevis + trajet + '.', '',\n      \"Avez-vous pu en prendre connaissance ? Si vous avez une question, ou si un point est à ajuster (date, volume, prestations), il vous suffit de répondre à ce message.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si votre projet a évolué et que vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n  return {\n    objet: \"Votre projet de déménagement est-il toujours d'actualité ?\",\n    corps: [bonjour, '',\n      'Je me permets de revenir vers vous une dernière fois au sujet de notre devis du ' + dateDevis + trajet + '.', '',\n      \"Si la date vous convient toujours, une simple réponse nous permet de réserver l'équipe et le camion pour vous. Et si vous avez choisi une autre solution, un mot de votre part nous aide à clore votre dossier.\", '',\n      'Bien cordialement,', '', SIGNATURE, '',\n      'Si vous ne souhaitez plus être recontacté, répondez simplement « stop ».'].join(NL)\n  };\n};\n\nconst sortie = [];\nfor (const f of aplatir($('Airtable – dossiers en relance').all())) {\n  if (!f.id || !f.nocrm_id) continue;\n  const email = String(f['E-mail'] || '').trim().toLowerCase();\n  const envoiDevis = devis[email];\n  if (!envoiDevis) continue; // devis introuvable : pas de relance (formule « Devis introuvable » dans Airtable)\n\n  const maj = {};\n  const connu = f['Devis envoyé le'] ? Date.parse(f['Devis envoyé le']) : 0;\n  if (Math.abs(connu - envoiDevis) > 60000) maj['Devis envoyé le'] = new Date(envoiDevis).toISOString();\n\n  const apres = (reponses[email] || []).filter(r => r.quand > envoiDevis).sort((a, b) => a.quand - b.quand);\n  if (apres.length) {\n    const premiere = new Date(apres[0].quand).toISOString();\n    if (!f['Réponse client reçue le'] || Math.abs(Date.parse(f['Réponse client reçue le']) - apres[0].quand) > 60000) maj['Réponse client reçue le'] = premiere;\n    if (apres.some(r => /\\bstop\\b/i.test(r.extrait))) { maj['Relance désactivée'] = true; maj['Motif de désactivation'] = 'Réponse stop du client'; }\n  } else if (f['Réponse client reçue le']) {\n    maj['Réponse client reçue le'] = null; // plus de vraie réponse après le dernier devis (réponse automatique écartée, devis renvoyé)\n  }\n  if (Object.keys(maj).length) sortie.push({ json: { cible: 'opportunite', id: f.id, fields: maj } });\n  if (apres.length) continue; // le client a répondu : plus de relance\n\n  const jourDevis = ymd(new Date(envoiDevis));\n  const refBase = (f['Titre'] || 'Dossier') + ' · ' + f.nocrm_id;\n  const cleBase = f.nocrm_id + '';\n  const enSequence = existantes.has(cleBase + ' · R1');\n  if (!enSequence && ecart(jourDevis, aujourdhui) > 7) continue; // D16 : au lancement, seuls les devis de moins de 7 jours entrent\n  const dateDevis = new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, day: 'numeric', month: 'long' }).format(new Date(envoiDevis));\n\n  for (const [numero, libelle, jours, rattrapage] of [['R1', 'R1 · J+2', 2, 4], ['R2', 'R2 · J+7', 7, 6]]) {\n    const prevue = ouvre(plus(jourDevis, jours));\n    const ref = refBase + ' · ' + numero;\n    if (aujourdhui < prevue || ecart(prevue, aujourdhui) > rattrapage || existantes.has(cleBase + ' · ' + numero)) continue;\n    if (numero === 'R2') {\n      const jourR1 = existantes.get(cleBase + ' · R1');\n      if (!jourR1 || ecart(jourR1, aujourdhui) < 4) continue; // pas de R2 sans R1, ni moins de 4 jours après R1 (cas du rattrapage)\n    }\n    const t = texte(numero, f['Prénom'], dateDevis, f['Départ'], f['Arrivée']);\n    sortie.push({ json: { cible: 'relance', fields: {\n      'Référence': ref, 'Opportunité': [f.id], 'Numéro': libelle, 'Prévue le': prevue,\n      'Destinataire': email, 'Objet': t.objet, 'Corps': t.corps,\n      'Statut': MODE === 'simulation' ? 'Simulée' : 'Planifiée'\n    } } });\n  }\n}\nreturn sortie;"
         },
         "id": "d3000000-0000-4000-8000-000000000008",
         "name": "Décision et rédaction des relances",
@@ -3053,7 +2933,7 @@
         "typeVersion": 2,
         "position": [
           1440,
-          2368
+          1344
         ]
       },
       {
@@ -3066,7 +2946,7 @@
         "typeVersion": 2,
         "position": [
           1680,
-          2272
+          1248
         ]
       },
       {
@@ -3079,7 +2959,7 @@
         "typeVersion": 2,
         "position": [
           1680,
-          2496
+          1472
         ]
       },
       {
@@ -3104,13 +2984,13 @@
         "name": "Airtable – mise à jour des opportunités",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          1920,
-          2272
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          1920,
+          1248
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3140,13 +3020,13 @@
         "name": "Airtable – création des relances",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          1920,
-          2496
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          1920,
+          1472
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3157,7 +3037,7 @@
       {
         "parameters": {
           "content": "# WF4 · Planification des envois\nChaque jour ouvré à 7 h 30 · heures d'envoi tirées au hasard (D21)",
-          "height": 912,
+          "height": 992,
           "width": 2080,
           "color": 6
         },
@@ -3167,13 +3047,13 @@
         "typeVersion": 1,
         "position": [
           -688,
-          3488
+          2704
         ]
       },
       {
         "parameters": {
-          "content": "## WF4 · Planification des envois\n\n**Rôle** : chaque jour ouvré à 7 h 30, donner à chaque relance à envoyer une **heure d'envoi tirée au hasard**, pour un rythme comparable à un envoi manuel (décision D21, exigence F12).\n\n**Relances concernées** : statut « Simulée » ou « Planifiée », sans heure d'envoi. En simulation, l'heure est fictive : rien ne part tant que WF5 n'est pas activé.\n\n### Étapes\n**1. Airtable – relances à planifier** — les relances sans heure d'envoi, les plus anciennes d'abord.\n\n**2. Airtable – créneaux déjà pris** — les heures déjà attribuées sur les derniers jours, pour respecter le plafond et ne pas empiéter.\n\n**3. Tirage des heures d'envoi** — jour d'envoi = aujourd'hui s'il reste de la fenêtre, sinon le jour ouvré suivant. Écarts aléatoires de 7 à 25 min, heure de départ aléatoire, fenêtre 8 h – 17 h 30, jamais pile sur :00 / :15 / :30 / :45. **Plafond 20 par jour** (5 par jour la première semaine de conditions réelles : constante DEBUT_CONDITIONS_REELLES). Le surplus attend le lendemain.\n\n**4. Airtable – enregistrement des heures** — écrit « Planifiée à », par lots de 10.\n\n### Garde-fous\n- N'envoie rien : WF5 enverra chaque relance à son heure exacte.\n- Une relance déjà planifiée n'est jamais replanifiée.\n\nIdentifiant : « Airtable Personal Access Token account ».",
-          "height": 768,
+          "content": "## WF4 · Planification des envois\n\n**Rôle** : chaque jour ouvré à 7 h 30, donner à chaque relance à envoyer une **heure d'envoi tirée au hasard**, pour un rythme comparable à un envoi manuel (décision D21, exigence F12).\n\n**Relances concernées** : statut « Simulée » ou « Planifiée », sans heure d'envoi. En simulation, l'heure est fictive : rien ne part tant que WF5 n'est pas activé. À partir de DEBUT_CONDITIONS_REELLES, les relances « Simulée » restantes ne sont plus planifiées et ne comptent plus dans le plafond.\n\n### Étapes\n**1. Airtable – relances à planifier** — les relances sans heure d'envoi, les plus anciennes d'abord.\n\n**2. Airtable – créneaux déjà pris** — les heures déjà attribuées sur les derniers jours, pour respecter le plafond et ne pas empiéter.\n\n**3. Tirage des heures d'envoi** — jour d'envoi = aujourd'hui s'il reste de la fenêtre, sinon le jour ouvré suivant. Écarts aléatoires de 7 à 25 min, heure de départ aléatoire, fenêtre 8 h – 17 h 30, jamais pile sur :00 / :15 / :30 / :45. **Plafond 20 par jour** (5 par jour la première semaine de conditions réelles : constante DEBUT_CONDITIONS_REELLES). Le surplus attend le lendemain.\n\n**4. Airtable – enregistrement des heures** — écrit « Planifiée à », par lots de 10.\n\n### Garde-fous\n- N'envoie rien : WF5 enverra chaque relance à son heure exacte.\n- Une relance déjà planifiée n'est jamais replanifiée.\n\nIdentifiant : « Airtable Personal Access Token account ».",
+          "height": 864,
           "width": 560,
           "color": 7
         },
@@ -3183,7 +3063,7 @@
         "typeVersion": 1,
         "position": [
           -640,
-          3600
+          2816
         ]
       },
       {
@@ -3203,7 +3083,7 @@
         "typeVersion": 1.2,
         "position": [
           0,
-          3712
+          2928
         ]
       },
       {
@@ -3214,7 +3094,7 @@
         "typeVersion": 1,
         "position": [
           0,
-          3904
+          3120
         ]
       },
       {
@@ -3243,15 +3123,15 @@
         "name": "Airtable – relances à planifier",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          240,
-          3808
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          240,
+          3024
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3275,7 +3155,8 @@
           "filterByFormula": "AND({Planifiée à}!=BLANK(),IS_AFTER({Planifiée à},DATEADD(NOW(),-1,'days')))",
           "options": {
             "fields": [
-              "Planifiée à"
+              "Planifiée à",
+              "Statut"
             ]
           }
         },
@@ -3283,15 +3164,15 @@
         "name": "Airtable – créneaux déjà pris",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          480,
-          3808
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          480,
+          3024
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3301,7 +3182,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Tire au hasard l'heure d'envoi de chaque relance à planifier (décision D21, exigence F12).\n// Fenêtre : jours ouvrés, 8 h – 17 h 30 (heure de Paris). Écart aléatoire de 7 à 25 min entre deux envois,\n// jamais sur une heure ronde. Plafond quotidien ; le surplus attend le jour ouvré suivant.\nconst TZ = 'Europe/Paris';\nconst PLAFOND_PAR_JOUR = 20;\n// Montée en charge (D21) : 5 relances par jour pendant 7 jours à partir du premier jour en conditions réelles.\n// À renseigner au passage en conditions réelles (format 'AAAA-MM-JJ'). Vide = pas de montée en charge.\nconst DEBUT_CONDITIONS_REELLES = '';\nconst DEBUT_FENETRE = 8 * 60, FIN_FENETRE = 17 * 60 + 30;\nconst ECART_MIN = 7, ECART_MAX = 25;\nconst hasard = (a, b) => a + Math.random() * (b - a);\n\nconst parties = (d) => Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short' }).formatToParts(d).map(p => [p.type, p.value]));\nconst jourDe = (d) => { const p = parties(d); return p.year + '-' + p.month + '-' + p.day; };\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\n// (jour, minutes à Paris) -> instant réel, heure d'été comprise\nconst versInstant = (jour, minutes) => {\n  const [a, m, j] = jour.split('-').map(Number);\n  const essai = Date.UTC(a, m - 1, j, Math.floor(minutes / 60), Math.floor(minutes % 60), Math.floor((minutes % 1) * 60));\n  const p = parties(new Date(essai));\n  const affiche = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute);\n  return new Date(essai - (affiche - Math.floor(essai / 60000) * 60000));\n};\nconst minutesParis = (d) => { const p = parties(d); return (+p.hour % 24) * 60 + (+p.minute); };\n\n// Jour d'envoi : aujourd'hui si c'est un jour ouvré et qu'il reste au moins 30 min de fenêtre, sinon le jour ouvré suivant.\nconst maintenant = new Date();\nconst aujourdhui = jourDe(maintenant);\nconst jourOuvre = ouvre(aujourdhui) === aujourdhui;\nconst jourEnvoi = jourOuvre && minutesParis(maintenant) < FIN_FENETRE - 30 ? aujourdhui : ouvre(plus(aujourdhui, 1));\nlet plancher = jourEnvoi === aujourdhui ? Math.max(DEBUT_FENETRE, minutesParis(maintenant) + 10) : DEBUT_FENETRE;\n\n// Créneaux déjà pris ce jour-là : ils comptent dans le plafond et on repart après le dernier.\nlet dejaPris = 0;\nfor (const it of $('Airtable – créneaux déjà pris').all()) {\n  const f = it.json.fields || it.json;\n  if (!f['Planifiée à']) continue;\n  const d = new Date(f['Planifiée à']);\n  if (jourDe(d) !== jourEnvoi) continue;\n  dejaPris++;\n  plancher = Math.max(plancher, minutesParis(d) + ECART_MIN);\n}\nconst enMontee = DEBUT_CONDITIONS_REELLES && jourEnvoi >= DEBUT_CONDITIONS_REELLES && jourEnvoi < plus(DEBUT_CONDITIONS_REELLES, 7);\nconst capacite = Math.max(0, (enMontee ? 5 : PLAFOND_PAR_JOUR) - dejaPris);\n\n// Relances à planifier, les plus anciennes d'abord.\nconst aPlanifier = $('Airtable – relances à planifier').all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Référence'])\n  .sort((a, b) => String(a['Prévue le'] || '').localeCompare(String(b['Prévue le'] || '')));\n\n// Tirage : écarts aléatoires, puis une heure de départ aléatoire qui laisse tenir toute la série dans la fenêtre.\nlet n = Math.min(capacite, aPlanifier.length);\nlet ecarts = [];\nwhile (n > 0) {\n  ecarts = Array.from({ length: n - 1 }, () => hasard(ECART_MIN, ECART_MAX));\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  if (plancher + duree <= FIN_FENETRE) break;\n  n--; // la série ne tient pas : la dernière relance attendra le jour ouvré suivant\n}\nconst lignes = [];\nif (n > 0) {\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  let t = hasard(plancher, FIN_FENETRE - duree);\n  for (let i = 0; i < n; i++) {\n    if (i > 0) t += ecarts[i - 1];\n    let minutes = t;\n    if (Math.floor(minutes) % 15 === 0) minutes += hasard(1, 3); // jamais pile sur :00, :15, :30, :45\n    lignes.push({ id: aPlanifier[i].id, fields: { 'Planifiée à': versInstant(jourEnvoi, Math.min(minutes, FIN_FENETRE)).toISOString() } });\n  }\n}\nconst lots = [];\nfor (let i = 0; i < lignes.length; i += 10) lots.push({ json: { records: lignes.slice(i, i + 10), jourEnvoi, planifiees: lignes.length, enAttente: aPlanifier.length - lignes.length } });\nreturn lots;"
+          "jsCode": "// Tire au hasard l'heure d'envoi de chaque relance à planifier (décision D21, exigence F12).\n// Fenêtre : jours ouvrés, 8 h – 17 h 30 (heure de Paris). Écart aléatoire de 7 à 25 min entre deux envois,\n// jamais sur une heure ronde. Plafond quotidien ; le surplus attend le jour ouvré suivant.\nconst TZ = 'Europe/Paris';\nconst PLAFOND_PAR_JOUR = 20;\n// Montée en charge (D21) : 5 relances par jour pendant 7 jours à partir du premier jour en conditions réelles.\n// À renseigner au passage en conditions réelles (format 'AAAA-MM-JJ'). Vide = pas de montée en charge.\n// Sert aussi de repère du mode réel : à partir de cette date, les relances « Simulée » ne sont plus planifiées.\nconst DEBUT_CONDITIONS_REELLES = '';\nconst DEBUT_FENETRE = 8 * 60, FIN_FENETRE = 17 * 60 + 30;\nconst ECART_MIN = 7, ECART_MAX = 25;\nconst hasard = (a, b) => a + Math.random() * (b - a);\n\nconst parties = (d) => Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short' }).formatToParts(d).map(p => [p.type, p.value]));\nconst jourDe = (d) => { const p = parties(d); return p.year + '-' + p.month + '-' + p.day; };\nconst plus = (jour, n) => { const [a, m, j] = jour.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };\nconst ouvre = (jour) => { const js = new Date(jour + 'T12:00:00Z').getUTCDay(); return js === 6 ? plus(jour, 2) : js === 0 ? plus(jour, 1) : jour; };\n// (jour, minutes à Paris) -> instant réel, heure d'été comprise\nconst versInstant = (jour, minutes) => {\n  const [a, m, j] = jour.split('-').map(Number);\n  const essai = Date.UTC(a, m - 1, j, Math.floor(minutes / 60), Math.floor(minutes % 60), Math.floor((minutes % 1) * 60));\n  const p = parties(new Date(essai));\n  const affiche = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute);\n  return new Date(essai - (affiche - Math.floor(essai / 60000) * 60000));\n};\nconst minutesParis = (d) => { const p = parties(d); return (+p.hour % 24) * 60 + (+p.minute); };\n\n// Jour d'envoi : aujourd'hui si c'est un jour ouvré et qu'il reste au moins 30 min de fenêtre, sinon le jour ouvré suivant.\nconst maintenant = new Date();\nconst aujourdhui = jourDe(maintenant);\nconst jourOuvre = ouvre(aujourdhui) === aujourdhui;\nconst jourEnvoi = jourOuvre && minutesParis(maintenant) < FIN_FENETRE - 30 ? aujourdhui : ouvre(plus(aujourdhui, 1));\nconst reel = Boolean(DEBUT_CONDITIONS_REELLES) && jourEnvoi >= DEBUT_CONDITIONS_REELLES;\nlet plancher = jourEnvoi === aujourdhui ? Math.max(DEBUT_FENETRE, minutesParis(maintenant) + 10) : DEBUT_FENETRE;\n\n// Créneaux déjà pris ce jour-là : ils comptent dans le plafond et on repart après le dernier.\nlet dejaPris = 0;\nfor (const it of $('Airtable – créneaux déjà pris').all()) {\n  const f = it.json.fields || it.json;\n  if (!f['Planifiée à']) continue;\n  if (reel && f['Statut'] === 'Simulée') continue;\n  const d = new Date(f['Planifiée à']);\n  if (jourDe(d) !== jourEnvoi) continue;\n  dejaPris++;\n  plancher = Math.max(plancher, minutesParis(d) + ECART_MIN);\n}\nconst enMontee = DEBUT_CONDITIONS_REELLES && jourEnvoi >= DEBUT_CONDITIONS_REELLES && jourEnvoi < plus(DEBUT_CONDITIONS_REELLES, 7);\nconst capacite = Math.max(0, (enMontee ? 5 : PLAFOND_PAR_JOUR) - dejaPris);\n\n// Relances à planifier, les plus anciennes d'abord.\nconst aPlanifier = $('Airtable – relances à planifier').all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Référence'] && !(reel && r['Statut'] === 'Simulée'))\n  .sort((a, b) => String(a['Prévue le'] || '').localeCompare(String(b['Prévue le'] || '')));\n\n// Tirage : écarts aléatoires, puis une heure de départ aléatoire qui laisse tenir toute la série dans la fenêtre.\nlet n = Math.min(capacite, aPlanifier.length);\nlet ecarts = [];\nwhile (n > 0) {\n  ecarts = Array.from({ length: n - 1 }, () => hasard(ECART_MIN, ECART_MAX));\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  if (plancher + duree <= FIN_FENETRE) break;\n  n--; // la série ne tient pas : la dernière relance attendra le jour ouvré suivant\n}\nconst lignes = [];\nif (n > 0) {\n  const duree = ecarts.reduce((s, e) => s + e, 0);\n  let t = hasard(plancher, FIN_FENETRE - duree);\n  for (let i = 0; i < n; i++) {\n    if (i > 0) t += ecarts[i - 1];\n    let minutes = t;\n    if (Math.floor(minutes) % 15 === 0) minutes += hasard(1, 3); // jamais pile sur :00, :15, :30, :45\n    lignes.push({ id: aPlanifier[i].id, fields: { 'Planifiée à': versInstant(jourEnvoi, Math.min(minutes, FIN_FENETRE)).toISOString() } });\n  }\n}\nconst lots = [];\nfor (let i = 0; i < lignes.length; i += 10) lots.push({ json: { records: lignes.slice(i, i + 10), jourEnvoi, planifiees: lignes.length, enAttente: aPlanifier.length - lignes.length } });\nreturn lots;"
         },
         "id": "d4000000-0000-4000-8000-000000000005",
         "name": "Tirage des heures d'envoi",
@@ -3309,7 +3190,7 @@
         "typeVersion": 2,
         "position": [
           720,
-          3808
+          3024
         ]
       },
       {
@@ -3334,13 +3215,13 @@
         "name": "Airtable – enregistrement des heures",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          960,
-          3808
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          960,
+          3024
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3351,7 +3232,7 @@
       {
         "parameters": {
           "content": "# WF5 · Envoi des relances\nToutes les 25 min en journée · mode SIMULATION (aucun e-mail envoyé)",
-          "height": 1128,
+          "height": 1208,
           "width": 4720,
           "color": 2
         },
@@ -3361,13 +3242,13 @@
         "typeVersion": 1,
         "position": [
           -688,
-          4496
+          3712
         ]
       },
       {
         "parameters": {
-          "content": "## WF5 · Envoi des relances\n\n**Rôle** : envoyer chaque relance **à son heure exacte**, après une dernière vérification du dossier.\n\n**Mode actuel : SIMULATION** — aucun e-mail ne part ; chaque relance est annotée dans le champ Motif (« aurait été envoyée… » ou « aurait été annulée — raison »). Passage en conditions réelles : constante MODE du nœud « Réglages WF5 », uniquement sur déclaration explicite de Karim, en même temps que WF3 et WF4.\n\n### Étapes\n**1. Toutes les 25 min en journée** — jours ouvrés, de 8 h à 17 h 50.\n\n**2. Réglages WF5** — le mode (simulation ou réel).\n\n**3. Airtable – relances à envoyer** — celles dont l'heure d'envoi tombe dans les 25 prochaines minutes (ou est passée).\n\n**4. Verrou** — en réel, statut « Envoi en cours » ; en simulation, Motif provisoire. La prochaine exécution ne les reprend pas : **aucun double envoi** (F1).\n\n**5. Boucle, une relance à la fois** :\n- **Attente jusqu'à l'heure prévue** — l'heure tirée par WF4 est respectée à la minute ;\n- **Dernière vérification** : dossier Airtable, état noCRM à l'instant (étape, statut), réponse du client arrivée dans Gmail depuis le matin, relance désactivée ;\n- **Envoi Gmail** depuis karimbordeau@samdemenage.fr, affiché « Secrétariat Sam'Déménage », texte simple, sans mention n8n ;\n- **Résultat** : Envoyée, Annulée (avec la raison), Échec (Gmail ou noCRM injoignable), ou replanifiée si l'heure est dépassée de plus d'un jour.\n\n### Garde-fous\n- Un dossier qui n'est plus éligible n'est jamais relancé : la vérification a lieu à la minute de l'envoi.\n- noCRM injoignable → pas d'envoi à l'aveugle : statut Échec.\n- Un refus de Gmail n'arrête pas les autres envois.\n\nIdentifiants : « Gmail SamD Karim », « Header Auth account » (noCRM), « Airtable Personal Access Token account ».",
-          "height": 976,
+          "content": "## WF5 · Envoi des relances\n\n**Rôle** : envoyer chaque relance **à son heure exacte**, après une dernière vérification du dossier.\n\n**Mode actuel : SIMULATION** — aucun e-mail ne part ; chaque relance est annotée dans le champ Motif (« aurait été envoyée… » ou « aurait été annulée — raison »). Passage en conditions réelles : constante MODE du nœud « Réglages WF5 », uniquement sur déclaration explicite de Karim, en même temps que WF3 et WF4.\n\n### Étapes\n**1. Jours ouvrés à 8 h, 11 h et 14 h** — 3 passages par jour (quota Airtable : 1 000 appels/mois).\n\n**2. Réglages WF5** — le mode (simulation ou réel) et FENETRE_MINUTES (210 : chaque passage couvre les 3 h 30 suivantes).\n\n**3. Airtable – relances à envoyer** — celles dont l'heure d'envoi tombe dans la fenêtre du passage (ou est passée). L'exécution reste ensuite en attente jusqu'à chaque heure d'envoi ; une attente survit à un redémarrage de n8n.\n\n**4. Verrou** — en réel, statut « Envoi en cours » ; en simulation, Motif provisoire. Le passage suivant ne les reprend pas : **aucun double envoi** (F1).\n\n**5. Boucle, une relance à la fois** :\n- **Attente jusqu'à l'heure prévue** — l'heure tirée par WF4 est respectée à la minute ;\n- **Dernière vérification** : dossier Airtable, état noCRM à l'instant (étape, statut), réponse du client arrivée dans Gmail depuis le matin, relance désactivée ;\n- **Envoi Gmail** depuis karimbordeau@samdemenage.fr, affiché « Secrétariat Sam'Déménage », texte simple, sans mention n8n ;\n- **Résultat** : Envoyée, Annulée (avec la raison), Échec (Gmail ou noCRM injoignable), ou replanifiée si l'heure est dépassée de plus d'un jour.\n\n### Garde-fous\n- Un dossier qui n'est plus éligible n'est jamais relancé : la vérification a lieu à la minute de l'envoi.\n- noCRM injoignable → pas d'envoi à l'aveugle : statut Échec.\n- Un refus de Gmail n'arrête pas les autres envois.\n\nIdentifiants : « Gmail SamD Karim », « Header Auth account » (noCRM), « Airtable Personal Access Token account ».",
+          "height": 1056,
           "width": 560,
           "color": 7
         },
@@ -3377,7 +3258,7 @@
         "typeVersion": 1,
         "position": [
           -640,
-          4608
+          3824
         ]
       },
       {
@@ -3386,18 +3267,18 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "*/25 8-17 * * 1-5"
+                "expression": "0 8,11,14 * * 1-5"
               }
             ]
           }
         },
         "id": "d5000000-0000-4000-8000-000000000001",
-        "name": "Toutes les 25 min en journée",
+        "name": "Jours ouvrés à 8 h, 11 h et 14 h",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.2,
         "position": [
           0,
-          4720
+          3936
         ]
       },
       {
@@ -3408,12 +3289,12 @@
         "typeVersion": 1,
         "position": [
           0,
-          4912
+          4128
         ]
       },
       {
         "parameters": {
-          "jsCode": "// MODE : 'simulation' = aucun e-mail n'est envoyé ; chaque relance est seulement annotée (champ Motif).\n//        'reel'       = envoi réel. À ne passer qu'après déclaration explicite de Karim Bordeau (décision D5),\n//                       en même temps que MODE du nœud « Décision et rédaction des relances » (WF3)\n//                       et DEBUT_CONDITIONS_REELLES du nœud « Tirage des heures d'envoi » (WF4).\nreturn [{ json: { MODE: 'simulation' } }];"
+          "jsCode": "// MODE : 'simulation' = aucun e-mail n'est envoyé ; chaque relance est seulement annotée (champ Motif).\n//        'reel'       = envoi réel. À ne passer qu'après déclaration explicite de Karim Bordeau (décision D5),\n//                       en même temps que MODE du nœud « Décision et rédaction des relances » (WF3)\n//                       et DEBUT_CONDITIONS_REELLES du nœud « Tirage des heures d'envoi » (WF4).\n// FENETRE_MINUTES : un passage prend les relances dont l'heure d'envoi tombe dans ce délai (ou est passée).\n//                   Doit couvrir l'écart jusqu'au passage suivant : 8 h → 11 h → 14 h → fin de fenêtre 17 h 30.\nreturn [{ json: { MODE: 'simulation', FENETRE_MINUTES: 210 } }];"
         },
         "id": "d5000000-0000-4000-8000-000000000003",
         "name": "Réglages WF5",
@@ -3421,7 +3302,7 @@
         "typeVersion": 2,
         "position": [
           240,
-          4816
+          4032
         ]
       },
       {
@@ -3437,7 +3318,7 @@
             "mode": "id",
             "value": "tblRoNTjuFAXOmcLf"
           },
-          "filterByFormula": "={{ $('Réglages WF5').first().json.MODE === 'reel' ? \"AND({Statut}='Planifiée',{Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),25,'minutes')))\" : \"AND({Statut}='Simulée',{Planifiée à}!=BLANK(),{Motif}=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),25,'minutes')))\" }}",
+          "filterByFormula": "={{ $('Réglages WF5').first().json.MODE === 'reel' ? \"AND({Statut}='Planifiée',{Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),\" + $('Réglages WF5').first().json.FENETRE_MINUTES + \",'minutes')))\" : \"AND({Statut}='Simulée',{Planifiée à}!=BLANK(),{Motif}=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),\" + $('Réglages WF5').first().json.FENETRE_MINUTES + \",'minutes')))\" }}",
           "options": {
             "fields": [
               "Référence",
@@ -3454,15 +3335,15 @@
         "name": "Airtable – relances à envoyer",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          480,
-          4816
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          480,
+          4032
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3472,7 +3353,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Relances dont l'heure d'envoi tombe dans les 25 prochaines minutes (ou est passée), les plus tôt d'abord.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst relances = $input.all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Destinataire'] && r['Planifiée à'] && Array.isArray(r['Opportunité']) && r['Opportunité'].length)\n  .sort((a, b) => String(a['Planifiée à']).localeCompare(String(b['Planifiée à'])))\n  .map(r => ({ json: {\n    id: r.id, reference: r['Référence'], destinataire: String(r['Destinataire']).trim(),\n    objet: r['Objet'], corps: r['Corps'], planifieeA: r['Planifiée à'], opportunite: r['Opportunité'][0], MODE\n  } }));\nreturn relances;"
+          "jsCode": "// Relances dont l'heure d'envoi tombe dans la fenêtre du passage (FENETRE_MINUTES) ou est passée, les plus tôt d'abord.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst relances = $input.all()\n  .map(it => ({ id: it.json.id, ...(it.json.fields || it.json) }))\n  .filter(r => r.id && r['Destinataire'] && r['Planifiée à'] && Array.isArray(r['Opportunité']) && r['Opportunité'].length)\n  .sort((a, b) => String(a['Planifiée à']).localeCompare(String(b['Planifiée à'])))\n  .map(r => ({ json: {\n    id: r.id, reference: r['Référence'], destinataire: String(r['Destinataire']).trim(),\n    objet: r['Objet'], corps: r['Corps'], planifieeA: r['Planifiée à'], opportunite: r['Opportunité'][0], MODE\n  } }));\nreturn relances;"
         },
         "id": "d5000000-0000-4000-8000-000000000005",
         "name": "Préparation des relances",
@@ -3480,12 +3361,12 @@
         "typeVersion": 2,
         "position": [
           720,
-          4816
+          4032
         ]
       },
       {
         "parameters": {
-          "jsCode": "// Verrou (exigence F1) : la prochaine exécution, 25 min plus tard, ne reprendra pas ces relances.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst l = $input.all().map(i => ({ id: i.json.id, fields: MODE === 'reel'\n  ? { 'Statut': 'Envoi en cours' }\n  : { 'Motif': \"Simulation : en attente de l'heure d'envoi\" } }));\nconst lots = [];\nfor (let i = 0; i < l.length; i += 10) lots.push({ json: { records: l.slice(i, i + 10) } });\nreturn lots;"
+          "jsCode": "// Verrou (exigence F1) : le passage suivant ne reprendra pas ces relances.\nconst MODE = $('Réglages WF5').first().json.MODE;\nconst l = $input.all().map(i => ({ id: i.json.id, fields: MODE === 'reel'\n  ? { 'Statut': 'Envoi en cours' }\n  : { 'Motif': \"Simulation : en attente de l'heure d'envoi\" } }));\nconst lots = [];\nfor (let i = 0; i < l.length; i += 10) lots.push({ json: { records: l.slice(i, i + 10) } });\nreturn lots;"
         },
         "id": "d5000000-0000-4000-8000-000000000006",
         "name": "Lots – verrou",
@@ -3493,7 +3374,7 @@
         "typeVersion": 2,
         "position": [
           960,
-          4816
+          4032
         ]
       },
       {
@@ -3518,13 +3399,13 @@
         "name": "Airtable – pose du verrou",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          1200,
-          4816
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          1200,
+          4032
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3542,7 +3423,7 @@
         "typeVersion": 2,
         "position": [
           1440,
-          4816
+          4032
         ]
       },
       {
@@ -3555,7 +3436,7 @@
         "typeVersion": 3,
         "position": [
           1680,
-          4816
+          4032
         ]
       },
       {
@@ -3565,13 +3446,13 @@
         },
         "id": "d5000000-0000-4000-8000-00000000000a",
         "name": "Attente jusqu'à l'heure prévue",
+        "webhookId": "d724d102-be42-4c3e-8897-7d67b0610285",
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
           1920,
-          4992
-        ],
-        "webhookId": "7fa194b0-88ef-4cb8-9e4c-189fab0ba662"
+          4208
+        ]
       },
       {
         "parameters": {
@@ -3584,13 +3465,13 @@
         "name": "Airtable – dossier de la relance",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          2160,
-          4992
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          2160,
+          4208
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3609,13 +3490,13 @@
         "name": "noCRM – état du dossier",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          2400,
-          4992
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          2400,
+          4208
+        ],
         "credentials": {
           "httpHeaderAuth": {
             "id": "cozsLIX1RhBu4CoY",
@@ -3635,17 +3516,17 @@
         },
         "id": "d5000000-0000-4000-8000-00000000000d",
         "name": "Gmail – réponse récente du client",
+        "webhookId": "2b7c87be-a4ac-463c-ab53-caf238df1417",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.1,
-        "position": [
-          2640,
-          4992
-        ],
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
-        "webhookId": "7f886c06-0be9-4653-83ce-8ccc509c8dbc",
+        "position": [
+          2640,
+          4208
+        ],
         "credentials": {
           "gmailOAuth2": {
             "id": "JP8a4UaPJbJqua5Y",
@@ -3663,7 +3544,7 @@
         "typeVersion": 2,
         "position": [
           2880,
-          4992
+          4208
         ]
       },
       {
@@ -3696,7 +3577,7 @@
         "typeVersion": 2,
         "position": [
           3120,
-          4992
+          4208
         ]
       },
       {
@@ -3712,13 +3593,13 @@
         },
         "id": "d5000000-0000-4000-8000-000000000010",
         "name": "Gmail – envoi de la relance",
+        "webhookId": "69c5c8dd-7542-4868-9121-a2efb7475ef2",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.1,
         "position": [
           3360,
-          4912
+          4128
         ],
-        "webhookId": "cd1d7d69-92cc-43d8-9b74-ce9f5e3b7891",
         "credentials": {
           "gmailOAuth2": {
             "id": "JP8a4UaPJbJqua5Y",
@@ -3737,7 +3618,7 @@
         "typeVersion": 2,
         "position": [
           3600,
-          4992
+          4208
         ]
       },
       {
@@ -3755,13 +3636,13 @@
         "name": "Airtable – enregistrement du résultat",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          3840,
-          4992
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          3840,
+          4208
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3772,7 +3653,7 @@
       {
         "parameters": {
           "content": "# WF6 · Contrôle des pannes silencieuses\nJours ouvrés · 8 h : A5, A9, A10 · chaque heure de 8 h 10 à 19 h 10 : A7, A8 · #alertes-relances",
-          "height": 1548,
+          "height": 1564,
           "width": 2560
         },
         "id": "13dc832e-e513-5bed-b90d-8c9477cacf4f",
@@ -3781,12 +3662,12 @@
         "typeVersion": 1,
         "position": [
           -688,
-          5728
+          5024
         ]
       },
       {
         "parameters": {
-          "content": "## WF6 · Contrôle des pannes silencieuses\n\n**Rôle** : repérer un système qui tourne sans erreur mais ne fait plus son travail (exigence F8). WF0 prévient quand une exécution **échoue** ; WF6 prévient quand ce qui devait se produire **ne s'est pas produit**. Alertes A5, A7 à A10 du catalogue, dans **#alertes-relances**.\n\n### Contrôles du matin — jours ouvrés à 8 h\n**1. n8n – exécutions récentes** — l'historique des exécutions de ce workflow (API n8n).\n\n**2. Gmail – derniers envois de devis** — les mails du secrétariat avec un devis en pièce jointe, sur 14 jours.\n\n**3. Airtable – devis introuvables** — les dossiers où la formule « Devis introuvable » vaut 1.\n\n**4. Contrôles du matin** :\n- **A5** — la synchronisation de 2 h (WF1) s'est exécutée cette nuit **et** a terminé ;\n- **A9** — au moins un envoi de devis sur les deux derniers jours ouvrés ;\n- **A10** — nouveaux dossiers « Devis introuvable » (chaque dossier n'est signalé qu'une fois).\n\n### Contrôles horaires — jours ouvrés, de 8 h 10 à 19 h 10\n**1. Airtable – relances en retard** — relances dont l'heure d'envoi est dépassée de plus de 30 min et qui ne sont ni envoyées, ni annulées, ni en échec.\n\n**2. Contrôles horaires** :\n- **A7** — relance verrouillée par WF5 (« Envoi en cours », ou Motif « en attente de l'heure d'envoi » en simulation) et toujours pas traitée 30 min après son heure : l'exécution d'envoi s'est interrompue ;\n- **A8** — relance jamais prise en charge 1 h après son heure : WF5 ne tourne plus.\n\n### Envoi de l'alerte (commun aux deux)\n**Une alerte par anomalie** — mémoire de n8n : une anomalie déjà signalée ne repart pas. A5 et A9 : une fois par jour ; A7 et A8 : un rappel par relance et par jour ; A10 : une fois par dossier.\n\n**Message de contrôle** — regroupe tout en **un seul message**, avec l'action à mener pour chaque alerte.\n\n**Alerte Slack** — publie dans #alertes-relances. Rien à signaler = aucun message.\n\n### À savoir\n- **A6** (webhooks noCRM manqués) viendra avec WF2 : sans webhook, rien à comparer.\n- **A4** (n8n ou le serveur arrêté) : WF6 s'arrête avec eux et ne peut rien voir → signal de vie externe (F7), à venir.\n- Jours fériés non gérés : A9 peut sonner à tort le lendemain d'un jour férié.\n- Identifiants : « n8n SD-WF6 », « Gmail SamD Karim », « Airtable Personal Access Token account », « Slack Alertes n8n ».",
+          "content": "## WF6 · Contrôle des pannes silencieuses\n\n**Rôle** : repérer un système qui tourne sans erreur mais ne fait plus son travail (exigence F8). « Gestion des erreurs » prend en charge une exécution qui **échoue** ; WF6 prévient quand ce qui devait se produire **ne s'est pas produit**. Alertes A5, A7 à A11 du catalogue, dans **#alertes-relances**.\n\n### Contrôles du matin — jours ouvrés à 8 h\n**1. n8n – exécutions récentes** — l'historique des exécutions de ce workflow (API n8n).\n\n**2. Gmail – derniers envois de devis** — les mails du secrétariat avec un devis en pièce jointe, sur 14 jours.\n\n**3. Airtable – devis introuvables** — les dossiers où la formule « Devis introuvable » vaut 1.\n\n**4. Contrôles du matin** :\n- **A5** — la synchronisation de 2 h (WF1, jours ouvrés) s'est exécutée cette nuit **et** a terminé ;\n- **A9** — au moins un envoi de devis sur les deux derniers jours ouvrés ;\n- **A10** — nouveaux dossiers « Devis introuvable » (chaque dossier n'est signalé qu'une fois).\n\n### Contrôles de la journée — jours ouvrés à 10 h 10, 12 h 10, 15 h 10 et 18 h 40 (quota Airtable)\n**1. Airtable – relances en retard** — relances dont l'heure d'envoi est dépassée de plus de 30 min et qui ne sont ni envoyées, ni annulées ; et relances en échec.\n\n**2. Contrôles horaires** (nom du nœud) :\n- **A7** — relance verrouillée par WF5 (« Envoi en cours », ou Motif « en attente de l'heure d'envoi » en simulation) et toujours pas traitée 30 min après son heure : l'exécution d'envoi s'est interrompue ;\n- **A8** — relance jamais prise en charge 1 h après son heure : WF5 ne tourne plus ;\n- **A11** — relance en « Échec » (Gmail a refusé l'envoi, ou noCRM injoignable) ; en simulation, relance qui aurait échoué faute de vérification noCRM.\n\n### Envoi de l'alerte (commun aux deux)\n**Une alerte par anomalie** — mémoire de n8n : une anomalie déjà signalée ne repart pas. A5 et A9 : une fois par jour ; A7 et A8 : un rappel par relance et par jour ; A11 : une fois par échec ; A10 : une fois par dossier.\n\n**Message de contrôle** — regroupe tout en **un seul message**, avec l'action à mener pour chaque alerte.\n\n**Alerte Slack** — publie dans #alertes-relances. Rien à signaler = aucun message.\n\n### À savoir\n- **A6** (webhooks noCRM manqués) viendra avec WF2 : sans webhook, rien à comparer.\n- **A4** (n8n ou le serveur arrêté) : WF6 s'arrête avec eux et ne peut rien voir → bloc F7 · Signal de vie externe.\n- Jours fériés non gérés : A9 peut sonner à tort le lendemain d'un jour férié.\n- Identifiants : « n8n SD-WF6 », « Gmail SamD Karim », « Airtable Personal Access Token account », « Slack Alertes n8n ».",
           "height": 1408,
           "width": 560,
           "color": 7
@@ -3797,7 +3678,7 @@
         "typeVersion": 1,
         "position": [
           -640,
-          5840
+          5136
         ]
       },
       {
@@ -3817,7 +3698,7 @@
         "typeVersion": 1.2,
         "position": [
           0,
-          5936
+          5232
         ]
       },
       {
@@ -3828,7 +3709,7 @@
         "typeVersion": 1,
         "position": [
           0,
-          6128
+          5424
         ]
       },
       {
@@ -3855,14 +3736,14 @@
         "name": "n8n – exécutions récentes",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
-        "position": [
-          240,
-          6032
-        ],
         "executeOnce": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          240,
+          5328
+        ],
         "credentials": {
           "n8nApi": {
             "id": "UkE2UaZb5SrNjijN",
@@ -3881,18 +3762,18 @@
         },
         "id": "87b74910-b8c3-5429-b006-e6075fda69b8",
         "name": "Gmail – derniers envois de devis",
+        "webhookId": "28ee87eb-0ea9-4f66-a22a-98971e86fa4e",
         "type": "n8n-nodes-base.gmail",
         "typeVersion": 2.1,
-        "position": [
-          480,
-          6032
-        ],
         "executeOnce": true,
         "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
-        "webhookId": "cacf8893-f33f-4ad9-9476-773519eb81f6",
+        "position": [
+          480,
+          5328
+        ],
         "credentials": {
           "gmailOAuth2": {
             "id": "JP8a4UaPJbJqua5Y",
@@ -3929,15 +3810,15 @@
         "name": "Airtable – devis introuvables",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          720,
-          6032
-        ],
         "executeOnce": true,
+        "alwaysOutputData": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
-        "alwaysOutputData": true,
+        "position": [
+          720,
+          5328
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -3955,7 +3836,7 @@
         "typeVersion": 2,
         "position": [
           960,
-          6032
+          5328
         ]
       },
       {
@@ -3964,18 +3845,22 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "10 8-19 * * 1-5"
+                "expression": "10 10,12,15 * * 1-5"
+              },
+              {
+                "field": "cronExpression",
+                "expression": "40 18 * * 1-5"
               }
             ]
           }
         },
         "id": "911f2037-dd85-53f5-b42a-71e3953f97ed",
-        "name": "Chaque heure en journée",
+        "name": "Jours ouvrés à 10 h 10, 12 h 10, 15 h 10 et 18 h 40",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.2,
         "position": [
           0,
-          6336
+          5632
         ]
       },
       {
@@ -3986,7 +3871,7 @@
         "typeVersion": 1,
         "position": [
           0,
-          6528
+          5824
         ]
       },
       {
@@ -4002,7 +3887,7 @@
             "mode": "id",
             "value": "tblRoNTjuFAXOmcLf"
           },
-          "filterByFormula": "AND({Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),-30,'minutes')),OR({Statut}='Envoi en cours',{Statut}='Planifiée',AND({Statut}='Simulée',OR({Motif}=BLANK(),{Motif}=\"Simulation : en attente de l'heure d'envoi\"))))",
+          "filterByFormula": "OR({Statut}='Échec',AND({Statut}='Simulée',FIND('Vérification noCRM impossible',{Motif})),AND({Planifiée à}!=BLANK(),IS_BEFORE({Planifiée à},DATEADD(NOW(),-30,'minutes')),OR({Statut}='Envoi en cours',{Statut}='Planifiée',AND({Statut}='Simulée',OR({Motif}=BLANK(),{Motif}=\"Simulation : en attente de l'heure d'envoi\")))))",
           "options": {
             "fields": [
               "Référence",
@@ -4016,14 +3901,14 @@
         "name": "Airtable – relances en retard",
         "type": "n8n-nodes-base.airtable",
         "typeVersion": 2.1,
-        "position": [
-          480,
-          6432
-        ],
         "executeOnce": true,
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
+        "position": [
+          480,
+          5728
+        ],
         "credentials": {
           "airtableTokenApi": {
             "id": "sr22doSVsleoR29y",
@@ -4033,7 +3918,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Contrôles horaires (alertes A7 et A8 du catalogue), en conditions réelles comme en simulation.\n// A7 : relance verrouillée par WF5 et toujours pas traitée 30 min après son heure d'envoi (exécution interrompue).\n// A8 : relance jamais prise en charge plus d'une heure après son heure d'envoi (WF5 ne tourne plus).\nconst TZ = 'Europe/Paris';\nconst VERROU_SIMULATION = \"Simulation : en attente de l'heure d'envoi\"; // Motif posé par le verrou de WF5 en simulation\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst hm = (d) => new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(d).replace(':', ' h ');\nconst duree = (min) => min < 60 ? min + ' min' : Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0');\nconst maintenant = Date.now();\nconst aujourdhui = ymd(new Date());\n\nconst anomalies = [];\nfor (const it of $input.all()) {\n  const r = { id: it.json.id, ...(it.json.fields || it.json) };\n  if (!r.id || !r['Planifiée à']) continue;\n  const prevue = Date.parse(r['Planifiée à']);\n  const retard = Math.round((maintenant - prevue) / 60000);\n  const statut = r['Statut'];\n  const motif = String(r['Motif'] || '');\n  let code = null;\n  if (retard > 30 && (statut === 'Envoi en cours' || (statut === 'Simulée' && motif === VERROU_SIMULATION))) code = 'A7';\n  else if (retard > 60 && (statut === 'Planifiée' || (statut === 'Simulée' && !motif))) code = 'A8';\n  if (!code) continue;\n  anomalies.push({ json: {\n    code,\n    cle: code + '|' + r.id + '|' + aujourdhui, // au plus un rappel par relance et par jour\n    texte: (r['Référence'] || r.id) + (statut === 'Simulée' ? ' (simulation)' : '') + ' — prévue à ' + hm(new Date(prevue))\n      + (code === 'A7' ? ', toujours « en cours d’envoi »' : ', toujours pas partie') + ' (' + duree(retard) + ' de retard).'\n  } });\n}\nreturn anomalies;"
+          "jsCode": "// Contrôles de la journée, 4 passages (alertes A7, A8 et A11 du catalogue), en conditions réelles comme en simulation.\n// A7 : relance verrouillée par WF5 et toujours pas traitée 30 min après son heure d'envoi (exécution interrompue).\n// A8 : relance jamais prise en charge plus d'une heure après son heure d'envoi (WF5 ne tourne plus).\n// A11 : relance en échec (Gmail a refusé l'envoi, ou noCRM injoignable) ; en simulation, l'échec noCRM qui l'aurait causé.\nconst TZ = 'Europe/Paris';\nconst VERROU_SIMULATION = \"Simulation : en attente de l'heure d'envoi\"; // Motif posé par le verrou de WF5 en simulation\nconst ECHEC_SIMULATION = 'Vérification noCRM impossible'; // seul échec possible en simulation (aucun envoi Gmail)\nconst ymd = (d) => new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);\nconst hm = (d) => new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(d).replace(':', ' h ');\nconst duree = (min) => min < 60 ? min + ' min' : Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0');\nconst maintenant = Date.now();\nconst aujourdhui = ymd(new Date());\n\nconst anomalies = [];\nfor (const it of $input.all()) {\n  const r = { id: it.json.id, ...(it.json.fields || it.json) };\n  if (!r.id) continue;\n  const statut = r['Statut'];\n  const motif = String(r['Motif'] || '');\n  if (statut === 'Échec' || (statut === 'Simulée' && motif.includes(ECHEC_SIMULATION))) {\n    anomalies.push({ json: {\n      code: 'A11',\n      cle: 'A11|' + r.id + '|' + (r['Planifiée à'] || ''), // une fois par échec ; une relance replanifiée qui échoue à nouveau est re-signalée\n      texte: (r['Référence'] || r.id) + (statut === 'Simulée' ? ' (simulation)' : '') + ' — ' + (motif || 'sans motif')\n    } });\n    continue;\n  }\n  if (!r['Planifiée à']) continue;\n  const prevue = Date.parse(r['Planifiée à']);\n  const retard = Math.round((maintenant - prevue) / 60000);\n  let code = null;\n  if (retard > 30 && (statut === 'Envoi en cours' || (statut === 'Simulée' && motif === VERROU_SIMULATION))) code = 'A7';\n  else if (retard > 60 && (statut === 'Planifiée' || (statut === 'Simulée' && !motif))) code = 'A8';\n  if (!code) continue;\n  anomalies.push({ json: {\n    code,\n    cle: code + '|' + r.id + '|' + aujourdhui, // au plus un rappel par relance et par jour\n    texte: (r['Référence'] || r.id) + (statut === 'Simulée' ? ' (simulation)' : '') + ' — prévue à ' + hm(new Date(prevue))\n      + (code === 'A7' ? ', toujours « en cours d’envoi »' : ', toujours pas partie') + ' (' + duree(retard) + ' de retard).'\n  } });\n}\nreturn anomalies;"
         },
         "id": "2f26d08d-bd4f-5e19-aefe-1c7c7eb8bb4b",
         "name": "Contrôles horaires",
@@ -4041,7 +3926,7 @@
         "typeVersion": 2,
         "position": [
           960,
-          6432
+          5728
         ]
       },
       {
@@ -4059,12 +3944,12 @@
         "typeVersion": 2,
         "position": [
           1200,
-          6224
+          5520
         ]
       },
       {
         "parameters": {
-          "jsCode": "// Regroupe les anomalies nouvelles de cette exécution en un seul message Slack, avec l'action à mener.\nconst NL = String.fromCharCode(10);\nconst CATALOGUE = {\n  A5: ['Synchronisation de nuit absente ou inachevée', 'Relancer la synchronisation complète (bloc WF1 · Lancement manuel).'],\n  A7: ['Relance bloquée « en cours d’envoi » depuis plus de 30 min', 'Vérifier dans Gmail (Messages envoyés) si elle est partie, puis corriger son statut dans Airtable. Jamais de renvoi automatique.'],\n  A8: ['Relance non partie plus d’une heure après son créneau', 'Vérifier que l’envoi (bloc WF5) tourne : exécutions récentes dans n8n, workflow publié.'],\n  A9: ['Aucun envoi de devis depuis deux jours ouvrés', 'Vérifier que le secrétariat met toujours Karim en copie des envois de devis.'],\n  A10: ['Nouveaux dossiers « Devis introuvable »', 'Retrouver le devis dans Gmail, ou corriger l’e-mail du dossier dans noCRM. Ces dossiers ne sont pas relancés.']\n};\nconst parCode = {};\nfor (const it of $input.all()) (parCode[it.json.code] = parCode[it.json.code] || []).push(it.json);\nconst blocs = Object.keys(CATALOGUE).filter(c => parCode[c]).map(c => [\n  '*' + c + ' · ' + CATALOGUE[c][0] + '*',\n  ...parCode[c].map(a => '• ' + a.texte + (a.lien ? ' <' + a.lien + '|ouvrir>' : '')),\n  '→ ' + CATALOGUE[c][1]\n].join(NL));\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nreturn [{ json: { texte: [':mag: *Relances devis — contrôle WF6*', ...blocs, '_' + quand + '_'].join(NL + NL) } }];"
+          "jsCode": "// Regroupe les anomalies nouvelles de cette exécution en un seul message Slack, avec l'action à mener.\nconst NL = String.fromCharCode(10);\nconst CATALOGUE = {\n  A5: ['Synchronisation de nuit absente ou inachevée', 'Relancer la synchronisation complète (bloc WF1 · Lancement manuel).'],\n  A7: ['Relance bloquée « en cours d’envoi » depuis plus de 30 min', 'Vérifier dans Gmail (Messages envoyés) si elle est partie, puis corriger son statut dans Airtable. Jamais de renvoi automatique.'],\n  A8: ['Relance non partie plus d’une heure après son créneau', 'Vérifier que l’envoi (bloc WF5) tourne : exécutions récentes dans n8n, workflow publié.'],\n  A9: ['Aucun envoi de devis depuis deux jours ouvrés', 'Vérifier que le secrétariat met toujours Karim en copie des envois de devis.'],\n  A10: ['Nouveaux dossiers « Devis introuvable »', 'Retrouver le devis dans Gmail, ou corriger l’e-mail du dossier dans noCRM. Ces dossiers ne sont pas relancés.'],\n  A11: ['Relance en échec', 'Lire le motif. « Gmail a refusé » : vérifier l’identifiant « Gmail SamD Karim ». « Vérification noCRM impossible » : dossier supprimé ou API noCRM indisponible. Pour la renvoyer : dans Airtable, Statut « Planifiée » et « Planifiée à » vidé — WF4 la replanifie à son prochain passage (7 h 30).']\n};\nconst parCode = {};\nfor (const it of $input.all()) (parCode[it.json.code] = parCode[it.json.code] || []).push(it.json);\nconst blocs = Object.keys(CATALOGUE).filter(c => parCode[c]).map(c => [\n  '*' + c + ' · ' + CATALOGUE[c][0] + '*',\n  ...parCode[c].map(a => '• ' + a.texte + (a.lien ? ' <' + a.lien + '|ouvrir>' : '')),\n  '→ ' + CATALOGUE[c][1]\n].join(NL));\nconst quand = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });\nreturn [{ json: { texte: [':mag: *Relances devis — contrôle WF6*', ...blocs, '_' + quand + '_'].join(NL + NL) } }];"
         },
         "id": "1145e9f7-81a7-5a35-923e-9ef73783977b",
         "name": "Message de contrôle",
@@ -4072,7 +3957,7 @@
         "typeVersion": 2,
         "position": [
           1440,
-          6224
+          5520
         ]
       },
       {
@@ -4091,36 +3976,97 @@
         },
         "id": "1481b110-c84a-554d-a366-386e233e0f3e",
         "name": "Alerte Slack contrôle",
+        "webhookId": "c51d0c4c-adb2-4ca4-8d94-01be34951e64",
         "type": "n8n-nodes-base.slack",
         "typeVersion": 2.3,
-        "position": [
-          1680,
-          6224
-        ],
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 3000,
-        "webhookId": "2958ba26-d080-4e4d-be48-a5711737d1d9",
+        "position": [
+          1680,
+          5520
+        ],
         "credentials": {
           "slackApi": {
             "id": "oiCh7mUHPUPu43md",
             "name": "Slack Alertes n8n"
           }
         }
+      },
+      {
+        "parameters": {
+          "content": "# Signal de vie externe (F7)\nJours ouvrés · toutes les 15 min de 8 h à 17 h 45 · Healthchecks.io → #alertes-relances (alerte A4)",
+          "height": 988,
+          "width": 1500,
+          "color": 3
+        },
+        "id": "de1bd78d-bad4-59e5-9cd7-075069badfc9",
+        "name": "Bloc F7 · Signal de vie externe",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          6688
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## Signal de vie externe (F7)\n\n**Rôle** : prévenir quand **n8n ou le serveur Hostinger est arrêté** (alerte A4). C'est le seul cas que « Gestion des erreurs » et WF6 ne peuvent pas voir : ils s'arrêtent avec le serveur.\n\n**Principe** : n8n signale régulièrement qu'il tourne à un service extérieur, **Healthchecks.io**. C'est Healthchecks qui alerte quand les signaux **cessent**.\n\n### Étapes\n**1. Toutes les 15 min en journée** — jours ouvrés, de 8 h à 17 h 45 (heure de Paris).\n\n**2. Signal de vie (Healthchecks)** — un simple appel à l'adresse de ping du contrôle « n8n · Relances devis ». Aucun appel Airtable, noCRM ni Gmail : ce bloc ne consomme aucun quota.\n\n### Côté Healthchecks.io (compte de Karim)\n- Contrôle **« n8n · Relances devis »**, calendrier Cron `*/15 8-17 * * 1-5`, fuseau Europe/Paris, délai de grâce **45 min**.\n- Plus de signal pendant ~1 h en heures ouvrées → message dans **#alertes-relances**, e-mail en secours. Retour du signal → message « up ».\n- La nuit et le week-end, Healthchecks n'attend rien : aucune fausse alerte.\n\n### À savoir\n- **Workflow dépublié** = plus de signal = alerte A4 : c'est voulu, un système dépublié n'envoie plus rien.\n- Un redémarrage rapide de n8n (mise à jour Watchtower) ne déclenche pas d'alerte : un signal manqué est absorbé par le délai de grâce.\n- Un échec de l'appel n'est pas une erreur n8n (rien ne part vers « Gestion des erreurs ») : si le signal n'arrive pas, Healthchecks le verra.\n- L'adresse de ping est dans le nœud : ne pas la diffuser (n'importe qui pourrait faire croire que n8n tourne).",
+          "height": 864,
+          "width": 560,
+          "color": 7
+        },
+        "id": "2476dc11-d341-55ac-9a61-9fb8f9f389e6",
+        "name": "F7 – mode d'emploi",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -640,
+          6800
+        ]
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "*/15 8-17 * * 1-5"
+              }
+            ]
+          }
+        },
+        "id": "b98ba2d6-417d-5bb4-b22d-69eadb62382f",
+        "name": "Toutes les 15 min en journée",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          6896
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://hc-ping.com/bba17224-d01b-418a-a55d-c7286e37bd1c",
+          "options": {
+            "timeout": 10000
+          }
+        },
+        "id": "a3917fd2-5350-534a-8053-a6616dc5fa54",
+        "name": "Signal de vie (Healthchecks)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 5000,
+        "position": [
+          240,
+          6896
+        ],
+        "onError": "continueRegularOutput"
       }
     ],
     "connections": {
-      "Chaque nuit à 2 h": {
-        "main": [
-          [
-            {
-              "node": "noCRM – utilisateurs",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Lancement manuel": {
         "main": [
           [
@@ -4192,39 +4138,6 @@
           [
             {
               "node": "Airtable – écriture par lots de 10",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Erreur d'exécution": {
-        "main": [
-          [
-            {
-              "node": "Message d'alerte",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Message d'alerte": {
-        "main": [
-          [
-            {
-              "node": "Une alerte par heure",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Une alerte par heure": {
-        "main": [
-          [
-            {
-              "node": "Alerte Slack #alertes-relances",
               "type": "main",
               "index": 0
             }
@@ -4395,17 +4308,6 @@
           [
             {
               "node": "Airtable – enregistrement des heures",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Toutes les 25 min en journée": {
-        "main": [
-          [
-            {
-              "node": "Réglages WF5",
               "type": "main",
               "index": 0
             }
@@ -4673,17 +4575,6 @@
           ]
         ]
       },
-      "Chaque heure en journée": {
-        "main": [
-          [
-            {
-              "node": "Airtable – relances en retard",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Lancement manuel WF6 horaire": {
         "main": [
           [
@@ -4738,14 +4629,58 @@
             }
           ]
         ]
+      },
+      "Chaque nuit de semaine à 2 h": {
+        "main": [
+          [
+            {
+              "node": "noCRM – utilisateurs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Jours ouvrés à 8 h, 11 h et 14 h": {
+        "main": [
+          [
+            {
+              "node": "Réglages WF5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Jours ouvrés à 10 h 10, 12 h 10, 15 h 10 et 18 h 40": {
+        "main": [
+          [
+            {
+              "node": "Airtable – relances en retard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Toutes les 15 min en journée": {
+        "main": [
+          [
+            {
+              "node": "Signal de vie (Healthchecks)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "nodeGroups": [],
     "authors": "Karim Bordeau",
-    "name": "Version 7245ca22",
+    "name": "Version b3f16d21",
     "description": "",
     "autosaved": true,
-    "createdAt": "2026-09-19T14:15:30.233Z",
-    "updatedAt": "2026-09-19T14:15:54.000Z"
+    "createdAt": "2026-09-21T16:14:01.778Z",
+    "updatedAt": "2026-09-21T16:14:06.000Z"
   }
 }
