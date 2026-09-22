@@ -1,0 +1,392 @@
+{
+  "id": "TresoSamuelWF001",
+  "name": "Tableau de trésorerie",
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-22T12:00:29.274Z",
+  "updatedAt": "2026-09-22T12:00:29.274Z",
+  "isArchived": false,
+  "versionId": "0a907a03-7a58-4039-8b26-829a30317d40",
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Tableau de trésorerie · visibilité financière de Samuel\nPennylane est la seule source de vérité : factures fournisseurs, factures clients, banque.\n\n- **WF1** · Gmail → Pennylane, collecte des factures fournisseurs : 🟡 en recette (mode simulation, déclencheur désactivé)\n- *WF2 à WF4 (instantané, point du matin, page) : pas encore construits, seulement si le tableau de bord Pennylane ne suffit pas à Samuel.*\n\nÉchecs → workflow `Gestion des erreurs` de l'instance, à désigner dans Settings → Error workflow.",
+        "height": 300,
+        "width": 1500,
+        "color": 7
+      },
+      "id": "160697fe-4bf5-5181-920f-093e39c3904b",
+      "name": "Sommaire du système",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -768
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Réglages du système\n**Réglages · WF1** :\n- `MODE` : `simulation` | `reel`\n- `ADRESSE_PENNYLANE` : adresse de collecte des factures fournisseurs\n- `RECHERCHE_GMAIL` : ce qui désigne une facture fournisseur\n- `LIBELLE_TRAITE` / `LIBELLE_TRAITE_ID` : libellé posé après envoi\n- `ANCIENNETE_JOURS` : 30\n\nHoraire du déclencheur : toutes les heures, de 7 h à 20 h (dans le nœud déclencheur).",
+        "height": 300,
+        "width": 620,
+        "color": 7
+      },
+      "id": "9116a42c-2f6f-5fdb-ab5c-5c47a6d15f98",
+      "name": "Réglages du système",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        852,
+        -768
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# WF1 · Gmail → Pennylane, collecte des factures fournisseurs\nFactures reçues → un PDF par envoi → adresse de collecte Pennylane → libellé de traitement",
+        "height": 820,
+        "width": 2900,
+        "color": 4
+      },
+      "id": "112a87fe-25c6-5357-814e-3ab32722df1a",
+      "name": "Bloc WF1 · Collecte des factures fournisseurs",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## WF1 – mode d'emploi\n\n**Rôle** : repérer les factures fournisseurs qui arrivent sur la boîte Gmail et en transmettre chaque PDF à l'adresse de collecte **Pennylane**, qui les lit, les classe et suit leur paiement. Pennylane reste la seule source de vérité.\n\n**Quand** : toutes les heures, de 7 h à 20 h.\n\n### Étapes\n**1. Réglages** : le seul endroit à modifier.\n**2. Gmail – factures à transmettre** : les mails qui répondent à `RECHERCHE_GMAIL`, avec un PDF joint, de moins de `ANCIENNETE_JOURS` jours, **sans** le libellé de traitement, et pas envoyés par nous-mêmes.\n**3. Une pièce jointe PDF par envoi** : un élément par PDF ; les images sont écartées.\n**4. Mode réel ?** : en simulation on s'arrête là. L'exécution liste ce qui **serait** parti.\n**5. Gmail – envoi à Pennylane** : un mail par PDF vers `ADRESSE_PENNYLANE`.\n**6. Un par mail**, puis **Gmail – libellé de traitement** : on pose le libellé **après** l'envoi, pour qu'un mail ne parte pas deux fois.\n\n### Garde-fous\n- Le libellé n'est posé qu'après un envoi réussi. Si l'envoi échoue en cours de route, le mail repart au passage suivant et Pennylane écarte le doublon.\n- Refus de démarrer en mode réel si l'adresse Pennylane ou l'id du libellé manque.\n- Un échec part vers `Gestion des erreurs` (Settings → Error workflow).\n\n### Identifiants utilisés\n- **Gmail – factures fournisseurs** (`gmailOAuth2`) : lecture, envoi et libellés sur la boîte des factures.",
+        "height": 660,
+        "width": 460,
+        "color": 7
+      },
+      "id": "d5b88721-c69c-507c-bd9f-862bebcce046",
+      "name": "WF1 – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7-20 * * *"
+            }
+          ]
+        }
+      },
+      "id": "0e0c8c6b-35e3-5c3e-b32c-bf8ded81b5b9",
+      "name": "Toutes les heures de 7 h à 20 h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -160
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "id": "b3e52e4e-65e4-5edc-ad47-5b7f2aad392f",
+      "name": "Lancement manuel WF1",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// MODE               : 'simulation' = les factures sont repérées et listées, RIEN n'est envoyé ni libellé.\n//                      'reel'       = chaque PDF part vers Pennylane, puis le mail reçoit le libellé de traitement.\n// ADRESSE_PENNYLANE  : adresse de collecte des factures fournisseurs (Pennylane → Paramètres → Factures fournisseurs).\n// RECHERCHE_GMAIL    : ce qui désigne une facture fournisseur dans la boîte (syntaxe de recherche Gmail).\n//                      Ex. 'label:factures-fournisseurs' ou '{from:edf.fr from:total.fr}'.\n// LIBELLE_TRAITE     : nom du libellé posé après envoi, tel qu'écrit dans une recherche Gmail (tirets, sans espace).\n// LIBELLE_TRAITE_ID  : identifiant du même libellé (Label_…), exigé par Gmail pour le poser.\n// ANCIENNETE_JOURS   : on ne regarde pas les mails plus vieux que cela.\nconst reglages = {\n  MODE: 'simulation',\n  ADRESSE_PENNYLANE: '',\n  RECHERCHE_GMAIL: 'label:factures-fournisseurs',\n  LIBELLE_TRAITE: 'transmis-pennylane',\n  LIBELLE_TRAITE_ID: '',\n  ANCIENNETE_JOURS: 30,\n};\nif (reglages.MODE === 'reel' && (!reglages.ADRESSE_PENNYLANE || !reglages.LIBELLE_TRAITE_ID)) {\n  throw new Error('Mode réel sans ADRESSE_PENNYLANE ou LIBELLE_TRAITE_ID : renseigner Réglages · WF1.');\n}\nreturn [{ json: { reglages } }];"
+      },
+      "id": "fac40797-3a4b-5349-ac9b-edc280e5c68b",
+      "name": "Réglages · WF1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": true,
+        "simple": false,
+        "filters": {
+          "q": "={{ $('Réglages · WF1').first().json.reglages.RECHERCHE_GMAIL + ' has:attachment filename:pdf -from:me -label:' + $('Réglages · WF1').first().json.reglages.LIBELLE_TRAITE + ' newer_than:' + $('Réglages · WF1').first().json.reglages.ANCIENNETE_JOURS + 'd' }}",
+          "readStatus": "both",
+          "includeSpamTrash": false
+        },
+        "options": {
+          "downloadAttachments": true,
+          "dataPropertyAttachmentsPrefixName": "piece_"
+        }
+      },
+      "id": "2effff06-2119-5c16-8bef-6fece982e30e",
+      "name": "Gmail – factures à transmettre",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        -160
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un élément par PDF joint : Pennylane reçoit un document par mail.\n// Logos, signatures et autres images sont écartés ; un mail sans PDF ne produit rien.\nconst sorties = [];\n$input.all().forEach((item, index) => {\n  const mail = item.json || {};\n  if (!mail.id) return;\n  const expediteur = (mail.from && mail.from.text) || '';\n  Object.entries(item.binary || {}).forEach(([cle, fichier]) => {\n    const nom = String(fichier.fileName || cle);\n    const estPdf = fichier.mimeType === 'application/pdf' || nom.toLowerCase().endsWith('.pdf');\n    if (!estPdf) return;\n    sorties.push({\n      json: {\n        messageId: mail.id,\n        expediteur,\n        objet: mail.subject || '',\n        recuLe: mail.date || '',\n        fichier: nom,\n      },\n      binary: { data: fichier },\n      pairedItem: { item: index },\n    });\n  });\n});\nreturn sorties;"
+      },
+      "id": "509be543-42a8-5db7-a02a-d000294ed24b",
+      "name": "Gmail – une pièce jointe PDF par envoi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "769615ac-ea24-5039-8637-31ca892e02ca",
+              "leftValue": "={{ $('Réglages · WF1').first().json.reglages.MODE }}",
+              "rightValue": "reel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a5b7056c-a0b0-5997-a3e3-1740e3f12d9b",
+      "name": "Mode réel ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Réglages · WF1').first().json.reglages.ADRESSE_PENNYLANE }}",
+        "subject": "=Facture fournisseur – {{ $json.fichier }}",
+        "emailType": "text",
+        "message": "=Facture transmise automatiquement.\nExpéditeur d'origine : {{ $json.expediteur }}\nObjet d'origine : {{ $json.objet }}\nReçue le : {{ $json.recuLe }}",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "data"
+              }
+            ]
+          }
+        }
+      },
+      "id": "18eb0526-14b4-585f-8d75-9e32e41a2c28",
+      "name": "Gmail – envoi à Pennylane",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        -256
+      ],
+      "webhookId": "b9e0aebd-9529-5532-af64-782832f499c6",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Le libellé se pose une fois par mail, même quand il portait plusieurs PDF.\nconst vus = new Set();\nreturn $('Gmail – une pièce jointe PDF par envoi').all()\n  .filter(i => !vus.has(i.json.messageId) && vus.add(i.json.messageId))\n  .map(i => ({ json: { messageId: i.json.messageId } }));"
+      },
+      "id": "ca8c1076-46b5-5b33-8b6f-69f96d3d48ea",
+      "name": "Un par mail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": "={{ [$('Réglages · WF1').first().json.reglages.LIBELLE_TRAITE_ID] }}"
+      },
+      "id": "dafae040-ceec-56c0-a579-7f0d6c20e1fd",
+      "name": "Gmail – libellé de traitement",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        -256
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {},
+      "id": "58bc4470-9a62-53f9-98b0-554d6239f327",
+      "name": "Simulation – rien n'est envoyé",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -32
+      ]
+    }
+  ],
+  "connections": {
+    "Toutes les heures de 7 h à 20 h": {
+      "main": [
+        [
+          {
+            "node": "Réglages · WF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel WF1": {
+      "main": [
+        [
+          {
+            "node": "Réglages · WF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Réglages · WF1": {
+      "main": [
+        [
+          {
+            "node": "Gmail – factures à transmettre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – factures à transmettre": {
+      "main": [
+        [
+          {
+            "node": "Gmail – une pièce jointe PDF par envoi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – une pièce jointe PDF par envoi": {
+      "main": [
+        [
+          {
+            "node": "Mode réel ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode réel ?": {
+      "main": [
+        [
+          {
+            "node": "Gmail – envoi à Pennylane",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Simulation – rien n'est envoyé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – envoi à Pennylane": {
+      "main": [
+        [
+          {
+            "node": "Un par mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Un par mail": {
+      "main": [
+        [
+          {
+            "node": "Gmail – libellé de traitement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "TresoSamuelWF001",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-22T12:00:29.281Z",
+      "updatedAt": "2026-09-22T12:00:29.281Z"
+    }
+  ],
+  "activeVersion": null
+}
