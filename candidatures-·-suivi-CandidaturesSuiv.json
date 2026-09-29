@@ -1,0 +1,2923 @@
+{
+  "id": "CandidaturesSuiv",
+  "name": "Candidatures · Suivi",
+  "active": true,
+  "activeVersionId": "7056c1dc-8d1a-429f-b16b-a48d8f0dca9a",
+  "createdAt": "2026-09-29T14:58:34.632Z",
+  "updatedAt": "2026-09-29T18:59:04.101Z",
+  "isArchived": false,
+  "versionId": "7056c1dc-8d1a-429f-b16b-a48d8f0dca9a",
+  "triggerCount": 2,
+  "nodes": [
+    {
+      "id": "00ff92cf-63b1-5e23-9a19-a87243b21095",
+      "name": "Sommaire du système",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -480
+      ],
+      "parameters": {
+        "content": "# Candidatures · Suivi\n\nÉcrit les candidatures du skill `job-search` dans le Google Sheet « Suivi des candidatures » (WF1) et crée leurs brouillons Gmail, CV joint (WF2).\n\n| Bloc | État |\n|---|---|\n| WF1 · Ajout ou mise à jour d'une candidature | en service, mode réel depuis le 2026-09-29 |\n| WF2 · Brouillon de candidature (CV joint, anti-doublon) | mode réel depuis le 2026-09-29 — recette B7–B11 en cours |\n\nDossier de remise : `n8n builder/systemes/candidatures-suivi/`.",
+        "height": 368,
+        "width": 560,
+        "color": 7
+      }
+    },
+    {
+      "id": "4371a26b-d6da-5b4f-8897-7677a71b9884",
+      "name": "Réglages du système",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -480
+      ],
+      "parameters": {
+        "content": "## Réglages du système\n\nWF1 — nœud **Réglages · Suivi** :\n\n| Réglage | Défaut | Effet |\n|---|---|---|\n| MODE | reel | simulation : rien n'est écrit ; reel : le Sheet est mis à jour |\n| SHEET_ID | 1RQc4…jy9I | Sheet « Suivi des candidatures » |\n| ONGLET_GID | 1295018267 | onglet visé (par id) |\n| STATUTS | 5 valeurs | statuts admis, identiques à la liste déroulante |\n\nWF2 — nœud **Réglages · Brouillon** :\n\n| Réglage | Défaut | Effet |\n|---|---|---|\n| MODE | reel | simulation : contrôles exécutés, aucun brouillon ; reel : brouillon créé |\n| CV_DOSSIER_ID | 1pz19…1mkL | dossier Drive « Job Search/CV » |\n| SHEET_ID / ONGLET_GID | idem WF1 | contrôle des lignes « Envoyé » |\n| DOMAINES_GENERIQUES | 23 domaines | pas de contrôle par domaine sur les messageries grand public |\n| SIGNES_INTERDITS | 13 signes + émojis | refus 400 si l'objet ou le corps en contient |",
+        "height": 608,
+        "width": 560,
+        "color": 7
+      }
+    },
+    {
+      "id": "0cf38e6e-0f47-59a9-aff8-5d1235586b70",
+      "name": "Bloc WF1 · Ajout ou mise à jour d'une candidature",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        304
+      ],
+      "parameters": {
+        "content": "## Bloc WF1 · Ajout ou mise à jour d'une candidature",
+        "height": 700,
+        "width": 2880,
+        "color": 4
+      }
+    },
+    {
+      "id": "c628c310-c2c4-5b83-8766-376c802d12fd",
+      "name": "WF1 – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        416
+      ],
+      "parameters": {
+        "content": "## WF1 – mode d'emploi\n\n**Rôle** : ajoute une candidature au Sheet « Suivi des candidatures », ou met à jour la ligne dont le lien de l'offre correspond. Seules les colonnes envoyées changent.\n\n**Quand** : à chaque appel du skill `job-search` (POST `/webhook/candidatures/suivi`, en-tête `X-Candidatures-Secret`).\n\n**Étapes**\n1. Réglages · Suivi (mode, Sheet, onglet, statuts admis)\n2. Préparer la ligne : contrôle du lien et du statut, conversion en noms de colonnes\n3. Données valides ? non → réponse 400\n4. Mode réel ? oui → Google Sheets (ajout ou mise à jour) ; non → rien n'est écrit\n5. Réponse JSON\n\n**Garde-fous** : simulation par défaut ; aucune colonne créée ; Sheet et onglet par id ; lien de l'offre obligatoire.\n\n**Identifiants utilisés** : Google Sheets OAuth2 (compte de Karim) ; Header Auth « Candidatures – secret ».",
+        "height": 544,
+        "width": 560,
+        "color": 7
+      }
+    },
+    {
+      "id": "e5711342-b065-5538-950b-a9914dce5599",
+      "name": "Webhook – candidature",
+      "webhookId": "4bb53f7a-a538-5dce-8942-e0d584c0f50c",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        512
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "candidatures/suivi",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VoO41LdxILf7fFL4",
+          "name": "Candidatures – secret"
+        }
+      }
+    },
+    {
+      "id": "0ee32471-387f-5f3f-972b-88245f211e6d",
+      "name": "Lancement manuel WF1",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        736
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "76164e53-cff1-5e29-a3a9-7d5ba23ef08b",
+      "name": "Candidature d'exemple",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        736
+      ],
+      "parameters": {
+        "jsCode": "// Candidature d'exemple pour la recette (Lancement manuel WF1). Lien fictif : à supprimer du Sheet après un test en mode réel.\nreturn [{ json: { body: {\n  lien_offre: 'https://exemple.invalid/offre-test-candidatures-suivi',\n  statut: 'En attente',\n  entreprise: 'ZZ Test',\n  poste: 'Poste de test',\n  notes: 'Ligne de recette : à supprimer.',\n} } }];"
+      }
+    },
+    {
+      "id": "16a11c1c-448a-574c-90cc-dcd24dfb1e1d",
+      "name": "Réglages · Suivi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        512
+      ],
+      "parameters": {
+        "jsCode": "// MODE        : 'simulation' = tout est calculé et renvoyé, RIEN n'est écrit dans le Sheet.\n//               'reel'       = la ligne est ajoutée ou mise à jour. Bascule sur décision explicite, après la recette.\n// SHEET_ID    : identifiant du Google Sheet « Suivi des candidatures » (Drive, dossier Job Search).\n// ONGLET_GID  : identifiant (gid) de l'onglet — jamais son nom, qui peut changer.\n// STATUTS     : valeurs admises dans la colonne Statut (identiques à la liste déroulante du Sheet).\nconst reglages = {\n  MODE: 'reel',\n  SHEET_ID: '1RQc4EFb2OWXL-O9EsC1fRFQ_p4amb2oxDZxXZ0gjy9I',\n  ONGLET_GID: '1295018267',\n  STATUTS: ['En attente', 'Envoyé', 'Abandon', 'Refusé', 'Accepté'],\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
+      }
+    },
+    {
+      "id": "1917f5b9-26c7-5f9b-b6ab-9e9a223200d3",
+      "name": "Préparer la ligne",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        512
+      ],
+      "parameters": {
+        "jsCode": "// Valide le corps reçu et le convertit en noms de colonnes du Sheet.\n// Sortie : un seul item, { ok, erreur, ligne } — jamais zéro item (la réponse au webhook doit toujours partir).\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst corps = entree.body || {};\nconst COLONNES = {\n  date_ajout: \"Date d'ajout\",\n  statut: 'Statut',\n  entreprise: 'Entreprise',\n  poste: 'Poste',\n  type: 'Type',\n  lieu: 'Lieu / télétravail',\n  salaire: 'Salaire',\n  experience: 'Expérience',\n  equipe: 'Équipe en place',\n  correspondance: 'Correspondance',\n  lien_offre: \"Lien de l'offre\",\n  canal: 'Canal de candidature',\n  contact: 'Contact publié',\n  lettre: 'Lettre',\n  relecture: 'Relecture',\n  date_envoi: \"Date d'envoi\",\n  relance: 'Relance prévue',\n  notes: 'Notes',\n};\n\nconst lien = String(corps.lien_offre || '').trim();\nif (!lien) {\n  return [{ json: { ok: false, erreur: 'lien_offre manquant : il sert de clé pour retrouver la ligne.', mode: r.MODE } }];\n}\nif (corps.statut !== undefined && !r.STATUTS.includes(corps.statut)) {\n  return [{ json: { ok: false, erreur: 'statut inconnu : ' + corps.statut + ' (valeurs admises : ' + r.STATUTS.join(', ') + ').', mode: r.MODE } }];\n}\n\nconst ligne = {};\nfor (const [cle, colonne] of Object.entries(COLONNES)) {\n  if (corps[cle] !== undefined && corps[cle] !== null) ligne[colonne] = String(corps[cle]);\n}\nligne[\"Lien de l'offre\"] = lien;\n\nreturn [{ json: { ok: true, mode: r.MODE, ligne } }];"
+      }
+    },
+    {
+      "id": "b99503d3-5b95-53bd-b9d9-ac5df9648247",
+      "name": "Données valides ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        512
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6325efd5-108d-5f80-bf7e-b00538597418",
+              "leftValue": "={{ String($json.ok) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f4dc4326-5a5c-593d-ad49-d00f1d4ff923",
+      "name": "Mode réel ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        416
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2f572117-05e1-504e-8d12-575cabc56f09",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "reel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3b185d4f-d860-5c45-9a71-c48bb4e2c2f2",
+      "name": "Colonnes de la ligne",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        416
+      ],
+      "parameters": {
+        "jsCode": "// Ne transmet au nœud Google Sheets que les colonnes de la ligne (correspondance automatique par nom).\nreturn [{ json: $input.first().json.ligne }];"
+      }
+    },
+    {
+      "id": "5f5b649e-b1ce-59d0-ae68-07697a28c2e0",
+      "name": "Google Sheets – ajout ou mise à jour",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1680,
+        416
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Réglages · Suivi').first().json.reglages.SHEET_ID }}",
+          "cachedResultName": "Suivi des candidatures"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Réglages · Suivi').first().json.reglages.ONGLET_GID }}",
+          "cachedResultName": "Untitled"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Lien de l'offre"
+          ],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uC2XRC8ZU2RusWjr",
+          "name": "Google Sheets Karim"
+        }
+      }
+    },
+    {
+      "id": "212bdce1-9199-52df-bee9-12e6d91c309a",
+      "name": "Simulation – rien n'est écrit",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        608
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7c0baa8d-3e1f-50b3-a6ce-e375fd8a3090",
+      "name": "Réponse – enregistré",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        512
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, mode: $('Préparer la ligne').first().json.mode, ligne: $('Préparer la ligne').first().json.ligne }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "d524df1a-f74f-5b56-9511-219d5f112595",
+      "name": "Réponse – refusé",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        736
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, erreur: $json.erreur }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "id": "5e233186-2d3c-5a9c-a172-5979464f49ab",
+      "name": "Bloc WF2 · Brouillon de candidature",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        1104
+      ],
+      "parameters": {
+        "content": "## Bloc WF2 · Brouillon de candidature",
+        "height": 820,
+        "width": 5280,
+        "color": 5
+      }
+    },
+    {
+      "id": "8bdcbb58-86eb-55e8-984d-92a6b0654b24",
+      "name": "WF2 – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        1204
+      ],
+      "parameters": {
+        "content": "## WF2 – mode d'emploi\n\n**Rôle** : crée le brouillon Gmail d'une candidature avec le CV PDF joint (Drive « Job Search/CV »), ou un brouillon de relance dans le fil du premier envoi. N'envoie **jamais** : Karim relit et envoie.\n\n**Quand** : à chaque appel du skill `job-search` (POST `/webhook/candidatures/brouillon`, en-tête `X-Candidatures-Secret`).\n\n**Étapes**\n1. Réglages · Brouillon (mode, dossier CV, Sheet, domaines grand public)\n2. Valider la demande : destinataire, entreprise, objet, corps, cv (sauf relance)\n3. Contrôles : Gmail envoyés (adresse, domaine), brouillons existants, Sheet « Envoyé »\n4. Décider : bloqué → réponse 409 avec ce qui a été trouvé\n5. Candidature : CV cherché dans le Drive (absent → 400), téléchargé, joint\n6. Relance : dans le fil du dernier envoi, sans CV\n7. Mode réel ? oui → brouillon Gmail ; non → rien n'est créé\n8. Réponse JSON\n\n**Garde-fous** : simulation par défaut ; aucun nœud d'envoi ; objet ou corps avec un signe d'IA (tirets longs, point médian, émojis…) → refus 400 ; brouillon existant, envoi antérieur ou corps identique → bloqué ; relance seulement si demandée ; dossier et Sheet par id.\n\n**Identifiants utilisés** : Gmail OAuth2, Google Drive OAuth2, Google Sheets OAuth2 (compte de Karim) ; Header Auth « Candidatures – secret ».",
+        "height": 688,
+        "width": 560,
+        "color": 7
+      }
+    },
+    {
+      "id": "e587358b-82d0-5725-99f8-a18ce17b3ece",
+      "name": "Webhook – brouillon",
+      "webhookId": "9fbd2f6b-8789-507b-864a-be2954191adc",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1532
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "candidatures/brouillon",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VoO41LdxILf7fFL4",
+          "name": "Candidatures – secret"
+        }
+      }
+    },
+    {
+      "id": "ef8a88c2-7c45-590a-a916-22728ebfc42c",
+      "name": "Lancement manuel WF2",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1756
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "575e4b7f-69ad-540d-afe5-66d34c92ae9b",
+      "name": "Demande d'exemple",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1756
+      ],
+      "parameters": {
+        "jsCode": "// Demande d'exemple pour la recette (Lancement manuel WF2). Adresse réservée (.invalid) : aucun envoi possible.\nreturn [{ json: { body: {\n  destinataire: 'recrutement@exemple.invalid',\n  entreprise: 'ZZ Test',\n  objet: 'Candidature — Poste de test, Bordeaux',\n  corps: 'Bonjour, ceci est un brouillon de recette.',\n  cv: 'CV-Karim-Bordeau.pdf',\n  relance: false,\n} } }];"
+      }
+    },
+    {
+      "id": "e4901f23-f349-5c98-afa7-415576591f46",
+      "name": "Réglages · Brouillon",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1532
+      ],
+      "parameters": {
+        "jsCode": "// MODE                : 'simulation' = contrôles et recherche du CV exécutés (lectures), AUCUN brouillon créé.\n//                       'reel'       = le brouillon Gmail est créé. Bascule sur décision explicite, après la recette.\n// CV_DOSSIER_ID       : dossier Drive « Job Search/CV » (PDF finaux écrits par build-cv.mjs).\n// SHEET_ID, ONGLET_GID: Sheet « Suivi des candidatures » (contrôle des lignes au statut Envoyé).\n// DOMAINES_GENERIQUES : messageries grand public — jamais de contrôle par domaine sur ces domaines.\n// SIGNES_INTERDITS    : typographie qui trahit un texte écrit par une IA (règle de Karim, 2026-09-29) : refusée dans l'objet et le corps. Émojis refusés aussi.\nconst reglages = {\n  MODE: 'reel',\n  CV_DOSSIER_ID: '1pz19yJH0wpAJeItTb1nA8OEz6J1F1mkL',\n  SHEET_ID: '1RQc4EFb2OWXL-O9EsC1fRFQ_p4amb2oxDZxXZ0gjy9I',\n  ONGLET_GID: '1295018267',\n  SIGNES_INTERDITS: ['—', '–', '·', '•', '→', '⇒', '…', '’', '‘', '“', '”', '✓', '✔'],\n  DOMAINES_GENERIQUES: ['gmail.com', 'googlemail.com', 'outlook.fr', 'outlook.com', 'hotmail.fr', 'hotmail.com', 'live.fr', 'live.com', 'msn.com', 'yahoo.fr', 'yahoo.com', 'orange.fr', 'wanadoo.fr', 'free.fr', 'sfr.fr', 'neuf.fr', 'laposte.net', 'icloud.com', 'me.com', 'proton.me', 'protonmail.com', 'gmx.fr', 'bbox.fr'],\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
+      }
+    },
+    {
+      "id": "3ec44394-0727-5fd7-ba05-05a96643937b",
+      "name": "Valider la demande",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1532
+      ],
+      "parameters": {
+        "jsCode": "// Valide la demande et prépare les requêtes Gmail. Sortie : toujours UN item { ok, erreur | demande, requetes }.\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst c = entree.body || {};\nconst txt = v => (v === undefined || v === null) ? '' : String(v).trim();\nconst refus = erreur => [{ json: { ok: false, erreur, mode: r.MODE } }];\n\n// destinataire : une adresse, ou plusieurs séparées par virgule / point-virgule (ex. contact@ + RH) : un seul brouillon, tous en destinataires.\nconst liste = [...new Set((Array.isArray(c.destinataire) ? c.destinataire.join(',') : txt(c.destinataire)).toLowerCase().split(/[,;\\s]+/).filter(Boolean))];\nconst destinataire = liste.join(', ');\nconst relance = c.relance === true || c.relance === 'true';\nconst demande = {\n  destinataire,\n  destinataires: liste,\n  entreprise: txt(c.entreprise),\n  objet: txt(c.objet),\n  corps: txt(c.corps),\n  cv: txt(c.cv),\n  lien_offre: txt(c.lien_offre),\n  relance,\n};\nif (!liste.length) return refus('destinataire manquant ou mal formé.');\nconst malFormee = liste.find(a => !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(a));\nif (malFormee) return refus('destinataire manquant ou mal formé : ' + malFormee);\nfor (const champ of ['entreprise', 'objet', 'corps']) {\n  if (!demande[champ]) return refus(champ + ' manquant.');\n}\n// Typographie d'IA : refus net, avec le signe et le champ fautifs (le texte se corrige côté skill, jamais ici).\nconst estEmoji = ch => { const cp = ch.codePointAt(0); return (cp >= 0x1F300 && cp <= 0x1FAFF) || (cp >= 0x2600 && cp <= 0x27BF); };\nfor (const champ of ['objet', 'corps']) {\n  const fautif = [...demande[champ]].find(ch => r.SIGNES_INTERDITS.includes(ch) || estEmoji(ch));\n  if (fautif) return refus('signe interdit dans ' + champ + ' : « ' + fautif + ' » (typographie d’IA : utiliser la ponctuation du clavier).');\n}\nif (!relance) {\n  if (!demande.cv) return refus('cv manquant : nom du PDF dans le dossier Drive Job Search/CV.');\n  if (!/^[^'\"\\/]+\\.pdf$/i.test(demande.cv)) return refus('cv invalide : un nom de fichier .pdf, sans guillemet ni chemin.');\n}\n\n// Gmail : {a b} = a OU b.\nconst ou = termes => termes.length === 1 ? termes[0] : '{' + termes.join(' ') + '}';\nconst domaines = [...new Set(liste.map(a => a.split('@')[1]))].filter(dm => !r.DOMAINES_GENERIQUES.includes(dm));\nconst parAdresse = 'in:sent ' + ou(liste.map(a => 'to:' + a));\nconst requetes = {\n  adresse: parAdresse,\n  domaine: domaines.length ? 'in:sent ' + ou(domaines.map(dm => 'to:' + dm)) : parAdresse,\n  controle_domaine: domaines.length > 0,\n  domaines,\n};\nconst cv_requete = \"name = '\" + demande.cv + \"' and '\" + r.CV_DOSSIER_ID + \"' in parents and trashed = false\";\nreturn [{ json: { ok: true, mode: r.MODE, demande, requetes, cv_requete } }];"
+      }
+    },
+    {
+      "id": "9cdb2634-c36e-5507-b02b-21b26e91fad3",
+      "name": "Demande valide ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        1532
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0ccdf176-fc76-56ab-8fac-5f2d468e0f4b",
+              "leftValue": "={{ String($json.ok) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "76ce17d2-0cb2-51ab-a400-4da19af4bee0",
+      "name": "Réponse – demande refusée",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        1756
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, erreur: $json.erreur }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "id": "6df18c8d-962a-5b6f-a895-440a452dd769",
+      "name": "Gmail – envois au destinataire",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1200,
+        1436
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": false,
+        "filters": {
+          "q": "={{ $('Valider la demande').first().json.requetes.adresse }}",
+          "includeSpamTrash": false,
+          "readStatus": "both"
+        },
+        "options": {
+          "downloadAttachments": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail Karim"
+        }
+      },
+      "webhookId": "7827f95e-ff1e-4fae-a46e-e2fc56176c1c"
+    },
+    {
+      "id": "f759d3a6-ca02-5405-9f61-78e8968a5dd5",
+      "name": "Gmail – envois au domaine",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1440,
+        1436
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": false,
+        "filters": {
+          "q": "={{ $('Valider la demande').first().json.requetes.domaine }}",
+          "includeSpamTrash": false,
+          "readStatus": "both"
+        },
+        "options": {
+          "downloadAttachments": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail Karim"
+        }
+      },
+      "webhookId": "2ed158ba-d907-4829-b7d4-c022291d0d1b"
+    },
+    {
+      "id": "f265dd67-579a-587a-be63-5d88f926eadb",
+      "name": "Gmail – brouillons",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1680,
+        1436
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "draft",
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "downloadAttachments": false,
+          "includeSpamTrash": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail Karim"
+        }
+      },
+      "webhookId": "d2b6f284-da2a-4de8-8f8a-07209e5fc601"
+    },
+    {
+      "id": "f769c80b-d8e8-5a86-8811-881365dd1e90",
+      "name": "Sheets – lignes du suivi",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        1920,
+        1436
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Réglages · Brouillon').first().json.reglages.SHEET_ID }}",
+          "cachedResultName": "Suivi des candidatures"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Réglages · Brouillon').first().json.reglages.ONGLET_GID }}",
+          "cachedResultName": "Untitled"
+        },
+        "filtersUI": {},
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uC2XRC8ZU2RusWjr",
+          "name": "Google Sheets Karim"
+        }
+      }
+    },
+    {
+      "id": "a9e4f7f7-7191-5ca1-9679-83a2b9f092ba",
+      "name": "Décider",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        1436
+      ],
+      "parameters": {
+        "jsCode": "// Applique le garde-fou anti-doublon (spec-brouillon.md §5.4). Sortie : toujours UN item.\nconst v = $('Valider la demande').first().json;\nconst d = v.demande;\nconst NL = String.fromCharCode(10);\nconst norm = s => String(s || '').toLowerCase().replace(/\\s+/g, ' ').trim();\nconst reels = noeud => $(noeud).all().map(i => i.json).filter(j => j && j.id);\n\nconst adresses = m => {\n  const champ = m.to;\n  const brut = [];\n  if (champ && Array.isArray(champ.value)) champ.value.forEach(x => brut.push(x.address));\n  else if (champ && champ.text) brut.push(champ.text);\n  else if (typeof champ === 'string') brut.push(champ);\n  if (m.headers && m.headers.to) brut.push(m.headers.to);\n  return brut.join(',').toLowerCase();\n};\nconst vise = m => {\n  const a = adresses(m);\n  if (d.destinataires.some(x => a.includes(x))) return true;\n  return v.requetes.domaines.some(dm => a.includes('@' + dm));\n};\nconst resume = m => ({ date: m.date || '', objet: m.subject || '', lien: 'https://mail.google.com/mail/u/0/#all/' + (m.threadId || m.id), id: m.id, threadId: m.threadId || '' });\n\n// 1. Envois Gmail (adresse puis domaine), dédoublonnés par id\nconst vus = new Map();\nfor (const m of [...reels('Gmail – envois au destinataire'), ...reels('Gmail – envois au domaine')]) {\n  if (vise(m)) vus.set(m.id, m);\n}\nconst envois = [...vus.values()].sort((a, b) => new Date(b.date) - new Date(a.date));\n\n// 2. Brouillons existants vers l'adresse\nconst brouillons = reels('Gmail – brouillons').filter(m => d.destinataires.some(x => adresses(m).includes(x)));\n\n// 3. Sheet : ligne « Envoyé » (lien de l'offre, sinon entreprise)\nconst lignes = $('Sheets – lignes du suivi').all().map(i => i.json).filter(j => j && j['Statut']);\nconst envoyees = lignes.filter(l => l['Statut'] === 'Envoyé' && (\n  (d.lien_offre && String(l[\"Lien de l'offre\"] || '').trim() === d.lien_offre) ||\n  (norm(l['Entreprise']) && norm(l['Entreprise']) === norm(d.entreprise))\n));\n\nconst controles = {\n  envois_gmail: envois.length,\n  controle_domaine: v.requetes.controle_domaine,\n  brouillons_existants: brouillons.length,\n  lignes_envoye_sheet: envoyees.length,\n};\nconst bloque = (raison, trouve) => [{ json: { bloque: true, raison, trouve, controles } }];\n\nif (brouillons.length) {\n  return bloque('un brouillon vers cette adresse existe déjà : le reprendre plutôt que d’en créer un autre.',\n    brouillons.map(m => ({ date: m.date || '', objet: m.subject || '', lien: 'https://mail.google.com/mail/u/0/#drafts' })));\n}\nconst dejaEcrit = envois.length > 0 || envoyees.length > 0;\nconst traces = [\n  ...envois.map(resume),\n  ...envoyees.map(l => ({ date: l[\"Date d'envoi\"] || '', objet: 'Sheet : ' + l['Entreprise'] + ' — ' + l['Poste'] + ' (Envoyé)', lien: l[\"Lien de l'offre\"] || '' })),\n];\nif (!d.relance) {\n  if (dejaEcrit) return bloque('candidature déjà envoyée à ce destinataire : pas de second envoi identique. Relance ? la demander explicitement.', traces);\n  return [{ json: { bloque: false, type: 'candidature', objet: d.objet, threadId: '', controles } }];\n}\nif (!dejaEcrit) return bloque('relance demandée, mais aucun envoi antérieur trouvé.', []);\nconst corps = norm(d.corps);\nconst identique = envois.find(m => norm(m.text).includes(corps));\nif (identique) return bloque('corps identique à un mail déjà envoyé le ' + (identique.date || '?') + ' : réécrire la relance.', [resume(identique)]);\nconst dernier = envois[0];\nconst objet = dernier ? 'Re: ' + String(dernier.subject || d.objet).replace(/^(re|tr|fwd?)\\s*:\\s*/i, '') : d.objet;\nreturn [{ json: { bloque: false, type: 'relance', objet, threadId: dernier ? dernier.threadId : '', controles } }];"
+      }
+    },
+    {
+      "id": "afa97bf4-1e6f-52ed-9670-dac157f6fb68",
+      "name": "Bloqué ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2400,
+        1436
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8296feac-8ab3-548d-8b4f-6e74633ba23e",
+              "leftValue": "={{ String($json.bloque) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "173affca-3c3c-5ba8-8cde-8f67e0b2d504",
+      "name": "Réponse – bloqué",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2640,
+        1628
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, bloque: $json.raison, trouve: $json.trouve, controles: $json.controles }) }}",
+        "options": {
+          "responseCode": 409
+        }
+      }
+    },
+    {
+      "id": "5d003d72-0840-550b-8d2c-325d0b5dc743",
+      "name": "Candidature ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        1340
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ebabd84f-55eb-54e4-9b78-5345849aa27b",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "candidature",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3d8d0648-bd43-50ef-af41-7a220e5eb907",
+      "name": "Drive – chercher le CV",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        2880,
+        1340
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "fileFolder",
+        "operation": "search",
+        "searchMethod": "query",
+        "queryString": "={{ $('Valider la demande').first().json.cv_requete }}",
+        "returnAll": false,
+        "limit": 5,
+        "filter": {},
+        "options": {
+          "fields": [
+            "id",
+            "name"
+          ]
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "80WSDQWpbAZNzqeB",
+          "name": "Google Drive Karim"
+        }
+      }
+    },
+    {
+      "id": "a332b13a-8521-5bc9-9d54-91d2c469c64d",
+      "name": "CV trouvé",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        1340
+      ],
+      "parameters": {
+        "jsCode": "// Sentinelle : le CV est-il dans le dossier Drive ? Sortie : toujours UN item.\nconst trouves = $input.all().map(i => i.json).filter(j => j && j.id);\nreturn [{ json: { trouve: trouves.length > 0, fichier_id: trouves.length ? trouves[0].id : '', nom: trouves.length ? trouves[0].name : '' } }];"
+      }
+    },
+    {
+      "id": "c60be992-b732-534f-84cc-fa28c55f28ed",
+      "name": "CV présent ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3360,
+        1340
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f390998a-650a-5206-91ea-f459089ef582",
+              "leftValue": "={{ String($json.trouve) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b793df70-c8bb-59da-9502-463d63045cf4",
+      "name": "Réponse – CV introuvable",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3600,
+        1436
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, erreur: 'CV introuvable sur le Drive (Job Search/CV) : ' + $('Valider la demande').first().json.demande.cv }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "id": "cd471aed-e128-5e62-9082-4ab57e229d30",
+      "name": "Drive – télécharger le CV",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        3600,
+        1244
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.fichier_id }}",
+          "cachedResultName": "CV de la candidature"
+        },
+        "options": {
+          "binaryPropertyName": "cv",
+          "fileName": "={{ $json.nom }}"
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "80WSDQWpbAZNzqeB",
+          "name": "Google Drive Karim"
+        }
+      }
+    },
+    {
+      "id": "27c2d1a4-0556-5d6e-9b44-f3bd161da97b",
+      "name": "Mode réel ? (candidature)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3840,
+        1244
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f00b6a3b-aaff-56b0-b538-dd6647d7f09b",
+              "leftValue": "={{ $('Valider la demande').first().json.mode }}",
+              "rightValue": "reel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "15d400d0-1146-50be-91b8-3641486c5396",
+      "name": "Gmail – brouillon avec CV",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        4080,
+        1148
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "draft",
+        "operation": "create",
+        "subject": "={{ $('Décider').first().json.objet }}",
+        "emailType": "text",
+        "message": "={{ $('Valider la demande').first().json.demande.corps }}",
+        "options": {
+          "sendTo": "={{ $('Valider la demande').first().json.demande.destinataire }}",
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "cv"
+              }
+            ]
+          }
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail Karim"
+        }
+      },
+      "webhookId": "f9253f1a-2080-4c11-a1b9-87f77aa55bbb"
+    },
+    {
+      "id": "609aa199-e004-5acf-a6e7-e68887b3f945",
+      "name": "Simulation – aucun brouillon",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4080,
+        1340
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "56b6d7ba-ced2-509c-aafa-af0c81db57b9",
+      "name": "Mode réel ? (relance)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2880,
+        1532
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "67471e7d-a170-5047-be22-f02ba28591e3",
+              "leftValue": "={{ $('Valider la demande').first().json.mode }}",
+              "rightValue": "reel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "00978823-42c5-599c-9d9d-ea8e43d06634",
+      "name": "Gmail – brouillon de relance",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "position": [
+        3120,
+        1532
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "draft",
+        "operation": "create",
+        "subject": "={{ $('Décider').first().json.objet }}",
+        "emailType": "text",
+        "message": "={{ $('Valider la demande').first().json.demande.corps }}",
+        "options": {
+          "sendTo": "={{ $('Valider la demande').first().json.demande.destinataire }}",
+          "threadId": "={{ $('Décider').first().json.threadId }}"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OanV52MRrCz2nqau",
+          "name": "Gmail Karim"
+        }
+      },
+      "webhookId": "02bc6ed6-882b-43b5-8d17-67b60e887a1a"
+    },
+    {
+      "id": "72209fdd-3ca2-5f4e-9308-e70e71d8f82a",
+      "name": "Simulation – aucune relance",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        1724
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "13d63a75-b33b-5a7c-9af4-9ae1f2892160",
+      "name": "Réponse – brouillon créé",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        4320,
+        1436
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, mode: $('Valider la demande').first().json.mode, type: $('Décider').first().json.type, brouillon: $json.message ? { id: $json.id, lien: 'https://mail.google.com/mail/u/0/#drafts?compose=' + $json.message.id } : null, controles: $('Décider').first().json.controles }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook – candidature": {
+      "main": [
+        [
+          {
+            "node": "Réglages · Suivi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel WF1": {
+      "main": [
+        [
+          {
+            "node": "Candidature d'exemple",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidature d'exemple": {
+      "main": [
+        [
+          {
+            "node": "Réglages · Suivi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Réglages · Suivi": {
+      "main": [
+        [
+          {
+            "node": "Préparer la ligne",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer la ligne": {
+      "main": [
+        [
+          {
+            "node": "Données valides ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Données valides ?": {
+      "main": [
+        [
+          {
+            "node": "Mode réel ?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse – refusé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode réel ?": {
+      "main": [
+        [
+          {
+            "node": "Colonnes de la ligne",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Simulation – rien n'est écrit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Colonnes de la ligne": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets – ajout ou mise à jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets – ajout ou mise à jour": {
+      "main": [
+        [
+          {
+            "node": "Réponse – enregistré",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulation – rien n'est écrit": {
+      "main": [
+        [
+          {
+            "node": "Réponse – enregistré",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook – brouillon": {
+      "main": [
+        [
+          {
+            "node": "Réglages · Brouillon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel WF2": {
+      "main": [
+        [
+          {
+            "node": "Demande d'exemple",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Demande d'exemple": {
+      "main": [
+        [
+          {
+            "node": "Réglages · Brouillon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Réglages · Brouillon": {
+      "main": [
+        [
+          {
+            "node": "Valider la demande",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valider la demande": {
+      "main": [
+        [
+          {
+            "node": "Demande valide ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Demande valide ?": {
+      "main": [
+        [
+          {
+            "node": "Gmail – envois au destinataire",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse – demande refusée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – envois au destinataire": {
+      "main": [
+        [
+          {
+            "node": "Gmail – envois au domaine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – envois au domaine": {
+      "main": [
+        [
+          {
+            "node": "Gmail – brouillons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – brouillons": {
+      "main": [
+        [
+          {
+            "node": "Sheets – lignes du suivi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets – lignes du suivi": {
+      "main": [
+        [
+          {
+            "node": "Décider",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Décider": {
+      "main": [
+        [
+          {
+            "node": "Bloqué ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bloqué ?": {
+      "main": [
+        [
+          {
+            "node": "Réponse – bloqué",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Candidature ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidature ?": {
+      "main": [
+        [
+          {
+            "node": "Drive – chercher le CV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mode réel ? (relance)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Drive – chercher le CV": {
+      "main": [
+        [
+          {
+            "node": "CV trouvé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CV trouvé": {
+      "main": [
+        [
+          {
+            "node": "CV présent ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CV présent ?": {
+      "main": [
+        [
+          {
+            "node": "Drive – télécharger le CV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse – CV introuvable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Drive – télécharger le CV": {
+      "main": [
+        [
+          {
+            "node": "Mode réel ? (candidature)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode réel ? (candidature)": {
+      "main": [
+        [
+          {
+            "node": "Gmail – brouillon avec CV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Simulation – aucun brouillon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – brouillon avec CV": {
+      "main": [
+        [
+          {
+            "node": "Réponse – brouillon créé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulation – aucun brouillon": {
+      "main": [
+        [
+          {
+            "node": "Réponse – brouillon créé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mode réel ? (relance)": {
+      "main": [
+        [
+          {
+            "node": "Gmail – brouillon de relance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Simulation – aucune relance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – brouillon de relance": {
+      "main": [
+        [
+          {
+            "node": "Réponse – brouillon créé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulation – aucune relance": {
+      "main": [
+        [
+          {
+            "node": "Réponse – brouillon créé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "errorWorkflow": "GestErreursInst1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "CandidaturesSuiv",
+      "projectId": "349GhfsUP4jOI9a6",
+      "createdAt": "2026-09-29T14:58:34.635Z",
+      "updatedAt": "2026-09-29T14:58:34.635Z"
+    }
+  ],
+  "activeVersion": {
+    "versionId": "7056c1dc-8d1a-429f-b16b-a48d8f0dca9a",
+    "workflowId": "CandidaturesSuiv",
+    "nodes": [
+      {
+        "id": "00ff92cf-63b1-5e23-9a19-a87243b21095",
+        "name": "Sommaire du système",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          -480
+        ],
+        "parameters": {
+          "content": "# Candidatures · Suivi\n\nÉcrit les candidatures du skill `job-search` dans le Google Sheet « Suivi des candidatures » (WF1) et crée leurs brouillons Gmail, CV joint (WF2).\n\n| Bloc | État |\n|---|---|\n| WF1 · Ajout ou mise à jour d'une candidature | en service, mode réel depuis le 2026-09-29 |\n| WF2 · Brouillon de candidature (CV joint, anti-doublon) | mode réel depuis le 2026-09-29 — recette B7–B11 en cours |\n\nDossier de remise : `n8n builder/systemes/candidatures-suivi/`.",
+          "height": 368,
+          "width": 560,
+          "color": 7
+        }
+      },
+      {
+        "id": "4371a26b-d6da-5b4f-8897-7677a71b9884",
+        "name": "Réglages du système",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          0,
+          -480
+        ],
+        "parameters": {
+          "content": "## Réglages du système\n\nWF1 — nœud **Réglages · Suivi** :\n\n| Réglage | Défaut | Effet |\n|---|---|---|\n| MODE | reel | simulation : rien n'est écrit ; reel : le Sheet est mis à jour |\n| SHEET_ID | 1RQc4…jy9I | Sheet « Suivi des candidatures » |\n| ONGLET_GID | 1295018267 | onglet visé (par id) |\n| STATUTS | 5 valeurs | statuts admis, identiques à la liste déroulante |\n\nWF2 — nœud **Réglages · Brouillon** :\n\n| Réglage | Défaut | Effet |\n|---|---|---|\n| MODE | reel | simulation : contrôles exécutés, aucun brouillon ; reel : brouillon créé |\n| CV_DOSSIER_ID | 1pz19…1mkL | dossier Drive « Job Search/CV » |\n| SHEET_ID / ONGLET_GID | idem WF1 | contrôle des lignes « Envoyé » |\n| DOMAINES_GENERIQUES | 23 domaines | pas de contrôle par domaine sur les messageries grand public |\n| SIGNES_INTERDITS | 13 signes + émojis | refus 400 si l'objet ou le corps en contient |",
+          "height": 608,
+          "width": 560,
+          "color": 7
+        }
+      },
+      {
+        "id": "0cf38e6e-0f47-59a9-aff8-5d1235586b70",
+        "name": "Bloc WF1 · Ajout ou mise à jour d'une candidature",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          304
+        ],
+        "parameters": {
+          "content": "## Bloc WF1 · Ajout ou mise à jour d'une candidature",
+          "height": 700,
+          "width": 2880,
+          "color": 4
+        }
+      },
+      {
+        "id": "c628c310-c2c4-5b83-8766-376c802d12fd",
+        "name": "WF1 – mode d'emploi",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -640,
+          416
+        ],
+        "parameters": {
+          "content": "## WF1 – mode d'emploi\n\n**Rôle** : ajoute une candidature au Sheet « Suivi des candidatures », ou met à jour la ligne dont le lien de l'offre correspond. Seules les colonnes envoyées changent.\n\n**Quand** : à chaque appel du skill `job-search` (POST `/webhook/candidatures/suivi`, en-tête `X-Candidatures-Secret`).\n\n**Étapes**\n1. Réglages · Suivi (mode, Sheet, onglet, statuts admis)\n2. Préparer la ligne : contrôle du lien et du statut, conversion en noms de colonnes\n3. Données valides ? non → réponse 400\n4. Mode réel ? oui → Google Sheets (ajout ou mise à jour) ; non → rien n'est écrit\n5. Réponse JSON\n\n**Garde-fous** : simulation par défaut ; aucune colonne créée ; Sheet et onglet par id ; lien de l'offre obligatoire.\n\n**Identifiants utilisés** : Google Sheets OAuth2 (compte de Karim) ; Header Auth « Candidatures – secret ».",
+          "height": 544,
+          "width": 560,
+          "color": 7
+        }
+      },
+      {
+        "id": "e5711342-b065-5538-950b-a9914dce5599",
+        "name": "Webhook – candidature",
+        "webhookId": "4bb53f7a-a538-5dce-8942-e0d584c0f50c",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          512
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "candidatures/suivi",
+          "authentication": "headerAuth",
+          "responseMode": "responseNode",
+          "options": {
+            "rawBody": false
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "VoO41LdxILf7fFL4",
+            "name": "Candidatures – secret"
+          }
+        }
+      },
+      {
+        "id": "0ee32471-387f-5f3f-972b-88245f211e6d",
+        "name": "Lancement manuel WF1",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          736
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "76164e53-cff1-5e29-a3a9-7d5ba23ef08b",
+        "name": "Candidature d'exemple",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          736
+        ],
+        "parameters": {
+          "jsCode": "// Candidature d'exemple pour la recette (Lancement manuel WF1). Lien fictif : à supprimer du Sheet après un test en mode réel.\nreturn [{ json: { body: {\n  lien_offre: 'https://exemple.invalid/offre-test-candidatures-suivi',\n  statut: 'En attente',\n  entreprise: 'ZZ Test',\n  poste: 'Poste de test',\n  notes: 'Ligne de recette : à supprimer.',\n} } }];"
+        }
+      },
+      {
+        "id": "16a11c1c-448a-574c-90cc-dcd24dfb1e1d",
+        "name": "Réglages · Suivi",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          512
+        ],
+        "parameters": {
+          "jsCode": "// MODE        : 'simulation' = tout est calculé et renvoyé, RIEN n'est écrit dans le Sheet.\n//               'reel'       = la ligne est ajoutée ou mise à jour. Bascule sur décision explicite, après la recette.\n// SHEET_ID    : identifiant du Google Sheet « Suivi des candidatures » (Drive, dossier Job Search).\n// ONGLET_GID  : identifiant (gid) de l'onglet — jamais son nom, qui peut changer.\n// STATUTS     : valeurs admises dans la colonne Statut (identiques à la liste déroulante du Sheet).\nconst reglages = {\n  MODE: 'reel',\n  SHEET_ID: '1RQc4EFb2OWXL-O9EsC1fRFQ_p4amb2oxDZxXZ0gjy9I',\n  ONGLET_GID: '1295018267',\n  STATUTS: ['En attente', 'Envoyé', 'Abandon', 'Refusé', 'Accepté'],\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
+        }
+      },
+      {
+        "id": "1917f5b9-26c7-5f9b-b6ab-9e9a223200d3",
+        "name": "Préparer la ligne",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          512
+        ],
+        "parameters": {
+          "jsCode": "// Valide le corps reçu et le convertit en noms de colonnes du Sheet.\n// Sortie : un seul item, { ok, erreur, ligne } — jamais zéro item (la réponse au webhook doit toujours partir).\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst corps = entree.body || {};\nconst COLONNES = {\n  date_ajout: \"Date d'ajout\",\n  statut: 'Statut',\n  entreprise: 'Entreprise',\n  poste: 'Poste',\n  type: 'Type',\n  lieu: 'Lieu / télétravail',\n  salaire: 'Salaire',\n  experience: 'Expérience',\n  equipe: 'Équipe en place',\n  correspondance: 'Correspondance',\n  lien_offre: \"Lien de l'offre\",\n  canal: 'Canal de candidature',\n  contact: 'Contact publié',\n  lettre: 'Lettre',\n  relecture: 'Relecture',\n  date_envoi: \"Date d'envoi\",\n  relance: 'Relance prévue',\n  notes: 'Notes',\n};\n\nconst lien = String(corps.lien_offre || '').trim();\nif (!lien) {\n  return [{ json: { ok: false, erreur: 'lien_offre manquant : il sert de clé pour retrouver la ligne.', mode: r.MODE } }];\n}\nif (corps.statut !== undefined && !r.STATUTS.includes(corps.statut)) {\n  return [{ json: { ok: false, erreur: 'statut inconnu : ' + corps.statut + ' (valeurs admises : ' + r.STATUTS.join(', ') + ').', mode: r.MODE } }];\n}\n\nconst ligne = {};\nfor (const [cle, colonne] of Object.entries(COLONNES)) {\n  if (corps[cle] !== undefined && corps[cle] !== null) ligne[colonne] = String(corps[cle]);\n}\nligne[\"Lien de l'offre\"] = lien;\n\nreturn [{ json: { ok: true, mode: r.MODE, ligne } }];"
+        }
+      },
+      {
+        "id": "b99503d3-5b95-53bd-b9d9-ac5df9648247",
+        "name": "Données valides ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          960,
+          512
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "6325efd5-108d-5f80-bf7e-b00538597418",
+                "leftValue": "={{ String($json.ok) }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "f4dc4326-5a5c-593d-ad49-d00f1d4ff923",
+        "name": "Mode réel ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1200,
+          416
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "2f572117-05e1-504e-8d12-575cabc56f09",
+                "leftValue": "={{ $json.mode }}",
+                "rightValue": "reel",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "3b185d4f-d860-5c45-9a71-c48bb4e2c2f2",
+        "name": "Colonnes de la ligne",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1440,
+          416
+        ],
+        "parameters": {
+          "jsCode": "// Ne transmet au nœud Google Sheets que les colonnes de la ligne (correspondance automatique par nom).\nreturn [{ json: $input.first().json.ligne }];"
+        }
+      },
+      {
+        "id": "5f5b649e-b1ce-59d0-ae68-07697a28c2e0",
+        "name": "Google Sheets – ajout ou mise à jour",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          1680,
+          416
+        ],
+        "parameters": {
+          "operation": "appendOrUpdate",
+          "documentId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Réglages · Suivi').first().json.reglages.SHEET_ID }}",
+            "cachedResultName": "Suivi des candidatures"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Réglages · Suivi').first().json.reglages.ONGLET_GID }}",
+            "cachedResultName": "Untitled"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {},
+            "matchingColumns": [
+              "Lien de l'offre"
+            ],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {
+            "handlingExtraData": "ignoreIt"
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "uC2XRC8ZU2RusWjr",
+            "name": "Google Sheets Karim"
+          }
+        }
+      },
+      {
+        "id": "212bdce1-9199-52df-bee9-12e6d91c309a",
+        "name": "Simulation – rien n'est écrit",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1440,
+          608
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "7c0baa8d-3e1f-50b3-a6ce-e375fd8a3090",
+        "name": "Réponse – enregistré",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1920,
+          512
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: true, mode: $('Préparer la ligne').first().json.mode, ligne: $('Préparer la ligne').first().json.ligne }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "d524df1a-f74f-5b56-9511-219d5f112595",
+        "name": "Réponse – refusé",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          736
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: false, erreur: $json.erreur }) }}",
+          "options": {
+            "responseCode": 400
+          }
+        }
+      },
+      {
+        "id": "5e233186-2d3c-5a9c-a172-5979464f49ab",
+        "name": "Bloc WF2 · Brouillon de candidature",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          1104
+        ],
+        "parameters": {
+          "content": "## Bloc WF2 · Brouillon de candidature",
+          "height": 820,
+          "width": 5280,
+          "color": 5
+        }
+      },
+      {
+        "id": "8bdcbb58-86eb-55e8-984d-92a6b0654b24",
+        "name": "WF2 – mode d'emploi",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -640,
+          1204
+        ],
+        "parameters": {
+          "content": "## WF2 – mode d'emploi\n\n**Rôle** : crée le brouillon Gmail d'une candidature avec le CV PDF joint (Drive « Job Search/CV »), ou un brouillon de relance dans le fil du premier envoi. N'envoie **jamais** : Karim relit et envoie.\n\n**Quand** : à chaque appel du skill `job-search` (POST `/webhook/candidatures/brouillon`, en-tête `X-Candidatures-Secret`).\n\n**Étapes**\n1. Réglages · Brouillon (mode, dossier CV, Sheet, domaines grand public)\n2. Valider la demande : destinataire, entreprise, objet, corps, cv (sauf relance)\n3. Contrôles : Gmail envoyés (adresse, domaine), brouillons existants, Sheet « Envoyé »\n4. Décider : bloqué → réponse 409 avec ce qui a été trouvé\n5. Candidature : CV cherché dans le Drive (absent → 400), téléchargé, joint\n6. Relance : dans le fil du dernier envoi, sans CV\n7. Mode réel ? oui → brouillon Gmail ; non → rien n'est créé\n8. Réponse JSON\n\n**Garde-fous** : simulation par défaut ; aucun nœud d'envoi ; objet ou corps avec un signe d'IA (tirets longs, point médian, émojis…) → refus 400 ; brouillon existant, envoi antérieur ou corps identique → bloqué ; relance seulement si demandée ; dossier et Sheet par id.\n\n**Identifiants utilisés** : Gmail OAuth2, Google Drive OAuth2, Google Sheets OAuth2 (compte de Karim) ; Header Auth « Candidatures – secret ».",
+          "height": 688,
+          "width": 560,
+          "color": 7
+        }
+      },
+      {
+        "id": "e587358b-82d0-5725-99f8-a18ce17b3ece",
+        "name": "Webhook – brouillon",
+        "webhookId": "9fbd2f6b-8789-507b-864a-be2954191adc",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          1532
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "candidatures/brouillon",
+          "authentication": "headerAuth",
+          "responseMode": "responseNode",
+          "options": {
+            "rawBody": false
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "VoO41LdxILf7fFL4",
+            "name": "Candidatures – secret"
+          }
+        }
+      },
+      {
+        "id": "ef8a88c2-7c45-590a-a916-22728ebfc42c",
+        "name": "Lancement manuel WF2",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          1756
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "575e4b7f-69ad-540d-afe5-66d34c92ae9b",
+        "name": "Demande d'exemple",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          1756
+        ],
+        "parameters": {
+          "jsCode": "// Demande d'exemple pour la recette (Lancement manuel WF2). Adresse réservée (.invalid) : aucun envoi possible.\nreturn [{ json: { body: {\n  destinataire: 'recrutement@exemple.invalid',\n  entreprise: 'ZZ Test',\n  objet: 'Candidature — Poste de test, Bordeaux',\n  corps: 'Bonjour, ceci est un brouillon de recette.',\n  cv: 'CV-Karim-Bordeau.pdf',\n  relance: false,\n} } }];"
+        }
+      },
+      {
+        "id": "e4901f23-f349-5c98-afa7-415576591f46",
+        "name": "Réglages · Brouillon",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          1532
+        ],
+        "parameters": {
+          "jsCode": "// MODE                : 'simulation' = contrôles et recherche du CV exécutés (lectures), AUCUN brouillon créé.\n//                       'reel'       = le brouillon Gmail est créé. Bascule sur décision explicite, après la recette.\n// CV_DOSSIER_ID       : dossier Drive « Job Search/CV » (PDF finaux écrits par build-cv.mjs).\n// SHEET_ID, ONGLET_GID: Sheet « Suivi des candidatures » (contrôle des lignes au statut Envoyé).\n// DOMAINES_GENERIQUES : messageries grand public — jamais de contrôle par domaine sur ces domaines.\n// SIGNES_INTERDITS    : typographie qui trahit un texte écrit par une IA (règle de Karim, 2026-09-29) : refusée dans l'objet et le corps. Émojis refusés aussi.\nconst reglages = {\n  MODE: 'reel',\n  CV_DOSSIER_ID: '1pz19yJH0wpAJeItTb1nA8OEz6J1F1mkL',\n  SHEET_ID: '1RQc4EFb2OWXL-O9EsC1fRFQ_p4amb2oxDZxXZ0gjy9I',\n  ONGLET_GID: '1295018267',\n  SIGNES_INTERDITS: ['—', '–', '·', '•', '→', '⇒', '…', '’', '‘', '“', '”', '✓', '✔'],\n  DOMAINES_GENERIQUES: ['gmail.com', 'googlemail.com', 'outlook.fr', 'outlook.com', 'hotmail.fr', 'hotmail.com', 'live.fr', 'live.com', 'msn.com', 'yahoo.fr', 'yahoo.com', 'orange.fr', 'wanadoo.fr', 'free.fr', 'sfr.fr', 'neuf.fr', 'laposte.net', 'icloud.com', 'me.com', 'proton.me', 'protonmail.com', 'gmx.fr', 'bbox.fr'],\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
+        }
+      },
+      {
+        "id": "3ec44394-0727-5fd7-ba05-05a96643937b",
+        "name": "Valider la demande",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          1532
+        ],
+        "parameters": {
+          "jsCode": "// Valide la demande et prépare les requêtes Gmail. Sortie : toujours UN item { ok, erreur | demande, requetes }.\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst c = entree.body || {};\nconst txt = v => (v === undefined || v === null) ? '' : String(v).trim();\nconst refus = erreur => [{ json: { ok: false, erreur, mode: r.MODE } }];\n\n// destinataire : une adresse, ou plusieurs séparées par virgule / point-virgule (ex. contact@ + RH) : un seul brouillon, tous en destinataires.\nconst liste = [...new Set((Array.isArray(c.destinataire) ? c.destinataire.join(',') : txt(c.destinataire)).toLowerCase().split(/[,;\\s]+/).filter(Boolean))];\nconst destinataire = liste.join(', ');\nconst relance = c.relance === true || c.relance === 'true';\nconst demande = {\n  destinataire,\n  destinataires: liste,\n  entreprise: txt(c.entreprise),\n  objet: txt(c.objet),\n  corps: txt(c.corps),\n  cv: txt(c.cv),\n  lien_offre: txt(c.lien_offre),\n  relance,\n};\nif (!liste.length) return refus('destinataire manquant ou mal formé.');\nconst malFormee = liste.find(a => !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(a));\nif (malFormee) return refus('destinataire manquant ou mal formé : ' + malFormee);\nfor (const champ of ['entreprise', 'objet', 'corps']) {\n  if (!demande[champ]) return refus(champ + ' manquant.');\n}\n// Typographie d'IA : refus net, avec le signe et le champ fautifs (le texte se corrige côté skill, jamais ici).\nconst estEmoji = ch => { const cp = ch.codePointAt(0); return (cp >= 0x1F300 && cp <= 0x1FAFF) || (cp >= 0x2600 && cp <= 0x27BF); };\nfor (const champ of ['objet', 'corps']) {\n  const fautif = [...demande[champ]].find(ch => r.SIGNES_INTERDITS.includes(ch) || estEmoji(ch));\n  if (fautif) return refus('signe interdit dans ' + champ + ' : « ' + fautif + ' » (typographie d’IA : utiliser la ponctuation du clavier).');\n}\nif (!relance) {\n  if (!demande.cv) return refus('cv manquant : nom du PDF dans le dossier Drive Job Search/CV.');\n  if (!/^[^'\"\\/]+\\.pdf$/i.test(demande.cv)) return refus('cv invalide : un nom de fichier .pdf, sans guillemet ni chemin.');\n}\n\n// Gmail : {a b} = a OU b.\nconst ou = termes => termes.length === 1 ? termes[0] : '{' + termes.join(' ') + '}';\nconst domaines = [...new Set(liste.map(a => a.split('@')[1]))].filter(dm => !r.DOMAINES_GENERIQUES.includes(dm));\nconst parAdresse = 'in:sent ' + ou(liste.map(a => 'to:' + a));\nconst requetes = {\n  adresse: parAdresse,\n  domaine: domaines.length ? 'in:sent ' + ou(domaines.map(dm => 'to:' + dm)) : parAdresse,\n  controle_domaine: domaines.length > 0,\n  domaines,\n};\nconst cv_requete = \"name = '\" + demande.cv + \"' and '\" + r.CV_DOSSIER_ID + \"' in parents and trashed = false\";\nreturn [{ json: { ok: true, mode: r.MODE, demande, requetes, cv_requete } }];"
+        }
+      },
+      {
+        "id": "9cdb2634-c36e-5507-b02b-21b26e91fad3",
+        "name": "Demande valide ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          960,
+          1532
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "0ccdf176-fc76-56ab-8fac-5f2d468e0f4b",
+                "leftValue": "={{ String($json.ok) }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "76ce17d2-0cb2-51ab-a400-4da19af4bee0",
+        "name": "Réponse – demande refusée",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          1756
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: false, erreur: $json.erreur }) }}",
+          "options": {
+            "responseCode": 400
+          }
+        }
+      },
+      {
+        "id": "6df18c8d-962a-5b6f-a895-440a452dd769",
+        "name": "Gmail – envois au destinataire",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          1200,
+          1436
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 20,
+          "simple": false,
+          "filters": {
+            "q": "={{ $('Valider la demande').first().json.requetes.adresse }}",
+            "includeSpamTrash": false,
+            "readStatus": "both"
+          },
+          "options": {
+            "downloadAttachments": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "OanV52MRrCz2nqau",
+            "name": "Gmail Karim"
+          }
+        },
+        "webhookId": "7827f95e-ff1e-4fae-a46e-e2fc56176c1c"
+      },
+      {
+        "id": "f759d3a6-ca02-5405-9f61-78e8968a5dd5",
+        "name": "Gmail – envois au domaine",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          1440,
+          1436
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 20,
+          "simple": false,
+          "filters": {
+            "q": "={{ $('Valider la demande').first().json.requetes.domaine }}",
+            "includeSpamTrash": false,
+            "readStatus": "both"
+          },
+          "options": {
+            "downloadAttachments": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "OanV52MRrCz2nqau",
+            "name": "Gmail Karim"
+          }
+        },
+        "webhookId": "2ed158ba-d907-4829-b7d4-c022291d0d1b"
+      },
+      {
+        "id": "f265dd67-579a-587a-be63-5d88f926eadb",
+        "name": "Gmail – brouillons",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          1680,
+          1436
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "draft",
+          "operation": "getAll",
+          "returnAll": true,
+          "options": {
+            "downloadAttachments": false,
+            "includeSpamTrash": false
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "OanV52MRrCz2nqau",
+            "name": "Gmail Karim"
+          }
+        },
+        "webhookId": "d2b6f284-da2a-4de8-8f8a-07209e5fc601"
+      },
+      {
+        "id": "f769c80b-d8e8-5a86-8811-881365dd1e90",
+        "name": "Sheets – lignes du suivi",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.7,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          1920,
+          1436
+        ],
+        "parameters": {
+          "operation": "read",
+          "documentId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Réglages · Brouillon').first().json.reglages.SHEET_ID }}",
+            "cachedResultName": "Suivi des candidatures"
+          },
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Réglages · Brouillon').first().json.reglages.ONGLET_GID }}",
+            "cachedResultName": "Untitled"
+          },
+          "filtersUI": {},
+          "options": {}
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "uC2XRC8ZU2RusWjr",
+            "name": "Google Sheets Karim"
+          }
+        }
+      },
+      {
+        "id": "a9e4f7f7-7191-5ca1-9679-83a2b9f092ba",
+        "name": "Décider",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2160,
+          1436
+        ],
+        "parameters": {
+          "jsCode": "// Applique le garde-fou anti-doublon (spec-brouillon.md §5.4). Sortie : toujours UN item.\nconst v = $('Valider la demande').first().json;\nconst d = v.demande;\nconst NL = String.fromCharCode(10);\nconst norm = s => String(s || '').toLowerCase().replace(/\\s+/g, ' ').trim();\nconst reels = noeud => $(noeud).all().map(i => i.json).filter(j => j && j.id);\n\nconst adresses = m => {\n  const champ = m.to;\n  const brut = [];\n  if (champ && Array.isArray(champ.value)) champ.value.forEach(x => brut.push(x.address));\n  else if (champ && champ.text) brut.push(champ.text);\n  else if (typeof champ === 'string') brut.push(champ);\n  if (m.headers && m.headers.to) brut.push(m.headers.to);\n  return brut.join(',').toLowerCase();\n};\nconst vise = m => {\n  const a = adresses(m);\n  if (d.destinataires.some(x => a.includes(x))) return true;\n  return v.requetes.domaines.some(dm => a.includes('@' + dm));\n};\nconst resume = m => ({ date: m.date || '', objet: m.subject || '', lien: 'https://mail.google.com/mail/u/0/#all/' + (m.threadId || m.id), id: m.id, threadId: m.threadId || '' });\n\n// 1. Envois Gmail (adresse puis domaine), dédoublonnés par id\nconst vus = new Map();\nfor (const m of [...reels('Gmail – envois au destinataire'), ...reels('Gmail – envois au domaine')]) {\n  if (vise(m)) vus.set(m.id, m);\n}\nconst envois = [...vus.values()].sort((a, b) => new Date(b.date) - new Date(a.date));\n\n// 2. Brouillons existants vers l'adresse\nconst brouillons = reels('Gmail – brouillons').filter(m => d.destinataires.some(x => adresses(m).includes(x)));\n\n// 3. Sheet : ligne « Envoyé » (lien de l'offre, sinon entreprise)\nconst lignes = $('Sheets – lignes du suivi').all().map(i => i.json).filter(j => j && j['Statut']);\nconst envoyees = lignes.filter(l => l['Statut'] === 'Envoyé' && (\n  (d.lien_offre && String(l[\"Lien de l'offre\"] || '').trim() === d.lien_offre) ||\n  (norm(l['Entreprise']) && norm(l['Entreprise']) === norm(d.entreprise))\n));\n\nconst controles = {\n  envois_gmail: envois.length,\n  controle_domaine: v.requetes.controle_domaine,\n  brouillons_existants: brouillons.length,\n  lignes_envoye_sheet: envoyees.length,\n};\nconst bloque = (raison, trouve) => [{ json: { bloque: true, raison, trouve, controles } }];\n\nif (brouillons.length) {\n  return bloque('un brouillon vers cette adresse existe déjà : le reprendre plutôt que d’en créer un autre.',\n    brouillons.map(m => ({ date: m.date || '', objet: m.subject || '', lien: 'https://mail.google.com/mail/u/0/#drafts' })));\n}\nconst dejaEcrit = envois.length > 0 || envoyees.length > 0;\nconst traces = [\n  ...envois.map(resume),\n  ...envoyees.map(l => ({ date: l[\"Date d'envoi\"] || '', objet: 'Sheet : ' + l['Entreprise'] + ' — ' + l['Poste'] + ' (Envoyé)', lien: l[\"Lien de l'offre\"] || '' })),\n];\nif (!d.relance) {\n  if (dejaEcrit) return bloque('candidature déjà envoyée à ce destinataire : pas de second envoi identique. Relance ? la demander explicitement.', traces);\n  return [{ json: { bloque: false, type: 'candidature', objet: d.objet, threadId: '', controles } }];\n}\nif (!dejaEcrit) return bloque('relance demandée, mais aucun envoi antérieur trouvé.', []);\nconst corps = norm(d.corps);\nconst identique = envois.find(m => norm(m.text).includes(corps));\nif (identique) return bloque('corps identique à un mail déjà envoyé le ' + (identique.date || '?') + ' : réécrire la relance.', [resume(identique)]);\nconst dernier = envois[0];\nconst objet = dernier ? 'Re: ' + String(dernier.subject || d.objet).replace(/^(re|tr|fwd?)\\s*:\\s*/i, '') : d.objet;\nreturn [{ json: { bloque: false, type: 'relance', objet, threadId: dernier ? dernier.threadId : '', controles } }];"
+        }
+      },
+      {
+        "id": "afa97bf4-1e6f-52ed-9670-dac157f6fb68",
+        "name": "Bloqué ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2400,
+          1436
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "8296feac-8ab3-548d-8b4f-6e74633ba23e",
+                "leftValue": "={{ String($json.bloque) }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "173affca-3c3c-5ba8-8cde-8f67e0b2d504",
+        "name": "Réponse – bloqué",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2640,
+          1628
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: false, bloque: $json.raison, trouve: $json.trouve, controles: $json.controles }) }}",
+          "options": {
+            "responseCode": 409
+          }
+        }
+      },
+      {
+        "id": "5d003d72-0840-550b-8d2c-325d0b5dc743",
+        "name": "Candidature ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2640,
+          1340
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "ebabd84f-55eb-54e4-9b78-5345849aa27b",
+                "leftValue": "={{ $json.type }}",
+                "rightValue": "candidature",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "3d8d0648-bd43-50ef-af41-7a220e5eb907",
+        "name": "Drive – chercher le CV",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          2880,
+          1340
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "fileFolder",
+          "operation": "search",
+          "searchMethod": "query",
+          "queryString": "={{ $('Valider la demande').first().json.cv_requete }}",
+          "returnAll": false,
+          "limit": 5,
+          "filter": {},
+          "options": {
+            "fields": [
+              "id",
+              "name"
+            ]
+          }
+        },
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "80WSDQWpbAZNzqeB",
+            "name": "Google Drive Karim"
+          }
+        }
+      },
+      {
+        "id": "a332b13a-8521-5bc9-9d54-91d2c469c64d",
+        "name": "CV trouvé",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3120,
+          1340
+        ],
+        "parameters": {
+          "jsCode": "// Sentinelle : le CV est-il dans le dossier Drive ? Sortie : toujours UN item.\nconst trouves = $input.all().map(i => i.json).filter(j => j && j.id);\nreturn [{ json: { trouve: trouves.length > 0, fichier_id: trouves.length ? trouves[0].id : '', nom: trouves.length ? trouves[0].name : '' } }];"
+        }
+      },
+      {
+        "id": "c60be992-b732-534f-84cc-fa28c55f28ed",
+        "name": "CV présent ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3360,
+          1340
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "f390998a-650a-5206-91ea-f459089ef582",
+                "leftValue": "={{ String($json.trouve) }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "b793df70-c8bb-59da-9502-463d63045cf4",
+        "name": "Réponse – CV introuvable",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          3600,
+          1436
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: false, erreur: 'CV introuvable sur le Drive (Job Search/CV) : ' + $('Valider la demande').first().json.demande.cv }) }}",
+          "options": {
+            "responseCode": 400
+          }
+        }
+      },
+      {
+        "id": "cd471aed-e128-5e62-9082-4ab57e229d30",
+        "name": "Drive – télécharger le CV",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          3600,
+          1244
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "file",
+          "operation": "download",
+          "fileId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $json.fichier_id }}",
+            "cachedResultName": "CV de la candidature"
+          },
+          "options": {
+            "binaryPropertyName": "cv",
+            "fileName": "={{ $json.nom }}"
+          }
+        },
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "80WSDQWpbAZNzqeB",
+            "name": "Google Drive Karim"
+          }
+        }
+      },
+      {
+        "id": "27c2d1a4-0556-5d6e-9b44-f3bd161da97b",
+        "name": "Mode réel ? (candidature)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3840,
+          1244
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "f00b6a3b-aaff-56b0-b538-dd6647d7f09b",
+                "leftValue": "={{ $('Valider la demande').first().json.mode }}",
+                "rightValue": "reel",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "15d400d0-1146-50be-91b8-3641486c5396",
+        "name": "Gmail – brouillon avec CV",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          4080,
+          1148
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "draft",
+          "operation": "create",
+          "subject": "={{ $('Décider').first().json.objet }}",
+          "emailType": "text",
+          "message": "={{ $('Valider la demande').first().json.demande.corps }}",
+          "options": {
+            "sendTo": "={{ $('Valider la demande').first().json.demande.destinataire }}",
+            "attachmentsUi": {
+              "attachmentsBinary": [
+                {
+                  "property": "cv"
+                }
+              ]
+            }
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "OanV52MRrCz2nqau",
+            "name": "Gmail Karim"
+          }
+        },
+        "webhookId": "f9253f1a-2080-4c11-a1b9-87f77aa55bbb"
+      },
+      {
+        "id": "609aa199-e004-5acf-a6e7-e68887b3f945",
+        "name": "Simulation – aucun brouillon",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          4080,
+          1340
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "56b6d7ba-ced2-509c-aafa-af0c81db57b9",
+        "name": "Mode réel ? (relance)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2880,
+          1532
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "67471e7d-a170-5047-be22-f02ba28591e3",
+                "leftValue": "={{ $('Valider la demande').first().json.mode }}",
+                "rightValue": "reel",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "00978823-42c5-599c-9d9d-ea8e43d06634",
+        "name": "Gmail – brouillon de relance",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "position": [
+          3120,
+          1532
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "draft",
+          "operation": "create",
+          "subject": "={{ $('Décider').first().json.objet }}",
+          "emailType": "text",
+          "message": "={{ $('Valider la demande').first().json.demande.corps }}",
+          "options": {
+            "sendTo": "={{ $('Valider la demande').first().json.demande.destinataire }}",
+            "threadId": "={{ $('Décider').first().json.threadId }}"
+          }
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "OanV52MRrCz2nqau",
+            "name": "Gmail Karim"
+          }
+        },
+        "webhookId": "02bc6ed6-882b-43b5-8d17-67b60e887a1a"
+      },
+      {
+        "id": "72209fdd-3ca2-5f4e-9308-e70e71d8f82a",
+        "name": "Simulation – aucune relance",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          3120,
+          1724
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "13d63a75-b33b-5a7c-9af4-9ae1f2892160",
+        "name": "Réponse – brouillon créé",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          4320,
+          1436
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: true, mode: $('Valider la demande').first().json.mode, type: $('Décider').first().json.type, brouillon: $json.message ? { id: $json.id, lien: 'https://mail.google.com/mail/u/0/#drafts?compose=' + $json.message.id } : null, controles: $('Décider').first().json.controles }) }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook – candidature": {
+        "main": [
+          [
+            {
+              "node": "Réglages · Suivi",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lancement manuel WF1": {
+        "main": [
+          [
+            {
+              "node": "Candidature d'exemple",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Candidature d'exemple": {
+        "main": [
+          [
+            {
+              "node": "Réglages · Suivi",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Réglages · Suivi": {
+        "main": [
+          [
+            {
+              "node": "Préparer la ligne",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Préparer la ligne": {
+        "main": [
+          [
+            {
+              "node": "Données valides ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Données valides ?": {
+        "main": [
+          [
+            {
+              "node": "Mode réel ?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Réponse – refusé",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode réel ?": {
+        "main": [
+          [
+            {
+              "node": "Colonnes de la ligne",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Simulation – rien n'est écrit",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Colonnes de la ligne": {
+        "main": [
+          [
+            {
+              "node": "Google Sheets – ajout ou mise à jour",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Sheets – ajout ou mise à jour": {
+        "main": [
+          [
+            {
+              "node": "Réponse – enregistré",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simulation – rien n'est écrit": {
+        "main": [
+          [
+            {
+              "node": "Réponse – enregistré",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook – brouillon": {
+        "main": [
+          [
+            {
+              "node": "Réglages · Brouillon",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lancement manuel WF2": {
+        "main": [
+          [
+            {
+              "node": "Demande d'exemple",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Demande d'exemple": {
+        "main": [
+          [
+            {
+              "node": "Réglages · Brouillon",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Réglages · Brouillon": {
+        "main": [
+          [
+            {
+              "node": "Valider la demande",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Valider la demande": {
+        "main": [
+          [
+            {
+              "node": "Demande valide ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Demande valide ?": {
+        "main": [
+          [
+            {
+              "node": "Gmail – envois au destinataire",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Réponse – demande refusée",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail – envois au destinataire": {
+        "main": [
+          [
+            {
+              "node": "Gmail – envois au domaine",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail – envois au domaine": {
+        "main": [
+          [
+            {
+              "node": "Gmail – brouillons",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail – brouillons": {
+        "main": [
+          [
+            {
+              "node": "Sheets – lignes du suivi",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sheets – lignes du suivi": {
+        "main": [
+          [
+            {
+              "node": "Décider",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Décider": {
+        "main": [
+          [
+            {
+              "node": "Bloqué ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Bloqué ?": {
+        "main": [
+          [
+            {
+              "node": "Réponse – bloqué",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Candidature ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Candidature ?": {
+        "main": [
+          [
+            {
+              "node": "Drive – chercher le CV",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mode réel ? (relance)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Drive – chercher le CV": {
+        "main": [
+          [
+            {
+              "node": "CV trouvé",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "CV trouvé": {
+        "main": [
+          [
+            {
+              "node": "CV présent ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "CV présent ?": {
+        "main": [
+          [
+            {
+              "node": "Drive – télécharger le CV",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Réponse – CV introuvable",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Drive – télécharger le CV": {
+        "main": [
+          [
+            {
+              "node": "Mode réel ? (candidature)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode réel ? (candidature)": {
+        "main": [
+          [
+            {
+              "node": "Gmail – brouillon avec CV",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Simulation – aucun brouillon",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail – brouillon avec CV": {
+        "main": [
+          [
+            {
+              "node": "Réponse – brouillon créé",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simulation – aucun brouillon": {
+        "main": [
+          [
+            {
+              "node": "Réponse – brouillon créé",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mode réel ? (relance)": {
+        "main": [
+          [
+            {
+              "node": "Gmail – brouillon de relance",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Simulation – aucune relance",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail – brouillon de relance": {
+        "main": [
+          [
+            {
+              "node": "Réponse – brouillon créé",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simulation – aucune relance": {
+        "main": [
+          [
+            {
+              "node": "Réponse – brouillon créé",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Karim Bordeau",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-29T18:59:04.104Z",
+    "updatedAt": "2026-09-29T18:59:04.104Z"
+  }
+}
