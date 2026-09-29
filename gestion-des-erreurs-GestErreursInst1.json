@@ -2,20 +2,14 @@
   "id": "GestErreursInst1",
   "name": "Gestion des erreurs",
   "active": true,
-  "activeVersionId": "c58de61e-9318-40ac-8418-45c1e9ff68d6",
+  "activeVersionId": "b2df7b16-26a9-4ea3-9fcc-ecc1b4505f05",
   "createdAt": "2026-09-21T14:11:49.024Z",
-  "updatedAt": "2026-09-21T15:02:10.259Z",
+  "updatedAt": "2026-09-29T13:00:32.766Z",
   "isArchived": false,
-  "versionId": "c58de61e-9318-40ac-8418-45c1e9ff68d6",
-  "triggerCount": 0,
+  "versionId": "b2df7b16-26a9-4ea3-9fcc-ecc1b4505f05",
+  "triggerCount": 2,
   "nodes": [
     {
-      "parameters": {
-        "content": "# Gestion des erreurs · gestionnaire d'incidents de l'instance\nUn seul exemplaire par instance. Tout workflow à surveiller le désigne dans **Settings → Error workflow**.\n\n- **WF1** · Réception de l'échec, file du réparateur, filet de sécurité Slack — ✅ construit, **mode simulation**\n\n**Une seule notification par incident** : le compte rendu du réparateur (réparé, ou situation et marche à suivre). n8n ne prévient lui-même que si le réparateur n'a rien conclu en `DELAI_FILET_MINUTES`.\nNe lui affecter **aucun** workflow d'erreur. Publier ce workflow **avant** tout autre système.",
-        "height": 300,
-        "width": 1500,
-        "color": 7
-      },
       "id": "612c46ed-6a47-584e-bae1-7a269fd3a99b",
       "name": "Sommaire du système",
       "type": "n8n-nodes-base.stickyNote",
@@ -23,15 +17,15 @@
       "position": [
         -688,
         -768
-      ]
+      ],
+      "parameters": {
+        "content": "# Gestion des erreurs · gestionnaire d'incidents de l'instance\nUn seul exemplaire par instance. Tout workflow à surveiller le désigne dans **Settings → Error workflow**.\n\n- **WF1** · Réception de l'échec, file du réparateur, filet de sécurité Slack — ✅ en service (mode réel depuis le 21/09/2026)\n- **WF2** · Gardien des pannes silencieuses : signal de vie Healthchecks + contrôle horaire de la table « Workflows surveillés » — ✅ en service (mode réel depuis le 29/09/2026)\n\n**Une seule notification par incident** : le compte rendu du réparateur (réparé, ou situation et marche à suivre). n8n ne prévient lui-même que si le réparateur n'a rien conclu en `DELAI_FILET_MINUTES`.\nNe lui affecter **aucun** workflow d'erreur. Publier ce workflow **avant** tout autre système.",
+        "height": 300,
+        "width": 1500,
+        "color": 7
+      }
     },
     {
-      "parameters": {
-        "content": "## Réglages du système\nTout se règle dans **Réglages · Gestion des erreurs** :\n- `MODE` — `simulation` | `reel`\n- `CANAL_ALERTE` — id du canal Slack (C…)\n- `FENETRE_DEDUP_HEURES` — 1\n- `URL_INSTANCE` — base des liens vers l'exécution\n- `REPARATION_AUTO` — true : file du réparateur ; false : alerte immédiate\n- `DELAI_FILET_MINUTES` — 30 (> passage du réparateur 10 min + réparation 15 min)\n- `TABLE_INCIDENTS` — id de la table « Incidents n8n »",
-        "height": 300,
-        "width": 560,
-        "color": 7
-      },
       "id": "241fbf66-1ff9-50dc-a324-72796d86039d",
       "name": "Réglages du système",
       "type": "n8n-nodes-base.stickyNote",
@@ -39,120 +33,135 @@
       "position": [
         864,
         -768
-      ]
+      ],
+      "parameters": {
+        "content": "## Réglages du système\nTout se règle dans **Réglages · Gestion des erreurs** :\n- `MODE` — `simulation` | `reel`\n- `CANAL_ALERTE` — id du canal Slack (C…)\n- `FENETRE_DEDUP_HEURES` — 1\n- `URL_INSTANCE` — base des liens vers l'exécution\n- `REPARATION_AUTO` — true : file du réparateur ; false : alerte immédiate\n- `DELAI_FILET_MINUTES` — 30 (> passage du réparateur 10 min + réparation 15 min)\n- `TABLE_INCIDENTS` — id de la table « Incidents n8n »\n\nEt dans **Réglages · Gardien** (WF2) :\n- `MODE_GARDIEN` — `simulation` | `reel`\n- `URL_SIGNAL_VIE` — adresse de ping Healthchecks\n- `TABLE_SURVEILLES` — id de la table « Workflows surveillés »\n- `ID_GESTION_ERREURS`, `CANAL_ALERTE`, `HEURES_OUVREES`, `RAPPEL_HEURES`, `URL_INSTANCE`",
+        "height": 496,
+        "width": 560,
+        "color": 7
+      }
     },
     {
-      "parameters": {
-        "content": "# WF1 · Réception, file du réparateur, filet de sécurité\nÉchec → file « Incidents n8n » → le réparateur rend compte → n8n ne prévient que s'il n'a rien conclu",
-        "height": 1000,
-        "width": 3860,
-        "color": 3
-      },
       "id": "bb11f075-c6aa-56b0-b842-ff9fd8536a03",
       "name": "Bloc WF1 · Réception et alerte",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -688,
-        -288
-      ]
+        -80
+      ],
+      "parameters": {
+        "content": "# WF1 · Réception, file du réparateur, filet de sécurité\nÉchec → file « Incidents n8n » → le réparateur rend compte → n8n ne prévient que s'il n'a rien conclu",
+        "height": 1400,
+        "width": 3860,
+        "color": 3
+      }
     },
     {
-      "parameters": {
-        "content": "## WF1 – mode d'emploi\n\n**Rôle** : recevoir l'échec de **n'importe quel workflow de l'instance** qui désigne « Gestion des erreurs » comme workflow d'erreur. Avec le réparateur : le mettre dans sa file et ne prévenir Slack que s'il ne conclut pas. Sans réparateur : alerter Slack tout de suite.\n\n**Quand** : à chaque exécution **automatique** en échec d'un workflow rattaché. Ne tourne jamais tout seul.\n\n### Étapes\n**1. Échec d'un workflow** — n8n livre le dossier : workflow, exécution, dernier nœud, message.\n**2. Réglages** — seul endroit à modifier.\n**3. Message d'alerte** — met en forme l'incident, calcule la clé *workflow + nœud + message + fenêtre*.\n**4. Un incident par fenêtre** — une clé déjà vue s'arrête là (mémoire de n8n).\n**5. Réparateur actif ?** — `REPARATION_AUTO`.\n**6a. Incidents – enregistrement** — ligne `nouveau` dans la table « Incidents n8n » : c'est la **file du réparateur local**. Il la lit, répare, et publie **lui-même** le compte rendu sur Slack (une seule notification : à la fin).\n**7a. Attente du réparateur** — `DELAI_FILET_MINUTES`.\n**8a. Incidents – état** puis **Réparateur a conclu ?** — si la ligne n'est plus `nouveau` / `en_cours`, le réparateur a publié son compte rendu : on s'arrête, **rien n'est envoyé**.\n**9a. Message de secours** — sinon, n8n prévient avec la situation (filet de sécurité).\n**6b. Alerte immédiate** — sans réparateur.\n**10. Mode réel ?** puis **Slack – alerte d'incident**.\n\n### Garde-fous\n- Slack en `continueRegularOutput`, 2 essais : **jamais d'alerte sur l'alerte**.\n- Ce workflow n'a **pas** de workflow d'erreur : il ne se désigne pas lui-même (boucle).\n- Ne voit pas les échecs rattrapés par une sortie d'erreur câblée, ni les pannes silencieuses.\n\n### Identifiants utilisés\n- **Slack Alertes n8n** (`slackApi`, écriture sur le canal d'alerte).\n\n### Tester\n« Lancement manuel WF1 » → « Échec simulé » rejoue une fausse charge utile (workflow `ZZ…`, que le réparateur ignore).",
-        "height": 1256,
-        "width": 460,
-        "color": 7
-      },
       "id": "bde56e91-0c5d-58b5-8f15-049362d1cdaf",
       "name": "WF1 – mode d'emploi",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -640,
-        -176
-      ]
+        32
+      ],
+      "parameters": {
+        "content": "## WF1 – mode d'emploi\n\n**Rôle** : recevoir l'échec de **n'importe quel workflow de l'instance** qui désigne « Gestion des erreurs » comme workflow d'erreur. Avec le réparateur : le mettre dans sa file et ne prévenir Slack que s'il ne conclut pas. Sans réparateur : alerter Slack tout de suite.\n\n**Quand** : à chaque exécution **automatique** en échec d'un workflow rattaché. Ne tourne jamais tout seul.\n\n### Étapes\n**1. Échec d'un workflow** — n8n livre le dossier : workflow, exécution, dernier nœud, message.\n**2. Réglages** — seul endroit à modifier.\n**3. Message d'alerte** — met en forme l'incident, calcule la clé *workflow + nœud + message + fenêtre*.\n**4. Un incident par fenêtre** — une clé déjà vue s'arrête là (mémoire de n8n).\n**5. Réparateur actif ?** — `REPARATION_AUTO`.\n**6a. Incidents – enregistrement** — ligne `nouveau` dans la table « Incidents n8n » : c'est la **file du réparateur local**. Il la lit, répare, et publie **lui-même** le compte rendu sur Slack (une seule notification : à la fin).\n**7a. Attente du réparateur** — `DELAI_FILET_MINUTES`.\n**8a. Incidents – état** puis **Réparateur a conclu ?** — si la ligne n'est plus `nouveau` / `en_cours`, le réparateur a publié son compte rendu : on s'arrête, **rien n'est envoyé**.\n**9a. Message de secours** — sinon, n8n prévient avec la situation (filet de sécurité).\n**6b. Alerte immédiate** — sans réparateur.\n**10. Mode réel ?** puis **Slack – alerte d'incident**.\n\n### Garde-fous\n- Slack en `continueRegularOutput`, 2 essais : **jamais d'alerte sur l'alerte**.\n- Ce workflow n'a **pas** de workflow d'erreur : il ne se désigne pas lui-même (boucle).\n- Ne voit pas les échecs rattrapés par une sortie d'erreur câblée, ni les pannes silencieuses.\n\n### Identifiants utilisés\n- **Slack Alertes n8n** (`slackApi`, écriture sur le canal d'alerte).\n\n### Tester\n« Lancement manuel WF1 » → « Échec simulé » rejoue une fausse charge utile (workflow `ZZ…`, que le réparateur ignore).",
+        "height": 1256,
+        "width": 460,
+        "color": 7
+      }
     },
     {
-      "parameters": {},
       "id": "01a64c04-7436-5516-b3d9-2d4c37c71e7d",
       "name": "Échec d'un workflow",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
         0,
-        -80
-      ]
+        128
+      ],
+      "parameters": {}
     },
     {
-      "parameters": {},
       "id": "9a3b228f-896c-5ee2-a1d1-8195c752b81b",
       "name": "Lancement manuel WF1",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
         0,
-        144
-      ]
+        352
+      ],
+      "parameters": {}
     },
     {
-      "parameters": {
-        "jsCode": "// Fabrique une charge utile identique à celle de l'Error Trigger, pour tester le bloc à la main.\nreturn [{ json: {\n  execution: {\n    id: '0',\n    url: '',\n    retryOf: null,\n    error: { message: 'Échec simulé — test manuel du bloc WF1', stack: '' },\n    lastNodeExecuted: 'Nœud de test',\n    mode: 'manual',\n  },\n  workflow: { id: 'test', name: 'ZZ test erreur (simulé)' },\n} }];"
-      },
       "id": "b8660e31-ea30-55b0-b36f-3eb22c2e0686",
       "name": "Échec simulé",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         240,
-        144
-      ]
+        352
+      ],
+      "parameters": {
+        "jsCode": "// Fabrique une charge utile identique à celle de l'Error Trigger, pour tester le bloc à la main.\nreturn [{ json: {\n  execution: {\n    id: '0',\n    url: '',\n    retryOf: null,\n    error: { message: 'Échec simulé — test manuel du bloc WF1', stack: '' },\n    lastNodeExecuted: 'Nœud de test',\n    mode: 'manual',\n  },\n  workflow: { id: 'test', name: 'ZZ test erreur (simulé)' },\n} }];"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// MODE          : 'simulation' = tout est calculé, RIEN n'est envoyé sur Slack.\n//                 'reel'       = les messages partent. Bascule sur décision explicite, après la recette.\n// CANAL_ALERTE  : identifiant du canal Slack (C…), jamais son nom.\n// FENETRE_DEDUP_HEURES : une erreur identique (workflow + nœud + message) n'est traitée qu'une fois par fenêtre.\n// URL_INSTANCE  : base des liens « voir l'exécution » — vide = on prend execution.url fourni par n8n.\n// REPARATION_AUTO : true  = l'incident part dans la file du réparateur local ; Slack n'est prévenu par n8n\n//                           QUE si le réparateur n'a rien conclu après DELAI_FILET_MINUTES (poste éteint…).\n//                   false = pas de réparateur (instance client) : alerte Slack immédiate.\n// TABLE_INCIDENTS : id de la table de données « Incidents n8n » (file partagée avec le réparateur).\nconst reglages = {\n  MODE: 'reel',\n  CANAL_ALERTE: 'C0C27914SAZ',\n  FENETRE_DEDUP_HEURES: 1,\n  URL_INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud',\n  REPARATION_AUTO: true,\n  DELAI_FILET_MINUTES: 30,\n  TABLE_INCIDENTS: 'G6tieWFLeta7OEL5',\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
-      },
       "id": "665e6478-cfd4-57c3-8d56-d08db876ca07",
       "name": "Réglages · Gestion des erreurs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         480,
-        -80
-      ]
+        128
+      ],
+      "parameters": {
+        "jsCode": "// MODE          : 'simulation' = tout est calculé, RIEN n'est envoyé sur Slack.\n//                 'reel'       = les messages partent. Bascule sur décision explicite, après la recette.\n// CANAL_ALERTE  : identifiant du canal Slack (C…), jamais son nom.\n// FENETRE_DEDUP_HEURES : une erreur identique (workflow + nœud + message) n'est traitée qu'une fois par fenêtre.\n// URL_INSTANCE  : base des liens « voir l'exécution » — vide = on prend execution.url fourni par n8n.\n// REPARATION_AUTO : true  = l'incident part dans la file du réparateur local ; Slack n'est prévenu par n8n\n//                           QUE si le réparateur n'a rien conclu après DELAI_FILET_MINUTES (poste éteint…).\n//                   false = pas de réparateur (instance client) : alerte Slack immédiate.\n// TABLE_INCIDENTS : id de la table de données « Incidents n8n » (file partagée avec le réparateur).\nconst reglages = {\n  MODE: 'reel',\n  CANAL_ALERTE: 'C0C27914SAZ',\n  FENETRE_DEDUP_HEURES: 1,\n  URL_INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud',\n  REPARATION_AUTO: true,\n  DELAI_FILET_MINUTES: 30,\n  TABLE_INCIDENTS: 'G6tieWFLeta7OEL5',\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// Met en forme l'incident et calcule la clé de dédoublonnage.\n// Deux formes de charge utile : échec d'un nœud (execution.*) ou échec du déclencheur (trigger.*).\nconst NL = String.fromCharCode(10);\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst wf = entree.workflow || {};\nconst ex = entree.execution || {};\nconst tr = entree.trigger || {};\nconst err = ex.error || tr.error || {};\nconst noeud = ex.lastNodeExecuted || (err.node && err.node.name) || (ex.id ? 'inconnu' : 'déclencheur');\nconst message = String(err.message || err.description || 'erreur sans message').slice(0, 800);\n\nlet lien = ex.url || '';\nif (r.URL_INSTANCE && wf.id && ex.id) {\n  lien = r.URL_INSTANCE.replace(/\\/+$/, '') + '/workflow/' + wf.id + '/executions/' + ex.id;\n}\n\nconst fenetreMs = Math.max(1, Number(r.FENETRE_DEDUP_HEURES) || 1) * 3600 * 1000;\nconst tranche = Math.floor(Date.now() / fenetreMs);\nconst cle = [wf.id || wf.name || '?', noeud, message.slice(0, 160), tranche].join('|');\n\nconst quand = $now.setZone('Europe/Paris').toFormat(\"dd/MM/yyyy 'à' HH:mm\");\nconst lignes = [\n  ':rotating_light: *Échec d’un workflow n8n*',\n  '*Workflow :* ' + (wf.name || 'inconnu') + (wf.id ? ' (`' + wf.id + '`)' : ''),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + message,\n  '*Quand :* ' + quand + (ex.mode ? ' — exécution ' + ex.mode : ''),\n  lien ? '*Exécution :* <' + lien + '|ouvrir dans n8n>' : '*Exécution :* ' + (ex.id || '—'),\n];\nif (ex.retryOf) {\n  lignes.push('_Nouvelle tentative de l’exécution ' + ex.retryOf + '._');\n}\n\nreturn [{ json: {\n  executionId: ex.id ? String(ex.id) : '',\n  workflowId: wf.id || '',\n  workflowNom: wf.name || '',\n  noeud,\n  message,\n  texte: lignes.join(NL),\n  cle,\n  statut: 'nouveau',\n} }];"
-      },
       "id": "5de26303-479d-568b-b3ca-5d1f022ed4cd",
       "name": "Message d'alerte",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         720,
-        -80
-      ]
+        128
+      ],
+      "parameters": {
+        "jsCode": "// Met en forme l'incident et calcule la clé de dédoublonnage.\n// Deux formes de charge utile : échec d'un nœud (execution.*) ou échec du déclencheur (trigger.*).\nconst NL = String.fromCharCode(10);\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst wf = entree.workflow || {};\nconst ex = entree.execution || {};\nconst tr = entree.trigger || {};\nconst err = ex.error || tr.error || {};\nconst noeud = ex.lastNodeExecuted || (err.node && err.node.name) || (ex.id ? 'inconnu' : 'déclencheur');\nconst message = String(err.message || err.description || 'erreur sans message').slice(0, 800);\n\nlet lien = ex.url || '';\nif (r.URL_INSTANCE && wf.id && ex.id) {\n  lien = r.URL_INSTANCE.replace(/\\/+$/, '') + '/workflow/' + wf.id + '/executions/' + ex.id;\n}\n\nconst fenetreMs = Math.max(1, Number(r.FENETRE_DEDUP_HEURES) || 1) * 3600 * 1000;\nconst tranche = Math.floor(Date.now() / fenetreMs);\nconst cle = [wf.id || wf.name || '?', noeud, message.slice(0, 160), tranche].join('|');\n\nconst quand = $now.setZone('Europe/Paris').toFormat(\"dd/MM/yyyy 'à' HH:mm\");\nconst lignes = [\n  ':rotating_light: *Échec d’un workflow n8n*',\n  '*Workflow :* ' + (wf.name || 'inconnu') + (wf.id ? ' (`' + wf.id + '`)' : ''),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + message,\n  '*Quand :* ' + quand + (ex.mode ? ' — exécution ' + ex.mode : ''),\n  lien ? '*Exécution :* <' + lien + '|ouvrir dans n8n>' : '*Exécution :* ' + (ex.id || '—'),\n];\nif (ex.retryOf) {\n  lignes.push('_Nouvelle tentative de l’exécution ' + ex.retryOf + '._');\n}\n\nreturn [{ json: {\n  executionId: ex.id ? String(ex.id) : '',\n  workflowId: wf.id || '',\n  workflowNom: wf.name || '',\n  noeud,\n  message,\n  texte: lignes.join(NL),\n  cle,\n  statut: 'nouveau',\n} }];"
+      }
     },
     {
-      "parameters": {
-        "operation": "removeItemsSeenInPreviousExecutions",
-        "dedupeValue": "={{ $json.cle }}",
-        "options": {
-          "scope": "workflow",
-          "historySize": 5000
-        }
-      },
       "id": "7df37942-7e1b-5562-af1b-f63512c4c7e8",
       "name": "Un incident par fenêtre",
       "type": "n8n-nodes-base.removeDuplicates",
       "typeVersion": 2,
       "position": [
         960,
-        -80
-      ]
+        128
+      ],
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "logic": "removeItemsWithAlreadySeenKeyValues",
+        "dedupeValue": "={{ $json.cle }}",
+        "options": {
+          "scope": "workflow",
+          "historySize": 5000
+        }
+      }
     },
     {
+      "id": "e2cbd64a-dbdd-54b6-8f4f-5371b99c323d",
+      "name": "Réparateur actif ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        128
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -175,18 +184,20 @@
           "combinator": "and"
         },
         "options": {}
-      },
-      "id": "e2cbd64a-dbdd-54b6-8f4f-5371b99c323d",
-      "name": "Réparateur actif ?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        1200,
-        -80
-      ]
+      }
     },
     {
+      "id": "a4b116ca-21c7-53da-91bb-9a2f89702d19",
+      "name": "Incidents – enregistrement",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        32
+      ],
       "parameters": {
+        "resource": "row",
+        "operation": "insert",
         "dataTableId": {
           "__rl": true,
           "mode": "id",
@@ -283,33 +294,36 @@
           "convertFieldsToString": false
         },
         "options": {}
-      },
-      "id": "a4b116ca-21c7-53da-91bb-9a2f89702d19",
-      "name": "Incidents – enregistrement",
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1440,
-        -176
-      ]
+      }
     },
     {
-      "parameters": {
-        "resume": "specificTime",
-        "dateTime": "={{ $now.plus({ minutes: $('Réglages · Gestion des erreurs').first().json.reglages.DELAI_FILET_MINUTES }).toISO() }}"
-      },
       "id": "5e249fe6-6a95-53ce-bdf8-9b130782483b",
       "name": "Attente du réparateur",
+      "webhookId": "49f86fb5-720f-5f7b-94c6-0b8405116d3f",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
         1680,
-        -176
+        32
       ],
-      "webhookId": "49f86fb5-720f-5f7b-94c6-0b8405116d3f"
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $now.plus({ minutes: $('Réglages · Gestion des erreurs').first().json.reglages.DELAI_FILET_MINUTES }).toISO() }}"
+      }
     },
     {
+      "id": "d8502a97-03a1-5d1a-ad5d-657028fc135e",
+      "name": "Incidents – état",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        1920,
+        32
+      ],
       "parameters": {
+        "resource": "row",
         "operation": "get",
         "dataTableId": {
           "__rl": true,
@@ -321,24 +335,24 @@
           "conditions": [
             {
               "keyName": "executionId",
+              "condition": "eq",
               "keyValue": "={{ $('Incidents – enregistrement').first().json.executionId }}"
             }
           ]
         },
+        "returnAll": false,
         "limit": 1
-      },
-      "id": "d8502a97-03a1-5d1a-ad5d-657028fc135e",
-      "name": "Incidents – état",
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1920,
-        -176
-      ],
-      "alwaysOutputData": true,
-      "executeOnce": true
+      }
     },
     {
+      "id": "5663fef2-6f52-58f5-ba48-d23e5044668d",
+      "name": "Réparateur a conclu ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2160,
+        32
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -361,54 +375,54 @@
           "combinator": "and"
         },
         "options": {}
-      },
-      "id": "5663fef2-6f52-58f5-ba48-d23e5044668d",
-      "name": "Réparateur a conclu ?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        2160,
-        -176
-      ]
+      }
     },
     {
-      "parameters": {},
       "id": "aa550e05-4dbb-57c2-acd0-0283f801624d",
       "name": "Compte rendu publié par le réparateur",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
         2400,
-        -272
-      ]
+        -64
+      ],
+      "parameters": {}
     },
     {
-      "parameters": {
-        "jsCode": "// Le réparateur n'a rien conclu dans le délai : n8n prévient lui-même, avec la situation.\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nconst ligne = $input.first().json;\nconst incident = $('Incidents – enregistrement').first().json;\nconst etat = ligne.statut === 'rapport_non_publie'\n  ? 'le réparateur a conclu (' + (ligne.resume || '—') + ') mais n’a pas pu publier son compte rendu'\n  : ligne.statut === 'en_cours'\n    ? 'le réparateur a pris l’incident mais n’a pas conclu'\n    : 'le réparateur ne l’a pas pris en charge (poste éteint ou réparateur arrêté ?)';\nconst texte = (ligne.texte || incident.texte) + NL +\n  ':warning: *Pas de réparation automatique au bout de ' + r.DELAI_FILET_MINUTES + ' min* : ' + etat +\n  '. À regarder à la main — sinon il le reprendra à son prochain démarrage et publiera son compte rendu ici.';\nreturn [{ json: { texte, mode: r.MODE } }];"
-      },
       "id": "44da67bd-04c3-5576-b62a-4126520de2f1",
       "name": "Message de secours",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         2400,
-        -80
-      ]
+        128
+      ],
+      "parameters": {
+        "jsCode": "// Le réparateur n'a rien conclu dans le délai : n8n prévient lui-même, avec la situation.\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nconst ligne = $input.first().json;\nconst incident = $('Incidents – enregistrement').first().json;\nconst etat = ligne.statut === 'rapport_non_publie'\n  ? 'le réparateur a conclu (' + (ligne.resume || '—') + ') mais n’a pas pu publier son compte rendu'\n  : ligne.statut === 'en_cours'\n    ? 'le réparateur a pris l’incident mais n’a pas conclu'\n    : 'le réparateur ne l’a pas pris en charge (poste éteint ou réparateur arrêté ?)';\nconst texte = (ligne.texte || incident.texte) + NL +\n  ':warning: *Pas de réparation automatique au bout de ' + r.DELAI_FILET_MINUTES + ' min* : ' + etat +\n  '. À regarder à la main — sinon il le reprendra à son prochain démarrage et publiera son compte rendu ici.';\nreturn [{ json: { texte, mode: r.MODE } }];"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// Pas de réparateur sur cette instance : l'alerte part tout de suite.\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nreturn $input.all().map(i => ({ json: { texte: i.json.texte, mode: r.MODE } }));"
-      },
       "id": "7e4a9e93-cb64-55ae-aae4-4807613c0dc9",
       "name": "Alerte immédiate",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1440,
-        320
-      ]
+        528
+      ],
+      "parameters": {
+        "jsCode": "// Pas de réparateur sur cette instance : l'alerte part tout de suite.\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nreturn $input.all().map(i => ({ json: { texte: i.json.texte, mode: r.MODE } }));"
+      }
     },
     {
+      "id": "66e93177-3841-5243-b0f0-5b8f2b4a8f63",
+      "name": "Mode réel ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        224
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -431,24 +445,33 @@
           "combinator": "and"
         },
         "options": {}
-      },
-      "id": "66e93177-3841-5243-b0f0-5b8f2b4a8f63",
-      "name": "Mode réel ?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        2640,
-        16
-      ]
+      }
     },
     {
+      "id": "b59195ba-75e1-5172-abe8-fd07fd7771f4",
+      "name": "Slack – alerte d'incident",
+      "webhookId": "5b9f1319-0f5c-58cd-8ffa-68790a61a7a8",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        2880,
+        128
+      ],
       "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "post",
         "select": "channel",
         "channelId": {
           "__rl": true,
           "mode": "id",
           "value": "={{ $('Réglages · Gestion des erreurs').first().json.reglages.CANAL_ALERTE }}"
         },
+        "messageType": "text",
         "text": "={{ $json.texte }}",
         "otherOptions": {
           "includeLinkToWorkflow": false,
@@ -456,36 +479,511 @@
           "unfurl_links": false
         }
       },
-      "id": "b59195ba-75e1-5172-abe8-fd07fd7771f4",
-      "name": "Slack – alerte d'incident",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.3,
-      "position": [
-        2880,
-        -80
-      ],
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 3000,
-      "webhookId": "5b9f1319-0f5c-58cd-8ffa-68790a61a7a8",
       "credentials": {
         "slackApi": {
           "id": "oiCh7mUHPUPu43md",
           "name": "Slack Alertes n8n"
         }
-      },
-      "onError": "continueRegularOutput"
+      }
     },
     {
-      "parameters": {},
       "id": "c117ffef-3b88-5611-ba92-1abf7c07ceed",
       "name": "Simulation – rien n'est envoyé",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
         2880,
-        112
-      ]
+        320
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "04b021ca-7a49-54de-9492-a6e899541171",
+      "name": "Bloc WF2 · Gardien des pannes silencieuses",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        1424
+      ],
+      "parameters": {
+        "content": "# WF2 · Gardien des pannes silencieuses\nSignal de vie Healthchecks toutes les 10 min · contrôle horaire des workflows inscrits dans « Workflows surveillés »",
+        "height": 1364,
+        "width": 3860,
+        "color": 5
+      }
+    },
+    {
+      "id": "ae3e892e-283f-5159-8612-b574ada7af2e",
+      "name": "WF2 – mode d'emploi",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        1536
+      ],
+      "parameters": {
+        "content": "## WF2 – mode d'emploi\n\n**Rôle** : repérer les pannes **silencieuses** que WF1 ne voit pas — un workflow dépublié, détaché de « Gestion des erreurs », supprimé, ou qui ne tourne plus — et prouver de l'extérieur que n8n et ce workflow tournent.\n\n**Quand** : signal de vie toutes les 10 min ; contrôle chaque heure à h + 05. 24 h/24.\n\n### Étapes\n**1. Réglages · Gardien** — seul endroit à modifier.\n**2. Signal de vie ou contrôle ?** — selon le déclencheur.\n**3a. HTTP – signal de vie** — ping Healthchecks. Plus de ping pendant 30 min → Healthchecks alerte (Slack + e-mail).\n**3b. Table – workflows surveillés** puis **Workflows à contrôler** — les lignes actives.\n**4. n8n – état du workflow** — publié ? rattaché ? (API n8n, lecture seule).\n**5. n8n – dernière exécution** — date de la plus récente, quel que soit son statut.\n**6. Diagnostic et décision** — anomalie (`introuvable`, `lecture_impossible`, `depublie`, `detache`, `silence`) et action : alerte à l'apparition, rappel toutes les `RAPPEL_HEURES`, « rétabli » à la disparition, sinon rien.\n**7. Table – mise à jour de l'état** et **Gardien – mode réel ?** → Slack.\n**En parallèle, 4b. n8n – workflows publiés** puis **Workflows non inscrits** — tout workflow rattaché à « Gestion des erreurs » mais absent de la table est signalé (**Un rappel par tranche** : une fois toutes les `RAPPEL_HEURES`).\n\n### Garde-fous\n- **Lecture seule** : l'API n8n n'est appelée qu'en GET.\n- Slack en `continueRegularOutput`, 2 essais : jamais d'alerte sur l'alerte.\n- Ping raté : ignoré (`continueRegularOutput`) — c'est Healthchecks qui juge l'absence de signal.\n- Surveiller un nouveau workflow = **ajouter une ligne** dans « Workflows surveillés ». `silence_max_h` vide = pas de contrôle de silence (workflows à webhooks).\n\n### Identifiants utilisés\n- **API n8n – Gardien** (`n8nApi`, clé dédiée, révocable seule).\n- **Slack Alertes n8n** (`slackApi`).\n\n### Tester\n« Lancement manuel WF2 » → contrôle complet (pas de signal de vie).",
+        "height": 1216,
+        "width": 460,
+        "color": 7
+      }
+    },
+    {
+      "id": "1b6caaa3-e02f-5063-b3e4-26d3462d39b1",
+      "name": "Toutes les 10 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        1424
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ce04c393-36d6-53ce-ace4-4d6ddb77394b",
+      "name": "Chaque heure à h + 05",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        1632
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "5 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "711899a3-3f1e-5d97-9307-ada1e9dec7ad",
+      "name": "Lancement manuel WF2",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1840
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "52f88324-98ff-5941-bf2a-c6c96fc4654f",
+      "name": "Réglages · Gardien",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1632
+      ],
+      "parameters": {
+        "jsCode": "// MODE_GARDIEN      : 'simulation' = tout est calculé et la table est tenue à jour, RIEN n'est envoyé sur Slack.\n//                     'reel'       = les alertes partent. Le signal de vie part dans les deux modes.\n// URL_SIGNAL_VIE    : adresse de ping du contrôle Healthchecks « n8n · instance (Gestion des erreurs) ». Ne pas diffuser.\n// TABLE_SURVEILLES  : id de la table « Workflows surveillés » — une ligne par workflow à surveiller.\n// ID_GESTION_ERREURS: valeur attendue dans Settings → Error workflow des workflows surveillés.\n// CANAL_ALERTE      : identifiant du canal Slack (C…), jamais son nom.\n// HEURES_OUVREES    : plage des lignes « ouvrees » — jours ISO (1 = lundi) et heures de début / fin.\n// RAPPEL_HEURES     : tant qu'une anomalie dure, un rappel au plus toutes les RAPPEL_HEURES.\nconst reglages = {\n  MODE_GARDIEN: 'reel',\n  URL_SIGNAL_VIE: 'https://hc-ping.com/c3b25148-a2e3-45a0-83bb-39697935f3ea',\n  TABLE_SURVEILLES: '7QgsElRqld0DYeOz',\n  ID_GESTION_ERREURS: 'GestErreursInst1',\n  CANAL_ALERTE: 'C0C27914SAZ',\n  HEURES_OUVREES: { jours: [1, 2, 3, 4, 5], debut: 8, fin: 18 },\n  RAPPEL_HEURES: 24,\n  URL_INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud',\n};\nreturn [{ json: { reglages } }];"
+      }
+    },
+    {
+      "id": "813f130d-6dc2-5438-99d3-1106628bb7bb",
+      "name": "Signal de vie ou contrôle ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        1632
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b6420e79-3932-5069-bc2f-6da8df050404",
+              "leftValue": "={{ $('Toutes les 10 minutes').isExecuted }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "26c42c70-93f1-5cdf-a3d0-80e769899e3f",
+      "name": "HTTP – signal de vie",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        720,
+        1424
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_SIGNAL_VIE }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "64b5707f-e8f2-563d-bf65-63f12cf4ad92",
+      "name": "Table – workflows surveillés",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        720,
+        1632
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Réglages · Gardien').first().json.reglages.TABLE_SURVEILLES }}"
+        },
+        "returnAll": true,
+        "filterType": "none",
+        "options": {}
+      }
+    },
+    {
+      "id": "ee214a53-14f0-5dd3-ab54-a9018a1ef175",
+      "name": "Workflows à contrôler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1632
+      ],
+      "parameters": {
+        "jsCode": "// Ne garde que les lignes actives et bien formées. Table vide : rien à contrôler, le bloc s'arrête là.\nreturn $input.all()\n  .filter(i => i.json.workflowId && i.json.actif !== false)\n  .map(i => ({ json: i.json }));"
+      }
+    },
+    {
+      "id": "734d4c2e-8745-5997-8155-05de5df4a013",
+      "name": "n8n – état du workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1200,
+        1632
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_INSTANCE }}/api/v1/workflows/{{ $json.workflowId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "WDEn4UVmJg1Knt0W",
+          "name": "API n8n – Gardien"
+        }
+      }
+    },
+    {
+      "id": "6909d8b9-6006-5d90-a64b-f340e9b06b4e",
+      "name": "n8n – dernière exécution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        1440,
+        1632
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_INSTANCE }}/api/v1/executions?limit=1&workflowId={{ $('Workflows à contrôler').item.json.workflowId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "WDEn4UVmJg1Knt0W",
+          "name": "API n8n – Gardien"
+        }
+      }
+    },
+    {
+      "id": "5874adf5-aaef-50c3-b51a-65da2d37a57c",
+      "name": "Diagnostic et décision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        1632
+      ],
+      "parameters": {
+        "jsCode": "// Pour chaque workflow : anomalie constatée, puis décision (alerte, rappel, rétabli ou rien).\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gardien').first().json.reglages;\nconst lignes = $('Workflows à contrôler').all();\nconst etats = $('n8n – état du workflow').all();\nconst execs = $input.all();\nconst maintenant = $now.setZone('Europe/Paris');\nconst base = r.URL_INSTANCE.replace(/[/]+$/, '');\n\nfunction heuresOuvrees(debut, fin) {\n  const p = r.HEURES_OUVREES;\n  let total = 0;\n  let jour = debut.startOf('day');\n  let garde = 0;\n  while (jour <= fin && garde < 400) {\n    if (p.jours.includes(jour.weekday)) {\n      const a = jour.set({ hour: p.debut }), b = jour.set({ hour: p.fin });\n      const s = debut > a ? debut : a, e = fin < b ? fin : b;\n      if (e > s) total += e.diff(s, 'minutes').minutes;\n    }\n    jour = jour.plus({ days: 1 });\n    garde++;\n  }\n  return total / 60;\n}\n\nfunction duree(h) {\n  if (h < 1) return Math.round(h * 60) + ' min';\n  if (h < 48) return Math.floor(h) + ' h ' + String(Math.round((h % 1) * 60)).padStart(2, '0');\n  return Math.round(h / 24) + ' jours';\n}\n\nconst date = iso => DateTime.fromISO(iso).setZone('Europe/Paris').toFormat(\"dd/MM 'à' HH:mm\");\n\nfunction diagnostiquer(ligne, etat, exec) {\n  const code = etat.statusCode;\n  if (code === 404) return { code: 'introuvable', constat: 'l’identifiant `' + ligne.workflowId + '` n’existe plus sur l’instance.' };\n  if (code !== 200) return { code: 'lecture_impossible', constat: 'le gardien n’arrive pas à lire l’état de ce workflow (HTTP ' + code + ').' };\n  const wf = etat.body || {};\n  if (wf.active !== true) return { code: 'depublie', constat: 'le workflow n’est plus publié : aucun de ses déclencheurs ne tourne.' };\n  const rattache = (wf.settings || {}).errorWorkflow || '';\n  if (rattache !== r.ID_GESTION_ERREURS) {\n    return { code: 'detache', constat: 'ses échecs ne sont plus ni signalés ni réparés (Error workflow : ' + (rattache || 'vide') + ').' };\n  }\n  const max = Number(ligne.silence_max_h);\n  if (!max || max <= 0) return { code: 'ok' };\n  if (exec.statusCode !== 200) return { code: 'lecture_impossible', constat: 'le gardien n’arrive pas à lire les exécutions de ce workflow (HTTP ' + exec.statusCode + ').' };\n  const derniere = ((exec.body || {}).data || [])[0];\n  const repere = derniere ? (derniere.startedAt || derniere.createdAt) : ligne.createdAt;\n  const depuis = DateTime.fromISO(repere).setZone('Europe/Paris');\n  const ouvrees = ligne.plage === 'ouvrees';\n  const ecoule = ouvrees ? heuresOuvrees(depuis, maintenant) : maintenant.diff(depuis, 'hours').hours;\n  if (ecoule <= max) return { code: 'ok' };\n  return { code: 'silence', constat: 'aucune exécution depuis ' + duree(ecoule) + (ouvrees ? ' d’heures ouvrées' : '') +\n    ' (maximum prévu : ' + max + ' h). ' + (derniere ? 'Dernière exécution le ' + date(repere) + '.' : 'Aucune exécution connue.') };\n}\n\nconst LIBELLES = {\n  introuvable: ['Workflow introuvable', 'vérifier s’il a été supprimé ou réimporté sous un autre identifiant, puis corriger ou désactiver sa ligne dans la table « Workflows surveillés ».'],\n  lecture_impossible: ['Gardien aveugle', 'vérifier la clé d’API « Gardien » (Settings → n8n API) et l’identifiant « API n8n – Gardien ».'],\n  depublie: ['Workflow dépublié', 'l’ouvrir, recharger la page (F5), puis Publier.'],\n  detache: ['Workflow détaché de « Gestion des erreurs »', 'dans ses réglages, Error workflow → « Gestion des erreurs », puis enregistrer et publier.'],\n  silence: ['Panne silencieuse', 'vérifier que le workflow est publié, que ses déclencheurs sont actifs et à la bonne heure.'],\n};\n\nconst sortie = [];\nlignes.forEach((l, i) => {\n  const ligne = l.json;\n  const d = diagnostiquer(ligne, (etats[i] || {}).json || {}, (execs[i] || {}).json || {});\n  const avant = ligne.etat || 'ok';\n  const lien = base + '/workflow/' + ligne.workflowId;\n  const nom = ligne.nom || ligne.workflowId;\n  let action = null;\n  let depuis = ligne.depuis || '';\n  let derniere = ligne.derniere_alerte || '';\n  if (d.code === 'ok' && avant !== 'ok') {\n    action = 'retabli';\n  } else if (d.code !== 'ok' && d.code !== avant) {\n    action = 'alerte';\n    depuis = maintenant.toISO();\n  } else if (d.code !== 'ok' && (!derniere || maintenant.diff(DateTime.fromISO(derniere), 'hours').hours >= r.RAPPEL_HEURES)) {\n    action = 'rappel';\n  }\n  if (!action) return;\n\n  let texte;\n  if (action === 'retabli') {\n    const ancien = (LIBELLES[avant] || [avant])[0];\n    texte = ':white_check_mark: *Rétabli — ' + nom + '* — fin de « ' + ancien + ' »' + (ligne.depuis ? ' (depuis le ' + date(ligne.depuis) + ')' : '') + '.';\n    depuis = '';\n    derniere = '';\n  } else {\n    const [titre, aFaire] = LIBELLES[d.code];\n    const entete = action === 'rappel'\n      ? ':repeat: *Toujours en cours — ' + titre + ' — ' + nom + '* (depuis le ' + date(depuis) + ')'\n      : ':large_orange_circle: *' + titre + ' — ' + nom + '*';\n    texte = [entete, '*Constat :* ' + d.constat, '*À faire :* ' + aFaire, '*Workflow :* <' + lien + '|ouvrir dans n8n>'].join(NL);\n    derniere = maintenant.toISO();\n  }\n  sortie.push({ json: { id: ligne.id, workflowId: ligne.workflowId, action, etat: d.code, depuis, derniere_alerte: derniere, texte } });\n});\nreturn sortie;"
+      }
+    },
+    {
+      "id": "25a073d0-8607-5921-a6f4-1bf0a61b7d08",
+      "name": "Table – mise à jour de l'état",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        1520
+      ],
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Réglages · Gardien').first().json.reglages.TABLE_SURVEILLES }}"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "etat": "={{ $json.etat }}",
+            "depuis": "={{ $json.depuis }}",
+            "derniere_alerte": "={{ $json.derniere_alerte }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "etat",
+              "displayName": "etat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "depuis",
+              "displayName": "depuis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "derniere_alerte",
+              "displayName": "derniere_alerte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "78b98524-0272-51a4-9228-0d51486d2c03",
+      "name": "Gardien – mode réel ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        1744
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "469c9928-9374-51b1-b097-f8a0bbf462e8",
+              "leftValue": "={{ $('Réglages · Gardien').first().json.reglages.MODE_GARDIEN }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "reel"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d32293fc-7dc3-5775-b726-f55fad17d294",
+      "name": "Slack – alerte du gardien",
+      "webhookId": "e64eca5a-d587-5e82-901b-5cfb15c33b33",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        2160,
+        1648
+      ],
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Réglages · Gardien').first().json.reglages.CANAL_ALERTE }}"
+        },
+        "messageType": "text",
+        "text": "={{ $json.texte }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "mrkdwn": true,
+          "unfurl_links": false
+        }
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "oiCh7mUHPUPu43md",
+          "name": "Slack Alertes n8n"
+        }
+      }
+    },
+    {
+      "id": "3c0ff49f-1159-5bee-a5b2-9994d3bde96d",
+      "name": "Gardien – simulation, rien n'est envoyé",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        1840
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "85614824-4471-5314-a263-86d012160d26",
+      "name": "n8n – workflows publiés",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "position": [
+        960,
+        2032
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_INSTANCE }}/api/v1/workflows?active=true&limit=250",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "WDEn4UVmJg1Knt0W",
+          "name": "API n8n – Gardien"
+        }
+      }
+    },
+    {
+      "id": "1d5aa2c1-2455-51e9-a24b-df26dde552c6",
+      "name": "Workflows non inscrits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        2032
+      ],
+      "parameters": {
+        "jsCode": "// Workflows publiés, rattachés à « Gestion des erreurs », mais absents de « Workflows surveillés ».\n// Une ligne présente, même avec actif décoché, compte comme inscrite (c'est la façon de dire « ne pas surveiller »).\n// Les workflows en ZZ (tests) sont ignorés. Clé = workflow + tranche de RAPPEL_HEURES : un rappel par tranche au plus.\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gardien').first().json.reglages;\nconst reponse = $input.first().json;\nif (reponse.statusCode !== 200) return [];\nconst inscrits = new Set($('Table – workflows surveillés').all().map(i => i.json.workflowId).filter(Boolean));\nconst tranche = Math.floor(Date.now() / (r.RAPPEL_HEURES * 3600 * 1000));\nconst base = r.URL_INSTANCE.replace(/[/]+$/, '');\nreturn ((reponse.body || {}).data || [])\n  .filter(w => (w.settings || {}).errorWorkflow === r.ID_GESTION_ERREURS && !inscrits.has(w.id) && !/^ZZ/i.test(w.name || ''))\n  .map(w => ({ json: {\n    workflowId: w.id,\n    cle: w.id + '|' + tranche,\n    texte: [\n      ':large_blue_circle: *Workflow non surveillé — ' + w.name + '*',\n      '*Constat :* rattaché à « Gestion des erreurs » mais absent de la table « Workflows surveillés » : ses pannes silencieuses (dépublié, muet…) ne seraient pas détectées.',\n      '*À faire :* ajouter sa ligne dans « Workflows surveillés » — ou demander à Claude « surveille ' + w.name + ' ». Pour ne pas le surveiller : une ligne avec `actif` décoché.',\n      '*Workflow :* <' + base + '/workflow/' + w.id + '|ouvrir dans n8n>',\n    ].join(NL),\n  } }));"
+      }
+    },
+    {
+      "id": "36bde348-a95a-5750-9cbd-abab8c1e9ccf",
+      "name": "Un rappel par tranche",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        2032
+      ],
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "logic": "removeItemsWithAlreadySeenKeyValues",
+        "dedupeValue": "={{ $json.cle }}",
+        "options": {
+          "scope": "node",
+          "historySize": 1000
+        }
+      }
     }
   ],
   "connections": {
@@ -663,6 +1161,184 @@
           }
         ]
       ]
+    },
+    "Toutes les 10 minutes": {
+      "main": [
+        [
+          {
+            "node": "Réglages · Gardien",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chaque heure à h + 05": {
+      "main": [
+        [
+          {
+            "node": "Réglages · Gardien",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel WF2": {
+      "main": [
+        [
+          {
+            "node": "Réglages · Gardien",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Réglages · Gardien": {
+      "main": [
+        [
+          {
+            "node": "Signal de vie ou contrôle ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal de vie ou contrôle ?": {
+      "main": [
+        [
+          {
+            "node": "HTTP – signal de vie",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Table – workflows surveillés",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Table – workflows surveillés": {
+      "main": [
+        [
+          {
+            "node": "Workflows à contrôler",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "n8n – workflows publiés",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n – workflows publiés": {
+      "main": [
+        [
+          {
+            "node": "Workflows non inscrits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflows non inscrits": {
+      "main": [
+        [
+          {
+            "node": "Un rappel par tranche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Un rappel par tranche": {
+      "main": [
+        [
+          {
+            "node": "Gardien – mode réel ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflows à contrôler": {
+      "main": [
+        [
+          {
+            "node": "n8n – état du workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n – état du workflow": {
+      "main": [
+        [
+          {
+            "node": "n8n – dernière exécution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n – dernière exécution": {
+      "main": [
+        [
+          {
+            "node": "Diagnostic et décision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diagnostic et décision": {
+      "main": [
+        [
+          {
+            "node": "Table – mise à jour de l'état",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gardien – mode réel ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gardien – mode réel ?": {
+      "main": [
+        [
+          {
+            "node": "Slack – alerte du gardien",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gardien – simulation, rien n'est envoyé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "nodeGroups": [],
@@ -670,11 +1346,28 @@
     "executionOrder": "v1",
     "timezone": "Europe/Paris",
     "saveDataErrorExecution": "all",
-    "saveDataSuccessExecution": "all",
+    "saveDataSuccessExecution": "none",
     "saveManualExecutions": true,
     "binaryMode": "separate"
   },
-  "staticData": null,
+  "staticData": {
+    "node:Toutes les 10 minutes": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    },
+    "node:Chaque heure à h + 05": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
   "pinData": {},
   "meta": null,
   "tags": [],
@@ -688,16 +1381,10 @@
     }
   ],
   "activeVersion": {
-    "versionId": "c58de61e-9318-40ac-8418-45c1e9ff68d6",
+    "versionId": "b2df7b16-26a9-4ea3-9fcc-ecc1b4505f05",
     "workflowId": "GestErreursInst1",
     "nodes": [
       {
-        "parameters": {
-          "content": "# Gestion des erreurs · gestionnaire d'incidents de l'instance\nUn seul exemplaire par instance. Tout workflow à surveiller le désigne dans **Settings → Error workflow**.\n\n- **WF1** · Réception de l'échec, file du réparateur, filet de sécurité Slack — ✅ construit, **mode simulation**\n\n**Une seule notification par incident** : le compte rendu du réparateur (réparé, ou situation et marche à suivre). n8n ne prévient lui-même que si le réparateur n'a rien conclu en `DELAI_FILET_MINUTES`.\nNe lui affecter **aucun** workflow d'erreur. Publier ce workflow **avant** tout autre système.",
-          "height": 300,
-          "width": 1500,
-          "color": 7
-        },
         "id": "612c46ed-6a47-584e-bae1-7a269fd3a99b",
         "name": "Sommaire du système",
         "type": "n8n-nodes-base.stickyNote",
@@ -705,15 +1392,15 @@
         "position": [
           -688,
           -768
-        ]
+        ],
+        "parameters": {
+          "content": "# Gestion des erreurs · gestionnaire d'incidents de l'instance\nUn seul exemplaire par instance. Tout workflow à surveiller le désigne dans **Settings → Error workflow**.\n\n- **WF1** · Réception de l'échec, file du réparateur, filet de sécurité Slack — ✅ en service (mode réel depuis le 21/09/2026)\n- **WF2** · Gardien des pannes silencieuses : signal de vie Healthchecks + contrôle horaire de la table « Workflows surveillés » — ✅ en service (mode réel depuis le 29/09/2026)\n\n**Une seule notification par incident** : le compte rendu du réparateur (réparé, ou situation et marche à suivre). n8n ne prévient lui-même que si le réparateur n'a rien conclu en `DELAI_FILET_MINUTES`.\nNe lui affecter **aucun** workflow d'erreur. Publier ce workflow **avant** tout autre système.",
+          "height": 300,
+          "width": 1500,
+          "color": 7
+        }
       },
       {
-        "parameters": {
-          "content": "## Réglages du système\nTout se règle dans **Réglages · Gestion des erreurs** :\n- `MODE` — `simulation` | `reel`\n- `CANAL_ALERTE` — id du canal Slack (C…)\n- `FENETRE_DEDUP_HEURES` — 1\n- `URL_INSTANCE` — base des liens vers l'exécution\n- `REPARATION_AUTO` — true : file du réparateur ; false : alerte immédiate\n- `DELAI_FILET_MINUTES` — 30 (> passage du réparateur 10 min + réparation 15 min)\n- `TABLE_INCIDENTS` — id de la table « Incidents n8n »",
-          "height": 300,
-          "width": 560,
-          "color": 7
-        },
         "id": "241fbf66-1ff9-50dc-a324-72796d86039d",
         "name": "Réglages du système",
         "type": "n8n-nodes-base.stickyNote",
@@ -721,120 +1408,135 @@
         "position": [
           864,
           -768
-        ]
+        ],
+        "parameters": {
+          "content": "## Réglages du système\nTout se règle dans **Réglages · Gestion des erreurs** :\n- `MODE` — `simulation` | `reel`\n- `CANAL_ALERTE` — id du canal Slack (C…)\n- `FENETRE_DEDUP_HEURES` — 1\n- `URL_INSTANCE` — base des liens vers l'exécution\n- `REPARATION_AUTO` — true : file du réparateur ; false : alerte immédiate\n- `DELAI_FILET_MINUTES` — 30 (> passage du réparateur 10 min + réparation 15 min)\n- `TABLE_INCIDENTS` — id de la table « Incidents n8n »\n\nEt dans **Réglages · Gardien** (WF2) :\n- `MODE_GARDIEN` — `simulation` | `reel`\n- `URL_SIGNAL_VIE` — adresse de ping Healthchecks\n- `TABLE_SURVEILLES` — id de la table « Workflows surveillés »\n- `ID_GESTION_ERREURS`, `CANAL_ALERTE`, `HEURES_OUVREES`, `RAPPEL_HEURES`, `URL_INSTANCE`",
+          "height": 496,
+          "width": 560,
+          "color": 7
+        }
       },
       {
-        "parameters": {
-          "content": "# WF1 · Réception, file du réparateur, filet de sécurité\nÉchec → file « Incidents n8n » → le réparateur rend compte → n8n ne prévient que s'il n'a rien conclu",
-          "height": 1000,
-          "width": 3860,
-          "color": 3
-        },
         "id": "bb11f075-c6aa-56b0-b842-ff9fd8536a03",
         "name": "Bloc WF1 · Réception et alerte",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
           -688,
-          -288
-        ]
+          -80
+        ],
+        "parameters": {
+          "content": "# WF1 · Réception, file du réparateur, filet de sécurité\nÉchec → file « Incidents n8n » → le réparateur rend compte → n8n ne prévient que s'il n'a rien conclu",
+          "height": 1400,
+          "width": 3860,
+          "color": 3
+        }
       },
       {
-        "parameters": {
-          "content": "## WF1 – mode d'emploi\n\n**Rôle** : recevoir l'échec de **n'importe quel workflow de l'instance** qui désigne « Gestion des erreurs » comme workflow d'erreur. Avec le réparateur : le mettre dans sa file et ne prévenir Slack que s'il ne conclut pas. Sans réparateur : alerter Slack tout de suite.\n\n**Quand** : à chaque exécution **automatique** en échec d'un workflow rattaché. Ne tourne jamais tout seul.\n\n### Étapes\n**1. Échec d'un workflow** — n8n livre le dossier : workflow, exécution, dernier nœud, message.\n**2. Réglages** — seul endroit à modifier.\n**3. Message d'alerte** — met en forme l'incident, calcule la clé *workflow + nœud + message + fenêtre*.\n**4. Un incident par fenêtre** — une clé déjà vue s'arrête là (mémoire de n8n).\n**5. Réparateur actif ?** — `REPARATION_AUTO`.\n**6a. Incidents – enregistrement** — ligne `nouveau` dans la table « Incidents n8n » : c'est la **file du réparateur local**. Il la lit, répare, et publie **lui-même** le compte rendu sur Slack (une seule notification : à la fin).\n**7a. Attente du réparateur** — `DELAI_FILET_MINUTES`.\n**8a. Incidents – état** puis **Réparateur a conclu ?** — si la ligne n'est plus `nouveau` / `en_cours`, le réparateur a publié son compte rendu : on s'arrête, **rien n'est envoyé**.\n**9a. Message de secours** — sinon, n8n prévient avec la situation (filet de sécurité).\n**6b. Alerte immédiate** — sans réparateur.\n**10. Mode réel ?** puis **Slack – alerte d'incident**.\n\n### Garde-fous\n- Slack en `continueRegularOutput`, 2 essais : **jamais d'alerte sur l'alerte**.\n- Ce workflow n'a **pas** de workflow d'erreur : il ne se désigne pas lui-même (boucle).\n- Ne voit pas les échecs rattrapés par une sortie d'erreur câblée, ni les pannes silencieuses.\n\n### Identifiants utilisés\n- **Slack Alertes n8n** (`slackApi`, écriture sur le canal d'alerte).\n\n### Tester\n« Lancement manuel WF1 » → « Échec simulé » rejoue une fausse charge utile (workflow `ZZ…`, que le réparateur ignore).",
-          "height": 1256,
-          "width": 460,
-          "color": 7
-        },
         "id": "bde56e91-0c5d-58b5-8f15-049362d1cdaf",
         "name": "WF1 – mode d'emploi",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
           -640,
-          -176
-        ]
+          32
+        ],
+        "parameters": {
+          "content": "## WF1 – mode d'emploi\n\n**Rôle** : recevoir l'échec de **n'importe quel workflow de l'instance** qui désigne « Gestion des erreurs » comme workflow d'erreur. Avec le réparateur : le mettre dans sa file et ne prévenir Slack que s'il ne conclut pas. Sans réparateur : alerter Slack tout de suite.\n\n**Quand** : à chaque exécution **automatique** en échec d'un workflow rattaché. Ne tourne jamais tout seul.\n\n### Étapes\n**1. Échec d'un workflow** — n8n livre le dossier : workflow, exécution, dernier nœud, message.\n**2. Réglages** — seul endroit à modifier.\n**3. Message d'alerte** — met en forme l'incident, calcule la clé *workflow + nœud + message + fenêtre*.\n**4. Un incident par fenêtre** — une clé déjà vue s'arrête là (mémoire de n8n).\n**5. Réparateur actif ?** — `REPARATION_AUTO`.\n**6a. Incidents – enregistrement** — ligne `nouveau` dans la table « Incidents n8n » : c'est la **file du réparateur local**. Il la lit, répare, et publie **lui-même** le compte rendu sur Slack (une seule notification : à la fin).\n**7a. Attente du réparateur** — `DELAI_FILET_MINUTES`.\n**8a. Incidents – état** puis **Réparateur a conclu ?** — si la ligne n'est plus `nouveau` / `en_cours`, le réparateur a publié son compte rendu : on s'arrête, **rien n'est envoyé**.\n**9a. Message de secours** — sinon, n8n prévient avec la situation (filet de sécurité).\n**6b. Alerte immédiate** — sans réparateur.\n**10. Mode réel ?** puis **Slack – alerte d'incident**.\n\n### Garde-fous\n- Slack en `continueRegularOutput`, 2 essais : **jamais d'alerte sur l'alerte**.\n- Ce workflow n'a **pas** de workflow d'erreur : il ne se désigne pas lui-même (boucle).\n- Ne voit pas les échecs rattrapés par une sortie d'erreur câblée, ni les pannes silencieuses.\n\n### Identifiants utilisés\n- **Slack Alertes n8n** (`slackApi`, écriture sur le canal d'alerte).\n\n### Tester\n« Lancement manuel WF1 » → « Échec simulé » rejoue une fausse charge utile (workflow `ZZ…`, que le réparateur ignore).",
+          "height": 1256,
+          "width": 460,
+          "color": 7
+        }
       },
       {
-        "parameters": {},
         "id": "01a64c04-7436-5516-b3d9-2d4c37c71e7d",
         "name": "Échec d'un workflow",
         "type": "n8n-nodes-base.errorTrigger",
         "typeVersion": 1,
         "position": [
           0,
-          -80
-        ]
+          128
+        ],
+        "parameters": {}
       },
       {
-        "parameters": {},
         "id": "9a3b228f-896c-5ee2-a1d1-8195c752b81b",
         "name": "Lancement manuel WF1",
         "type": "n8n-nodes-base.manualTrigger",
         "typeVersion": 1,
         "position": [
           0,
-          144
-        ]
+          352
+        ],
+        "parameters": {}
       },
       {
-        "parameters": {
-          "jsCode": "// Fabrique une charge utile identique à celle de l'Error Trigger, pour tester le bloc à la main.\nreturn [{ json: {\n  execution: {\n    id: '0',\n    url: '',\n    retryOf: null,\n    error: { message: 'Échec simulé — test manuel du bloc WF1', stack: '' },\n    lastNodeExecuted: 'Nœud de test',\n    mode: 'manual',\n  },\n  workflow: { id: 'test', name: 'ZZ test erreur (simulé)' },\n} }];"
-        },
         "id": "b8660e31-ea30-55b0-b36f-3eb22c2e0686",
         "name": "Échec simulé",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           240,
-          144
-        ]
+          352
+        ],
+        "parameters": {
+          "jsCode": "// Fabrique une charge utile identique à celle de l'Error Trigger, pour tester le bloc à la main.\nreturn [{ json: {\n  execution: {\n    id: '0',\n    url: '',\n    retryOf: null,\n    error: { message: 'Échec simulé — test manuel du bloc WF1', stack: '' },\n    lastNodeExecuted: 'Nœud de test',\n    mode: 'manual',\n  },\n  workflow: { id: 'test', name: 'ZZ test erreur (simulé)' },\n} }];"
+        }
       },
       {
-        "parameters": {
-          "jsCode": "// MODE          : 'simulation' = tout est calculé, RIEN n'est envoyé sur Slack.\n//                 'reel'       = les messages partent. Bascule sur décision explicite, après la recette.\n// CANAL_ALERTE  : identifiant du canal Slack (C…), jamais son nom.\n// FENETRE_DEDUP_HEURES : une erreur identique (workflow + nœud + message) n'est traitée qu'une fois par fenêtre.\n// URL_INSTANCE  : base des liens « voir l'exécution » — vide = on prend execution.url fourni par n8n.\n// REPARATION_AUTO : true  = l'incident part dans la file du réparateur local ; Slack n'est prévenu par n8n\n//                           QUE si le réparateur n'a rien conclu après DELAI_FILET_MINUTES (poste éteint…).\n//                   false = pas de réparateur (instance client) : alerte Slack immédiate.\n// TABLE_INCIDENTS : id de la table de données « Incidents n8n » (file partagée avec le réparateur).\nconst reglages = {\n  MODE: 'reel',\n  CANAL_ALERTE: 'C0C27914SAZ',\n  FENETRE_DEDUP_HEURES: 1,\n  URL_INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud',\n  REPARATION_AUTO: true,\n  DELAI_FILET_MINUTES: 30,\n  TABLE_INCIDENTS: 'G6tieWFLeta7OEL5',\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
-        },
         "id": "665e6478-cfd4-57c3-8d56-d08db876ca07",
         "name": "Réglages · Gestion des erreurs",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           480,
-          -80
-        ]
+          128
+        ],
+        "parameters": {
+          "jsCode": "// MODE          : 'simulation' = tout est calculé, RIEN n'est envoyé sur Slack.\n//                 'reel'       = les messages partent. Bascule sur décision explicite, après la recette.\n// CANAL_ALERTE  : identifiant du canal Slack (C…), jamais son nom.\n// FENETRE_DEDUP_HEURES : une erreur identique (workflow + nœud + message) n'est traitée qu'une fois par fenêtre.\n// URL_INSTANCE  : base des liens « voir l'exécution » — vide = on prend execution.url fourni par n8n.\n// REPARATION_AUTO : true  = l'incident part dans la file du réparateur local ; Slack n'est prévenu par n8n\n//                           QUE si le réparateur n'a rien conclu après DELAI_FILET_MINUTES (poste éteint…).\n//                   false = pas de réparateur (instance client) : alerte Slack immédiate.\n// TABLE_INCIDENTS : id de la table de données « Incidents n8n » (file partagée avec le réparateur).\nconst reglages = {\n  MODE: 'reel',\n  CANAL_ALERTE: 'C0C27914SAZ',\n  FENETRE_DEDUP_HEURES: 1,\n  URL_INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud',\n  REPARATION_AUTO: true,\n  DELAI_FILET_MINUTES: 30,\n  TABLE_INCIDENTS: 'G6tieWFLeta7OEL5',\n};\nreturn $input.all().map(item => ({ json: { ...item.json, reglages } }));"
+        }
       },
       {
-        "parameters": {
-          "jsCode": "// Met en forme l'incident et calcule la clé de dédoublonnage.\n// Deux formes de charge utile : échec d'un nœud (execution.*) ou échec du déclencheur (trigger.*).\nconst NL = String.fromCharCode(10);\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst wf = entree.workflow || {};\nconst ex = entree.execution || {};\nconst tr = entree.trigger || {};\nconst err = ex.error || tr.error || {};\nconst noeud = ex.lastNodeExecuted || (err.node && err.node.name) || (ex.id ? 'inconnu' : 'déclencheur');\nconst message = String(err.message || err.description || 'erreur sans message').slice(0, 800);\n\nlet lien = ex.url || '';\nif (r.URL_INSTANCE && wf.id && ex.id) {\n  lien = r.URL_INSTANCE.replace(/\\/+$/, '') + '/workflow/' + wf.id + '/executions/' + ex.id;\n}\n\nconst fenetreMs = Math.max(1, Number(r.FENETRE_DEDUP_HEURES) || 1) * 3600 * 1000;\nconst tranche = Math.floor(Date.now() / fenetreMs);\nconst cle = [wf.id || wf.name || '?', noeud, message.slice(0, 160), tranche].join('|');\n\nconst quand = $now.setZone('Europe/Paris').toFormat(\"dd/MM/yyyy 'à' HH:mm\");\nconst lignes = [\n  ':rotating_light: *Échec d’un workflow n8n*',\n  '*Workflow :* ' + (wf.name || 'inconnu') + (wf.id ? ' (`' + wf.id + '`)' : ''),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + message,\n  '*Quand :* ' + quand + (ex.mode ? ' — exécution ' + ex.mode : ''),\n  lien ? '*Exécution :* <' + lien + '|ouvrir dans n8n>' : '*Exécution :* ' + (ex.id || '—'),\n];\nif (ex.retryOf) {\n  lignes.push('_Nouvelle tentative de l’exécution ' + ex.retryOf + '._');\n}\n\nreturn [{ json: {\n  executionId: ex.id ? String(ex.id) : '',\n  workflowId: wf.id || '',\n  workflowNom: wf.name || '',\n  noeud,\n  message,\n  texte: lignes.join(NL),\n  cle,\n  statut: 'nouveau',\n} }];"
-        },
         "id": "5de26303-479d-568b-b3ca-5d1f022ed4cd",
         "name": "Message d'alerte",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           720,
-          -80
-        ]
+          128
+        ],
+        "parameters": {
+          "jsCode": "// Met en forme l'incident et calcule la clé de dédoublonnage.\n// Deux formes de charge utile : échec d'un nœud (execution.*) ou échec du déclencheur (trigger.*).\nconst NL = String.fromCharCode(10);\nconst entree = $input.first().json;\nconst r = entree.reglages;\nconst wf = entree.workflow || {};\nconst ex = entree.execution || {};\nconst tr = entree.trigger || {};\nconst err = ex.error || tr.error || {};\nconst noeud = ex.lastNodeExecuted || (err.node && err.node.name) || (ex.id ? 'inconnu' : 'déclencheur');\nconst message = String(err.message || err.description || 'erreur sans message').slice(0, 800);\n\nlet lien = ex.url || '';\nif (r.URL_INSTANCE && wf.id && ex.id) {\n  lien = r.URL_INSTANCE.replace(/\\/+$/, '') + '/workflow/' + wf.id + '/executions/' + ex.id;\n}\n\nconst fenetreMs = Math.max(1, Number(r.FENETRE_DEDUP_HEURES) || 1) * 3600 * 1000;\nconst tranche = Math.floor(Date.now() / fenetreMs);\nconst cle = [wf.id || wf.name || '?', noeud, message.slice(0, 160), tranche].join('|');\n\nconst quand = $now.setZone('Europe/Paris').toFormat(\"dd/MM/yyyy 'à' HH:mm\");\nconst lignes = [\n  ':rotating_light: *Échec d’un workflow n8n*',\n  '*Workflow :* ' + (wf.name || 'inconnu') + (wf.id ? ' (`' + wf.id + '`)' : ''),\n  '*Nœud en échec :* ' + noeud,\n  '*Message :* ' + message,\n  '*Quand :* ' + quand + (ex.mode ? ' — exécution ' + ex.mode : ''),\n  lien ? '*Exécution :* <' + lien + '|ouvrir dans n8n>' : '*Exécution :* ' + (ex.id || '—'),\n];\nif (ex.retryOf) {\n  lignes.push('_Nouvelle tentative de l’exécution ' + ex.retryOf + '._');\n}\n\nreturn [{ json: {\n  executionId: ex.id ? String(ex.id) : '',\n  workflowId: wf.id || '',\n  workflowNom: wf.name || '',\n  noeud,\n  message,\n  texte: lignes.join(NL),\n  cle,\n  statut: 'nouveau',\n} }];"
+        }
       },
       {
-        "parameters": {
-          "operation": "removeItemsSeenInPreviousExecutions",
-          "dedupeValue": "={{ $json.cle }}",
-          "options": {
-            "scope": "workflow",
-            "historySize": 5000
-          }
-        },
         "id": "7df37942-7e1b-5562-af1b-f63512c4c7e8",
         "name": "Un incident par fenêtre",
         "type": "n8n-nodes-base.removeDuplicates",
         "typeVersion": 2,
         "position": [
           960,
-          -80
-        ]
+          128
+        ],
+        "parameters": {
+          "operation": "removeItemsSeenInPreviousExecutions",
+          "logic": "removeItemsWithAlreadySeenKeyValues",
+          "dedupeValue": "={{ $json.cle }}",
+          "options": {
+            "scope": "workflow",
+            "historySize": 5000
+          }
+        }
       },
       {
+        "id": "e2cbd64a-dbdd-54b6-8f4f-5371b99c323d",
+        "name": "Réparateur actif ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1200,
+          128
+        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -857,18 +1559,20 @@
             "combinator": "and"
           },
           "options": {}
-        },
-        "id": "e2cbd64a-dbdd-54b6-8f4f-5371b99c323d",
-        "name": "Réparateur actif ?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.2,
-        "position": [
-          1200,
-          -80
-        ]
+        }
       },
       {
+        "id": "a4b116ca-21c7-53da-91bb-9a2f89702d19",
+        "name": "Incidents – enregistrement",
+        "type": "n8n-nodes-base.dataTable",
+        "typeVersion": 1.1,
+        "position": [
+          1440,
+          32
+        ],
         "parameters": {
+          "resource": "row",
+          "operation": "insert",
           "dataTableId": {
             "__rl": true,
             "mode": "id",
@@ -965,33 +1669,36 @@
             "convertFieldsToString": false
           },
           "options": {}
-        },
-        "id": "a4b116ca-21c7-53da-91bb-9a2f89702d19",
-        "name": "Incidents – enregistrement",
-        "type": "n8n-nodes-base.dataTable",
-        "typeVersion": 1.1,
-        "position": [
-          1440,
-          -176
-        ]
+        }
       },
       {
-        "parameters": {
-          "resume": "specificTime",
-          "dateTime": "={{ $now.plus({ minutes: $('Réglages · Gestion des erreurs').first().json.reglages.DELAI_FILET_MINUTES }).toISO() }}"
-        },
         "id": "5e249fe6-6a95-53ce-bdf8-9b130782483b",
         "name": "Attente du réparateur",
+        "webhookId": "49f86fb5-720f-5f7b-94c6-0b8405116d3f",
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
           1680,
-          -176
+          32
         ],
-        "webhookId": "49f86fb5-720f-5f7b-94c6-0b8405116d3f"
+        "parameters": {
+          "resume": "specificTime",
+          "dateTime": "={{ $now.plus({ minutes: $('Réglages · Gestion des erreurs').first().json.reglages.DELAI_FILET_MINUTES }).toISO() }}"
+        }
       },
       {
+        "id": "d8502a97-03a1-5d1a-ad5d-657028fc135e",
+        "name": "Incidents – état",
+        "type": "n8n-nodes-base.dataTable",
+        "typeVersion": 1.1,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "position": [
+          1920,
+          32
+        ],
         "parameters": {
+          "resource": "row",
           "operation": "get",
           "dataTableId": {
             "__rl": true,
@@ -1003,24 +1710,24 @@
             "conditions": [
               {
                 "keyName": "executionId",
+                "condition": "eq",
                 "keyValue": "={{ $('Incidents – enregistrement').first().json.executionId }}"
               }
             ]
           },
+          "returnAll": false,
           "limit": 1
-        },
-        "id": "d8502a97-03a1-5d1a-ad5d-657028fc135e",
-        "name": "Incidents – état",
-        "type": "n8n-nodes-base.dataTable",
-        "typeVersion": 1.1,
-        "position": [
-          1920,
-          -176
-        ],
-        "alwaysOutputData": true,
-        "executeOnce": true
+        }
       },
       {
+        "id": "5663fef2-6f52-58f5-ba48-d23e5044668d",
+        "name": "Réparateur a conclu ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2160,
+          32
+        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -1043,54 +1750,54 @@
             "combinator": "and"
           },
           "options": {}
-        },
-        "id": "5663fef2-6f52-58f5-ba48-d23e5044668d",
-        "name": "Réparateur a conclu ?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.2,
-        "position": [
-          2160,
-          -176
-        ]
+        }
       },
       {
-        "parameters": {},
         "id": "aa550e05-4dbb-57c2-acd0-0283f801624d",
         "name": "Compte rendu publié par le réparateur",
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
         "position": [
           2400,
-          -272
-        ]
+          -64
+        ],
+        "parameters": {}
       },
       {
-        "parameters": {
-          "jsCode": "// Le réparateur n'a rien conclu dans le délai : n8n prévient lui-même, avec la situation.\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nconst ligne = $input.first().json;\nconst incident = $('Incidents – enregistrement').first().json;\nconst etat = ligne.statut === 'rapport_non_publie'\n  ? 'le réparateur a conclu (' + (ligne.resume || '—') + ') mais n’a pas pu publier son compte rendu'\n  : ligne.statut === 'en_cours'\n    ? 'le réparateur a pris l’incident mais n’a pas conclu'\n    : 'le réparateur ne l’a pas pris en charge (poste éteint ou réparateur arrêté ?)';\nconst texte = (ligne.texte || incident.texte) + NL +\n  ':warning: *Pas de réparation automatique au bout de ' + r.DELAI_FILET_MINUTES + ' min* : ' + etat +\n  '. À regarder à la main — sinon il le reprendra à son prochain démarrage et publiera son compte rendu ici.';\nreturn [{ json: { texte, mode: r.MODE } }];"
-        },
         "id": "44da67bd-04c3-5576-b62a-4126520de2f1",
         "name": "Message de secours",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           2400,
-          -80
-        ]
+          128
+        ],
+        "parameters": {
+          "jsCode": "// Le réparateur n'a rien conclu dans le délai : n8n prévient lui-même, avec la situation.\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nconst ligne = $input.first().json;\nconst incident = $('Incidents – enregistrement').first().json;\nconst etat = ligne.statut === 'rapport_non_publie'\n  ? 'le réparateur a conclu (' + (ligne.resume || '—') + ') mais n’a pas pu publier son compte rendu'\n  : ligne.statut === 'en_cours'\n    ? 'le réparateur a pris l’incident mais n’a pas conclu'\n    : 'le réparateur ne l’a pas pris en charge (poste éteint ou réparateur arrêté ?)';\nconst texte = (ligne.texte || incident.texte) + NL +\n  ':warning: *Pas de réparation automatique au bout de ' + r.DELAI_FILET_MINUTES + ' min* : ' + etat +\n  '. À regarder à la main — sinon il le reprendra à son prochain démarrage et publiera son compte rendu ici.';\nreturn [{ json: { texte, mode: r.MODE } }];"
+        }
       },
       {
-        "parameters": {
-          "jsCode": "// Pas de réparateur sur cette instance : l'alerte part tout de suite.\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nreturn $input.all().map(i => ({ json: { texte: i.json.texte, mode: r.MODE } }));"
-        },
         "id": "7e4a9e93-cb64-55ae-aae4-4807613c0dc9",
         "name": "Alerte immédiate",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
           1440,
-          320
-        ]
+          528
+        ],
+        "parameters": {
+          "jsCode": "// Pas de réparateur sur cette instance : l'alerte part tout de suite.\nconst r = $('Réglages · Gestion des erreurs').first().json.reglages;\nreturn $input.all().map(i => ({ json: { texte: i.json.texte, mode: r.MODE } }));"
+        }
       },
       {
+        "id": "66e93177-3841-5243-b0f0-5b8f2b4a8f63",
+        "name": "Mode réel ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2640,
+          224
+        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -1113,24 +1820,33 @@
             "combinator": "and"
           },
           "options": {}
-        },
-        "id": "66e93177-3841-5243-b0f0-5b8f2b4a8f63",
-        "name": "Mode réel ?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.2,
-        "position": [
-          2640,
-          16
-        ]
+        }
       },
       {
+        "id": "b59195ba-75e1-5172-abe8-fd07fd7771f4",
+        "name": "Slack – alerte d'incident",
+        "webhookId": "5b9f1319-0f5c-58cd-8ffa-68790a61a7a8",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.3,
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 3000,
+        "onError": "continueRegularOutput",
+        "position": [
+          2880,
+          128
+        ],
         "parameters": {
+          "authentication": "accessToken",
+          "resource": "message",
+          "operation": "post",
           "select": "channel",
           "channelId": {
             "__rl": true,
             "mode": "id",
             "value": "={{ $('Réglages · Gestion des erreurs').first().json.reglages.CANAL_ALERTE }}"
           },
+          "messageType": "text",
           "text": "={{ $json.texte }}",
           "otherOptions": {
             "includeLinkToWorkflow": false,
@@ -1138,36 +1854,511 @@
             "unfurl_links": false
           }
         },
-        "id": "b59195ba-75e1-5172-abe8-fd07fd7771f4",
-        "name": "Slack – alerte d'incident",
-        "type": "n8n-nodes-base.slack",
-        "typeVersion": 2.3,
-        "position": [
-          2880,
-          -80
-        ],
-        "retryOnFail": true,
-        "maxTries": 2,
-        "waitBetweenTries": 3000,
-        "webhookId": "5b9f1319-0f5c-58cd-8ffa-68790a61a7a8",
         "credentials": {
           "slackApi": {
             "id": "oiCh7mUHPUPu43md",
             "name": "Slack Alertes n8n"
           }
-        },
-        "onError": "continueRegularOutput"
+        }
       },
       {
-        "parameters": {},
         "id": "c117ffef-3b88-5611-ba92-1abf7c07ceed",
         "name": "Simulation – rien n'est envoyé",
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
         "position": [
           2880,
-          112
-        ]
+          320
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "04b021ca-7a49-54de-9492-a6e899541171",
+        "name": "Bloc WF2 · Gardien des pannes silencieuses",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -688,
+          1424
+        ],
+        "parameters": {
+          "content": "# WF2 · Gardien des pannes silencieuses\nSignal de vie Healthchecks toutes les 10 min · contrôle horaire des workflows inscrits dans « Workflows surveillés »",
+          "height": 1364,
+          "width": 3860,
+          "color": 5
+        }
+      },
+      {
+        "id": "ae3e892e-283f-5159-8612-b574ada7af2e",
+        "name": "WF2 – mode d'emploi",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -640,
+          1536
+        ],
+        "parameters": {
+          "content": "## WF2 – mode d'emploi\n\n**Rôle** : repérer les pannes **silencieuses** que WF1 ne voit pas — un workflow dépublié, détaché de « Gestion des erreurs », supprimé, ou qui ne tourne plus — et prouver de l'extérieur que n8n et ce workflow tournent.\n\n**Quand** : signal de vie toutes les 10 min ; contrôle chaque heure à h + 05. 24 h/24.\n\n### Étapes\n**1. Réglages · Gardien** — seul endroit à modifier.\n**2. Signal de vie ou contrôle ?** — selon le déclencheur.\n**3a. HTTP – signal de vie** — ping Healthchecks. Plus de ping pendant 30 min → Healthchecks alerte (Slack + e-mail).\n**3b. Table – workflows surveillés** puis **Workflows à contrôler** — les lignes actives.\n**4. n8n – état du workflow** — publié ? rattaché ? (API n8n, lecture seule).\n**5. n8n – dernière exécution** — date de la plus récente, quel que soit son statut.\n**6. Diagnostic et décision** — anomalie (`introuvable`, `lecture_impossible`, `depublie`, `detache`, `silence`) et action : alerte à l'apparition, rappel toutes les `RAPPEL_HEURES`, « rétabli » à la disparition, sinon rien.\n**7. Table – mise à jour de l'état** et **Gardien – mode réel ?** → Slack.\n**En parallèle, 4b. n8n – workflows publiés** puis **Workflows non inscrits** — tout workflow rattaché à « Gestion des erreurs » mais absent de la table est signalé (**Un rappel par tranche** : une fois toutes les `RAPPEL_HEURES`).\n\n### Garde-fous\n- **Lecture seule** : l'API n8n n'est appelée qu'en GET.\n- Slack en `continueRegularOutput`, 2 essais : jamais d'alerte sur l'alerte.\n- Ping raté : ignoré (`continueRegularOutput`) — c'est Healthchecks qui juge l'absence de signal.\n- Surveiller un nouveau workflow = **ajouter une ligne** dans « Workflows surveillés ». `silence_max_h` vide = pas de contrôle de silence (workflows à webhooks).\n\n### Identifiants utilisés\n- **API n8n – Gardien** (`n8nApi`, clé dédiée, révocable seule).\n- **Slack Alertes n8n** (`slackApi`).\n\n### Tester\n« Lancement manuel WF2 » → contrôle complet (pas de signal de vie).",
+          "height": 1216,
+          "width": 460,
+          "color": 7
+        }
+      },
+      {
+        "id": "1b6caaa3-e02f-5063-b3e4-26d3462d39b1",
+        "name": "Toutes les 10 minutes",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          1424
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "minutesInterval": 10
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "ce04c393-36d6-53ce-ace4-4d6ddb77394b",
+        "name": "Chaque heure à h + 05",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          1632
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "5 * * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "711899a3-3f1e-5d97-9307-ada1e9dec7ad",
+        "name": "Lancement manuel WF2",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          1840
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "52f88324-98ff-5941-bf2a-c6c96fc4654f",
+        "name": "Réglages · Gardien",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          1632
+        ],
+        "parameters": {
+          "jsCode": "// MODE_GARDIEN      : 'simulation' = tout est calculé et la table est tenue à jour, RIEN n'est envoyé sur Slack.\n//                     'reel'       = les alertes partent. Le signal de vie part dans les deux modes.\n// URL_SIGNAL_VIE    : adresse de ping du contrôle Healthchecks « n8n · instance (Gestion des erreurs) ». Ne pas diffuser.\n// TABLE_SURVEILLES  : id de la table « Workflows surveillés » — une ligne par workflow à surveiller.\n// ID_GESTION_ERREURS: valeur attendue dans Settings → Error workflow des workflows surveillés.\n// CANAL_ALERTE      : identifiant du canal Slack (C…), jamais son nom.\n// HEURES_OUVREES    : plage des lignes « ouvrees » — jours ISO (1 = lundi) et heures de début / fin.\n// RAPPEL_HEURES     : tant qu'une anomalie dure, un rappel au plus toutes les RAPPEL_HEURES.\nconst reglages = {\n  MODE_GARDIEN: 'reel',\n  URL_SIGNAL_VIE: 'https://hc-ping.com/c3b25148-a2e3-45a0-83bb-39697935f3ea',\n  TABLE_SURVEILLES: '7QgsElRqld0DYeOz',\n  ID_GESTION_ERREURS: 'GestErreursInst1',\n  CANAL_ALERTE: 'C0C27914SAZ',\n  HEURES_OUVREES: { jours: [1, 2, 3, 4, 5], debut: 8, fin: 18 },\n  RAPPEL_HEURES: 24,\n  URL_INSTANCE: 'https://n8n-jtbx.srv1974245.hstgr.cloud',\n};\nreturn [{ json: { reglages } }];"
+        }
+      },
+      {
+        "id": "813f130d-6dc2-5438-99d3-1106628bb7bb",
+        "name": "Signal de vie ou contrôle ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          480,
+          1632
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "b6420e79-3932-5069-bc2f-6da8df050404",
+                "leftValue": "={{ $('Toutes les 10 minutes').isExecuted }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "26c42c70-93f1-5cdf-a3d0-80e769899e3f",
+        "name": "HTTP – signal de vie",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "onError": "continueRegularOutput",
+        "position": [
+          720,
+          1424
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_SIGNAL_VIE }}",
+          "options": {
+            "timeout": 10000
+          }
+        }
+      },
+      {
+        "id": "64b5707f-e8f2-563d-bf65-63f12cf4ad92",
+        "name": "Table – workflows surveillés",
+        "type": "n8n-nodes-base.dataTable",
+        "typeVersion": 1.1,
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "position": [
+          720,
+          1632
+        ],
+        "parameters": {
+          "operation": "get",
+          "dataTableId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Réglages · Gardien').first().json.reglages.TABLE_SURVEILLES }}"
+          },
+          "returnAll": true,
+          "filterType": "none",
+          "options": {}
+        }
+      },
+      {
+        "id": "ee214a53-14f0-5dd3-ab54-a9018a1ef175",
+        "name": "Workflows à contrôler",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          1632
+        ],
+        "parameters": {
+          "jsCode": "// Ne garde que les lignes actives et bien formées. Table vide : rien à contrôler, le bloc s'arrête là.\nreturn $input.all()\n  .filter(i => i.json.workflowId && i.json.actif !== false)\n  .map(i => ({ json: i.json }));"
+        }
+      },
+      {
+        "id": "734d4c2e-8745-5997-8155-05de5df4a013",
+        "name": "n8n – état du workflow",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "onError": "continueRegularOutput",
+        "position": [
+          1200,
+          1632
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_INSTANCE }}/api/v1/workflows/{{ $json.workflowId }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "n8nApi",
+          "options": {
+            "timeout": 15000,
+            "response": {
+              "response": {
+                "fullResponse": true,
+                "neverError": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "n8nApi": {
+            "id": "WDEn4UVmJg1Knt0W",
+            "name": "API n8n – Gardien"
+          }
+        }
+      },
+      {
+        "id": "6909d8b9-6006-5d90-a64b-f340e9b06b4e",
+        "name": "n8n – dernière exécution",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "onError": "continueRegularOutput",
+        "position": [
+          1440,
+          1632
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_INSTANCE }}/api/v1/executions?limit=1&workflowId={{ $('Workflows à contrôler').item.json.workflowId }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "n8nApi",
+          "options": {
+            "timeout": 15000,
+            "response": {
+              "response": {
+                "fullResponse": true,
+                "neverError": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "n8nApi": {
+            "id": "WDEn4UVmJg1Knt0W",
+            "name": "API n8n – Gardien"
+          }
+        }
+      },
+      {
+        "id": "5874adf5-aaef-50c3-b51a-65da2d37a57c",
+        "name": "Diagnostic et décision",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1680,
+          1632
+        ],
+        "parameters": {
+          "jsCode": "// Pour chaque workflow : anomalie constatée, puis décision (alerte, rappel, rétabli ou rien).\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gardien').first().json.reglages;\nconst lignes = $('Workflows à contrôler').all();\nconst etats = $('n8n – état du workflow').all();\nconst execs = $input.all();\nconst maintenant = $now.setZone('Europe/Paris');\nconst base = r.URL_INSTANCE.replace(/[/]+$/, '');\n\nfunction heuresOuvrees(debut, fin) {\n  const p = r.HEURES_OUVREES;\n  let total = 0;\n  let jour = debut.startOf('day');\n  let garde = 0;\n  while (jour <= fin && garde < 400) {\n    if (p.jours.includes(jour.weekday)) {\n      const a = jour.set({ hour: p.debut }), b = jour.set({ hour: p.fin });\n      const s = debut > a ? debut : a, e = fin < b ? fin : b;\n      if (e > s) total += e.diff(s, 'minutes').minutes;\n    }\n    jour = jour.plus({ days: 1 });\n    garde++;\n  }\n  return total / 60;\n}\n\nfunction duree(h) {\n  if (h < 1) return Math.round(h * 60) + ' min';\n  if (h < 48) return Math.floor(h) + ' h ' + String(Math.round((h % 1) * 60)).padStart(2, '0');\n  return Math.round(h / 24) + ' jours';\n}\n\nconst date = iso => DateTime.fromISO(iso).setZone('Europe/Paris').toFormat(\"dd/MM 'à' HH:mm\");\n\nfunction diagnostiquer(ligne, etat, exec) {\n  const code = etat.statusCode;\n  if (code === 404) return { code: 'introuvable', constat: 'l’identifiant `' + ligne.workflowId + '` n’existe plus sur l’instance.' };\n  if (code !== 200) return { code: 'lecture_impossible', constat: 'le gardien n’arrive pas à lire l’état de ce workflow (HTTP ' + code + ').' };\n  const wf = etat.body || {};\n  if (wf.active !== true) return { code: 'depublie', constat: 'le workflow n’est plus publié : aucun de ses déclencheurs ne tourne.' };\n  const rattache = (wf.settings || {}).errorWorkflow || '';\n  if (rattache !== r.ID_GESTION_ERREURS) {\n    return { code: 'detache', constat: 'ses échecs ne sont plus ni signalés ni réparés (Error workflow : ' + (rattache || 'vide') + ').' };\n  }\n  const max = Number(ligne.silence_max_h);\n  if (!max || max <= 0) return { code: 'ok' };\n  if (exec.statusCode !== 200) return { code: 'lecture_impossible', constat: 'le gardien n’arrive pas à lire les exécutions de ce workflow (HTTP ' + exec.statusCode + ').' };\n  const derniere = ((exec.body || {}).data || [])[0];\n  const repere = derniere ? (derniere.startedAt || derniere.createdAt) : ligne.createdAt;\n  const depuis = DateTime.fromISO(repere).setZone('Europe/Paris');\n  const ouvrees = ligne.plage === 'ouvrees';\n  const ecoule = ouvrees ? heuresOuvrees(depuis, maintenant) : maintenant.diff(depuis, 'hours').hours;\n  if (ecoule <= max) return { code: 'ok' };\n  return { code: 'silence', constat: 'aucune exécution depuis ' + duree(ecoule) + (ouvrees ? ' d’heures ouvrées' : '') +\n    ' (maximum prévu : ' + max + ' h). ' + (derniere ? 'Dernière exécution le ' + date(repere) + '.' : 'Aucune exécution connue.') };\n}\n\nconst LIBELLES = {\n  introuvable: ['Workflow introuvable', 'vérifier s’il a été supprimé ou réimporté sous un autre identifiant, puis corriger ou désactiver sa ligne dans la table « Workflows surveillés ».'],\n  lecture_impossible: ['Gardien aveugle', 'vérifier la clé d’API « Gardien » (Settings → n8n API) et l’identifiant « API n8n – Gardien ».'],\n  depublie: ['Workflow dépublié', 'l’ouvrir, recharger la page (F5), puis Publier.'],\n  detache: ['Workflow détaché de « Gestion des erreurs »', 'dans ses réglages, Error workflow → « Gestion des erreurs », puis enregistrer et publier.'],\n  silence: ['Panne silencieuse', 'vérifier que le workflow est publié, que ses déclencheurs sont actifs et à la bonne heure.'],\n};\n\nconst sortie = [];\nlignes.forEach((l, i) => {\n  const ligne = l.json;\n  const d = diagnostiquer(ligne, (etats[i] || {}).json || {}, (execs[i] || {}).json || {});\n  const avant = ligne.etat || 'ok';\n  const lien = base + '/workflow/' + ligne.workflowId;\n  const nom = ligne.nom || ligne.workflowId;\n  let action = null;\n  let depuis = ligne.depuis || '';\n  let derniere = ligne.derniere_alerte || '';\n  if (d.code === 'ok' && avant !== 'ok') {\n    action = 'retabli';\n  } else if (d.code !== 'ok' && d.code !== avant) {\n    action = 'alerte';\n    depuis = maintenant.toISO();\n  } else if (d.code !== 'ok' && (!derniere || maintenant.diff(DateTime.fromISO(derniere), 'hours').hours >= r.RAPPEL_HEURES)) {\n    action = 'rappel';\n  }\n  if (!action) return;\n\n  let texte;\n  if (action === 'retabli') {\n    const ancien = (LIBELLES[avant] || [avant])[0];\n    texte = ':white_check_mark: *Rétabli — ' + nom + '* — fin de « ' + ancien + ' »' + (ligne.depuis ? ' (depuis le ' + date(ligne.depuis) + ')' : '') + '.';\n    depuis = '';\n    derniere = '';\n  } else {\n    const [titre, aFaire] = LIBELLES[d.code];\n    const entete = action === 'rappel'\n      ? ':repeat: *Toujours en cours — ' + titre + ' — ' + nom + '* (depuis le ' + date(depuis) + ')'\n      : ':large_orange_circle: *' + titre + ' — ' + nom + '*';\n    texte = [entete, '*Constat :* ' + d.constat, '*À faire :* ' + aFaire, '*Workflow :* <' + lien + '|ouvrir dans n8n>'].join(NL);\n    derniere = maintenant.toISO();\n  }\n  sortie.push({ json: { id: ligne.id, workflowId: ligne.workflowId, action, etat: d.code, depuis, derniere_alerte: derniere, texte } });\n});\nreturn sortie;"
+        }
+      },
+      {
+        "id": "25a073d0-8607-5921-a6f4-1bf0a61b7d08",
+        "name": "Table – mise à jour de l'état",
+        "type": "n8n-nodes-base.dataTable",
+        "typeVersion": 1.1,
+        "position": [
+          1920,
+          1520
+        ],
+        "parameters": {
+          "operation": "update",
+          "dataTableId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Réglages · Gardien').first().json.reglages.TABLE_SURVEILLES }}"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "etat": "={{ $json.etat }}",
+              "depuis": "={{ $json.depuis }}",
+              "derniere_alerte": "={{ $json.derniere_alerte }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "etat",
+                "displayName": "etat",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "depuis",
+                "displayName": "depuis",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "derniere_alerte",
+                "displayName": "derniere_alerte",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "filters": {
+            "conditions": [
+              {
+                "keyName": "id",
+                "condition": "eq",
+                "keyValue": "={{ $json.id }}"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "78b98524-0272-51a4-9228-0d51486d2c03",
+        "name": "Gardien – mode réel ?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1920,
+          1744
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "469c9928-9374-51b1-b097-f8a0bbf462e8",
+                "leftValue": "={{ $('Réglages · Gardien').first().json.reglages.MODE_GARDIEN }}",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                },
+                "rightValue": "reel"
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "d32293fc-7dc3-5775-b726-f55fad17d294",
+        "name": "Slack – alerte du gardien",
+        "webhookId": "e64eca5a-d587-5e82-901b-5cfb15c33b33",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.3,
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 3000,
+        "onError": "continueRegularOutput",
+        "position": [
+          2160,
+          1648
+        ],
+        "parameters": {
+          "authentication": "accessToken",
+          "resource": "message",
+          "operation": "post",
+          "select": "channel",
+          "channelId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Réglages · Gardien').first().json.reglages.CANAL_ALERTE }}"
+          },
+          "messageType": "text",
+          "text": "={{ $json.texte }}",
+          "otherOptions": {
+            "includeLinkToWorkflow": false,
+            "mrkdwn": true,
+            "unfurl_links": false
+          }
+        },
+        "credentials": {
+          "slackApi": {
+            "id": "oiCh7mUHPUPu43md",
+            "name": "Slack Alertes n8n"
+          }
+        }
+      },
+      {
+        "id": "3c0ff49f-1159-5bee-a5b2-9994d3bde96d",
+        "name": "Gardien – simulation, rien n'est envoyé",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          2160,
+          1840
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "85614824-4471-5314-a263-86d012160d26",
+        "name": "n8n – workflows publiés",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "executeOnce": true,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 3000,
+        "onError": "continueRegularOutput",
+        "position": [
+          960,
+          2032
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $('Réglages · Gardien').first().json.reglages.URL_INSTANCE }}/api/v1/workflows?active=true&limit=250",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "n8nApi",
+          "options": {
+            "timeout": 30000,
+            "response": {
+              "response": {
+                "fullResponse": true,
+                "neverError": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "n8nApi": {
+            "id": "WDEn4UVmJg1Knt0W",
+            "name": "API n8n – Gardien"
+          }
+        }
+      },
+      {
+        "id": "1d5aa2c1-2455-51e9-a24b-df26dde552c6",
+        "name": "Workflows non inscrits",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          2032
+        ],
+        "parameters": {
+          "jsCode": "// Workflows publiés, rattachés à « Gestion des erreurs », mais absents de « Workflows surveillés ».\n// Une ligne présente, même avec actif décoché, compte comme inscrite (c'est la façon de dire « ne pas surveiller »).\n// Les workflows en ZZ (tests) sont ignorés. Clé = workflow + tranche de RAPPEL_HEURES : un rappel par tranche au plus.\nconst NL = String.fromCharCode(10);\nconst r = $('Réglages · Gardien').first().json.reglages;\nconst reponse = $input.first().json;\nif (reponse.statusCode !== 200) return [];\nconst inscrits = new Set($('Table – workflows surveillés').all().map(i => i.json.workflowId).filter(Boolean));\nconst tranche = Math.floor(Date.now() / (r.RAPPEL_HEURES * 3600 * 1000));\nconst base = r.URL_INSTANCE.replace(/[/]+$/, '');\nreturn ((reponse.body || {}).data || [])\n  .filter(w => (w.settings || {}).errorWorkflow === r.ID_GESTION_ERREURS && !inscrits.has(w.id) && !/^ZZ/i.test(w.name || ''))\n  .map(w => ({ json: {\n    workflowId: w.id,\n    cle: w.id + '|' + tranche,\n    texte: [\n      ':large_blue_circle: *Workflow non surveillé — ' + w.name + '*',\n      '*Constat :* rattaché à « Gestion des erreurs » mais absent de la table « Workflows surveillés » : ses pannes silencieuses (dépublié, muet…) ne seraient pas détectées.',\n      '*À faire :* ajouter sa ligne dans « Workflows surveillés » — ou demander à Claude « surveille ' + w.name + ' ». Pour ne pas le surveiller : une ligne avec `actif` décoché.',\n      '*Workflow :* <' + base + '/workflow/' + w.id + '|ouvrir dans n8n>',\n    ].join(NL),\n  } }));"
+        }
+      },
+      {
+        "id": "36bde348-a95a-5750-9cbd-abab8c1e9ccf",
+        "name": "Un rappel par tranche",
+        "type": "n8n-nodes-base.removeDuplicates",
+        "typeVersion": 2,
+        "position": [
+          1440,
+          2032
+        ],
+        "parameters": {
+          "operation": "removeItemsSeenInPreviousExecutions",
+          "logic": "removeItemsWithAlreadySeenKeyValues",
+          "dedupeValue": "={{ $json.cle }}",
+          "options": {
+            "scope": "node",
+            "historySize": 1000
+          }
+        }
       }
     ],
     "connections": {
@@ -1345,14 +2536,192 @@
             }
           ]
         ]
+      },
+      "Toutes les 10 minutes": {
+        "main": [
+          [
+            {
+              "node": "Réglages · Gardien",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Chaque heure à h + 05": {
+        "main": [
+          [
+            {
+              "node": "Réglages · Gardien",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lancement manuel WF2": {
+        "main": [
+          [
+            {
+              "node": "Réglages · Gardien",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Réglages · Gardien": {
+        "main": [
+          [
+            {
+              "node": "Signal de vie ou contrôle ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Signal de vie ou contrôle ?": {
+        "main": [
+          [
+            {
+              "node": "HTTP – signal de vie",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Table – workflows surveillés",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Table – workflows surveillés": {
+        "main": [
+          [
+            {
+              "node": "Workflows à contrôler",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "n8n – workflows publiés",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "n8n – workflows publiés": {
+        "main": [
+          [
+            {
+              "node": "Workflows non inscrits",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Workflows non inscrits": {
+        "main": [
+          [
+            {
+              "node": "Un rappel par tranche",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Un rappel par tranche": {
+        "main": [
+          [
+            {
+              "node": "Gardien – mode réel ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Workflows à contrôler": {
+        "main": [
+          [
+            {
+              "node": "n8n – état du workflow",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "n8n – état du workflow": {
+        "main": [
+          [
+            {
+              "node": "n8n – dernière exécution",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "n8n – dernière exécution": {
+        "main": [
+          [
+            {
+              "node": "Diagnostic et décision",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Diagnostic et décision": {
+        "main": [
+          [
+            {
+              "node": "Table – mise à jour de l'état",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Gardien – mode réel ?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gardien – mode réel ?": {
+        "main": [
+          [
+            {
+              "node": "Slack – alerte du gardien",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Gardien – simulation, rien n'est envoyé",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "nodeGroups": [],
     "authors": "Karim Bordeau",
-    "name": "Version c58de61e",
-    "description": "",
-    "autosaved": true,
-    "createdAt": "2026-09-21T15:02:10.261Z",
-    "updatedAt": "2026-09-21T15:04:08.000Z"
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-29T13:00:32.767Z",
+    "updatedAt": "2026-09-29T13:00:32.767Z"
   }
 }
